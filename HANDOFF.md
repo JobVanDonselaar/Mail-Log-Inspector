@@ -62,10 +62,12 @@ src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe
 
 - Verhoog na iedere code- of gedragswijziging de versie in `MailLogInspector.App.csproj` en `MailLogInspectorVersion.cs`.
 - Pas SQLite-databases nooit handmatig aan. Laat import, migratie, retentie en rebuild door de EXE uitvoeren.
-- Publiceren gebeurt niet als onderdeel van gewone ontwikkeling. Op de oorspronkelijke computer gebruikt de gebruiker `C:\Codex\Publish-MailLogInspector.bat` en is het doel `C:\Apps\Mail Log Inspector`.
+- Publiceren gebeurt niet als onderdeel van gewone ontwikkeling. Op de oorspronkelijke computer gebruikt de gebruiker `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat` en is het doel `C:\Apps\Mail Log Inspector`.
 - Bewaar broncode, tests en documentatie gescheiden van databases, downloads, logs en publishoutput.
 - Lees eerst `AGENTS.md`, `README.md`, `ROADMAP.md` en `docs/smtp-report-download-flow.md`.
 
 ## Inhoud en privacy
 
 De overdracht bevat broncode, tests, scripts en actuele documentatie. Niet opgenomen zijn Git-metadata, databases, back-ups, logs, downloads, WebView2-profielen, cookies, sessies, opgeslagen geheimen, builds en publishbestanden.
+
+

@@ -14,7 +14,7 @@ Bestaande installaties gebruiken standaard `Alleen Gmail`, zodat een upgrade het
 
 ## Nieuwe en lege database
 
-Wanneer de actieve database ontbreekt, maakt de EXE de database en benodigde operationele tabellen aan via de bestaande initialisatie. Codex of een los script past de productiedatabase niet rechtstreeks aan.
+Wanneer de actieve database ontbreekt, maakt de EXE de database en benodigde operationele tabellen aan via de bestaande initialisatie. GitHub Copilot of een los script past de productiedatabase niet rechtstreeks aan.
 
 Een database zonder importhistorie vormt een nieuwe basis:
 
@@ -177,4 +177,5 @@ Als een hash al via een andere bron is geïmporteerd, blijft de oorspronkelijke 
 
 ## Versie en documentatie
 
-De implementatie verhoogt de applicatieversie naar `0.189`. README, Help en de SMTP.com-downloaddocumentatie worden bijgewerkt. Codex publiceert niet.
+De implementatie verhoogt de applicatieversie naar `0.189`. README, Help en de SMTP.com-downloaddocumentatie worden bijgewerkt. GitHub Copilot publiceert niet.
+

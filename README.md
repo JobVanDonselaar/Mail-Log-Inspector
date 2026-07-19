@@ -8,11 +8,11 @@ Mail Log Inspector maakt grote mailrapporten snel doorzoekbaar, toont afleversta
 
 ## Belangrijke paden
 
-- Broncode: `C:\Codex\Mail Log Inspector`
-- Debug-testversie: `C:\Codex\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe`
+- Broncode: C:\GithubCoPilot\Mail Log Inspector
+- Debug-testversie: `C:\GithubCoPilot\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe`
 - Productiemap: `C:\Apps\Mail Log Inspector`
 - Productiedatabase: `C:\Apps\Mail Log Inspector\mail-log-inspector.sqlite`
-- Publishstarter: `C:\Codex\Publish-MailLogInspector.bat`
+- Publishstarter: `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat`
 
 ## Projecten
 
@@ -80,8 +80,10 @@ dotnet test tests\MailLogInspector.Storage.Tests\MailLogInspector.Storage.Tests.
 dotnet build src\MailLogInspector.App\MailLogInspector.App.csproj -c Debug
 ```
 
-Codex publiceert niet automatisch. Publiceren gebeurt door de gebruiker met `C:\Codex\Publish-MailLogInspector.bat` naar `C:\Apps\Mail Log Inspector`.
+GitHub Copilot publiceert niet automatisch. Publiceren gebeurt door de gebruiker met `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat` naar `C:\Apps\Mail Log Inspector`.
 
 ## Werkregels
 
 `AGENTS.md` is leidend voor database-, build-, publish-, versie- en Git-afspraken.
+
+

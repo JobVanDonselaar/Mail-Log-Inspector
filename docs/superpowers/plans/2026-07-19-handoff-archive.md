@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Bouw en valideer `C:\Codex\MailLogInspector-Handoff-0.194.zip` als veilige, compacte overdracht van de actuele broncode en documentatie.
+**Goal:** Bouw en valideer `C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip` als veilige, compacte overdracht van de actuele broncode en documentatie.
 
 **Architecture:** Kopieer een expliciete allowlist naar een tijdelijke stagingmap, voeg daar `HANDOFF.md` en een SHA-256-manifest aan toe en maak pas daarna de ZIP. Pak de ZIP opnieuw uit in een aparte validatiemap en controleer aanwezigheid, uitsluitingen en alle manifesthashes.
 
@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Broncommit is `98052f946ac1e2ce260b574d35ac21ce7e60e9c1` of een latere commit die uitsluitend deze overdrachtsdocumentatie toevoegt.
-- Doelbestand is exact `C:\Codex\MailLogInspector-Handoff-0.194.zip`.
+- Doelbestand is exact `C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip`.
 - Neem geen Git-metadata, databases, builds, logs, downloads, sessies of geheimen op.
 - Gebruik een allowlist; kopieer nooit de volledige werkmap en filter daarna.
 - Verander geen applicatiecode of productiedatabase.
@@ -87,7 +87,7 @@ Status: geen verplichte onafgemaakte taak
 
 **Files:**
 - Create in staging: `MANIFEST-SHA256.txt`
-- Create: `C:\Codex\MailLogInspector-Handoff-0.194.zip`
+- Create: `C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip`
 
 **Interfaces:**
 - Consumes: gevalideerde stagingmap
@@ -116,7 +116,7 @@ Sorteer alle stagingbestanden behalve `MANIFEST-SHA256.txt` op relatief pad en s
 Verwijder alleen een bestaand bestand op het exacte doelpad en gebruik daarna:
 
 ```powershell
-Compress-Archive -Path (Join-Path $staging '*') -DestinationPath 'C:\Codex\MailLogInspector-Handoff-0.194.zip' -CompressionLevel Optimal
+Compress-Archive -Path (Join-Path $staging '*') -DestinationPath 'C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip' -CompressionLevel Optimal
 ```
 
 ---
@@ -124,7 +124,7 @@ Compress-Archive -Path (Join-Path $staging '*') -DestinationPath 'C:\Codex\MailL
 ### Task 3: Valideer de overdracht
 
 **Files:**
-- Verify: `C:\Codex\MailLogInspector-Handoff-0.194.zip`
+- Verify: `C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip`
 - Temporary: `C:\tmp\MailLogInspector-Handoff-0.194-verify`
 
 **Interfaces:**
@@ -134,7 +134,7 @@ Compress-Archive -Path (Join-Path $staging '*') -DestinationPath 'C:\Codex\MailL
 - [ ] **Step 1: Pak de ZIP uit in een lege validatiemap**
 
 ```powershell
-Expand-Archive -LiteralPath 'C:\Codex\MailLogInspector-Handoff-0.194.zip' -DestinationPath $verify
+Expand-Archive -LiteralPath 'C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip' -DestinationPath $verify
 ```
 
 - [ ] **Step 2: Controleer vereiste bestanden**
@@ -171,3 +171,5 @@ ZIP-grootte
 SHA-256 van de ZIP
 broncommit
 ```
+
+

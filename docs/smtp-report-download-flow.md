@@ -25,7 +25,7 @@ Een lopende synchronisatie kan met `Stop` worden geannuleerd. De annulering loop
 - Bij bestaande historie worden nieuwere ontbrekende rapportdagen oudste eerst verwerkt.
 - De rapportdag wordt uit UTC-tijdstempels bepaald; de planning om 01:00 blijft lokale tijd gebruiken.
 
-De EXE initialiseert een ontbrekende database zelf. Codex of een beheerder hoeft de SQLite-database daarvoor niet handmatig aan te maken of te wijzigen.
+De EXE initialiseert een ontbrekende database zelf. GitHub Copilot of een beheerder hoeft de SQLite-database daarvoor niet handmatig aan te maken of te wijzigen.
 
 ## SMTP.com-selectie
 
@@ -111,3 +111,4 @@ Het bronlabel staat in het lokale log en in de gecombineerde importlijst op Dash
 - Selectieregels: `src/MailLogInspector.App/SmtpPortalReportMatcher.cs`
 - Proeforkestratie: `src/MailLogInspector.App/SmtpPortalProbeService.cs`
 - Bronconfiguratie en -historie: `src/MailLogInspector.Storage/ReportSyncOperationalStore.cs`
+

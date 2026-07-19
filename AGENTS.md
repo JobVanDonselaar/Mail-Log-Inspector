@@ -15,24 +15,27 @@ Deze repo bevat `Mail Log Inspector`, een standalone Windows-app voor import, zo
 
 ## Build en test
 
-- Voor handmatig testen gebruikt de gebruiker de Debug-EXE: `C:\Codex\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe`.
-- Codex mag de Debug-build bijwerken met `dotnet build src\MailLogInspector.App\MailLogInspector.App.csproj -c Debug`, maar publiceert niet zelf.
+- Voor handmatig testen gebruikt de gebruiker de Debug-EXE: `C:\GithubCoPilot\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe`.
+- GitHub Copilot mag de Debug-build bijwerken met `dotnet build src\MailLogInspector.App\MailLogInspector.App.csproj -c Debug`, maar publiceert niet zelf.
 - Draai gerichte tests via `dotnet test tests\MailLogInspector.Storage.Tests\MailLogInspector.Storage.Tests.csproj --filter <filter>`.
 - Gebruik Release-build alleen als verificatie of voorbereiding, niet als impliciete publish.
 
 ## Publish
 
 - De standaard publish-doelmap is `C:\Apps\Mail Log Inspector`.
-- Publiceren gebeurt door de gebruiker via `C:\Codex\Publish-MailLogInspector.bat`.
-- Codex voert geen publish uit en start geen productie-EXE, tenzij de gebruiker dat in die beurt expliciet vraagt.
+- Publiceren gebeurt door de gebruiker via `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat`.
+- GitHub Copilot voert geen publish uit en start geen productie-EXE, tenzij de gebruiker dat in die beurt expliciet vraagt.
 
 ## Git
 
 - Houd branches kort en duidelijk.
-- Gebruik `codex/` als prefix voor nieuwe feature branches als er een branch nodig is.
+- Gebruik `copilot/` als prefix voor nieuwe feature branches als er een branch nodig is.
 - Verwijder alleen branches die al gemerged zijn of waarvan de gebruiker expliciet heeft gevraagd ze op te ruimen.
 
 ## Documentatie
 
 - Werk `README.md`, `ROADMAP.md` en relevante docs bij als de workflow of het gedrag verandert.
 - Leg nieuwe repo-regels hier vast als ze blijvend zijn.
+
+
+

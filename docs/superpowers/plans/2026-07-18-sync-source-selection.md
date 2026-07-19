@@ -18,7 +18,7 @@
 - Bronlabels zijn exact `SMTP.com direct`, `Gmail` en `Handmatig`.
 - De SMTP.com-proefdownload blijft read-only ten opzichte van de importservice.
 - Databasewijzigingen worden uitsluitend idempotent door de EXE uitgevoerd.
-- Versie wordt `0.189`; Codex publiceert niet.
+- Versie wordt `0.189`; GitHub Copilot publiceert niet.
 
 ---
 
@@ -271,9 +271,12 @@ Verwacht `0.189.0.0`.
 Gebruik:
 
 ```text
-C:\Codex\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe
+C:\GithubCoPilot\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe
 ```
 
 - [ ] **Step 3: Publiceer niet**
 
-De gebruiker publiceert later via `C:\Codex\Publish-MailLogInspector.bat`.
+De gebruiker publiceert later via `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat`.
+
+
+

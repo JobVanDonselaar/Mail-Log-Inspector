@@ -33,7 +33,7 @@ Bewust uitgangspunt:
 
 - geen handmatige DB-migraties buiten de app
 - bij structurele schemawijziging liever DB opnieuw opbouwen via import
-- AGENTS.md is de leidende repo-regelset voor Codex en andere agents
+- AGENTS.md is de leidende repo-regelset voor GitHub Copilot en andere agents
 - publish gebeurt expliciet via het script of de batch-wrapper, niet handmatig
 
 ## Fase 1: stabiele basis
@@ -113,3 +113,4 @@ Mogelijke vervolgstap:
 2. controleren dat zoeken en analyse na herimport functioneel juist zijn
 3. redesign van de drie hoofdtabs implementeren
 4. daarna pas verdere datamodel-optimalisatie voor snelheid en compactheid
+

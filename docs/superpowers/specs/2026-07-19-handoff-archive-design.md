@@ -2,13 +2,13 @@
 
 ## Doel
 
-Maak een veilige, compacte broncodesnapshot waarmee een nieuwe Codex-chat op
+Maak een veilige, compacte broncodesnapshot waarmee een nieuwe GitHub Copilot-chat op
 een andere locatie direct verder kan werken aan Mail Log Inspector versie
 `0.194`.
 
 ## Doelbestand
 
-`C:\Codex\MailLogInspector-Handoff-0.194.zip`
+`C:\GithubCoPilot\MailLogInspector-Handoff-0.194.zip`
 
 ## Inhoud
 
@@ -55,3 +55,5 @@ GUI-mockups buiten de ZIP.
   geheimenbestand aanwezig is.
 - Controleer de manifesthashes tegen de uitgepakte bestanden.
 - Rapporteer bestandenaantal, ZIP-grootte en SHA-256 van de ZIP.
+
+

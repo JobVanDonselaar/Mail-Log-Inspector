@@ -262,7 +262,9 @@ Expected: `0.194.0.0` en geen `git diff --check`-uitvoer.
 Geef de gebruiker:
 
 ```text
-C:\Codex\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe
+C:\GithubCoPilot\Mail Log Inspector\src\MailLogInspector.App\bin\Debug\net10.0-windows\MailLogInspector.exe
 ```
 
 Meld expliciet dat niet is gepubliceerd.
+
+
