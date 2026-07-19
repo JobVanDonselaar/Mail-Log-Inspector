@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MailLogInspector.App/MailLogInspector.App.csproj" />
+    <Project Path="src/MailLogInspector.Core/MailLogInspector.Core.csproj" />
+    <Project Path="src/MailLogInspector.Storage/MailLogInspector.Storage.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MailLogInspector.Storage.Tests/MailLogInspector.Storage.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,1525 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="MailLogInspector.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:MailLogInspector.App"
+        Title="Mail Log Inspector"
+        Width="1560"
+        Height="930"
+        MinWidth="1280"
+        MinHeight="820"
+        Background="#F3F5F8"
+        FontFamily="Segoe UI"
+        Icon="Assets/MailLogInspector.ico"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F5F8" />
+    <SolidColorBrush x:Key="PanelFillBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PanelSubtleFillBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="PanelStrokeBrush" Color="#D8E0EA" />
+    <SolidColorBrush x:Key="StrongStrokeBrush" Color="#B9C5D2" />
+    <SolidColorBrush x:Key="TextBrush" Color="#1F2937" />
+    <SolidColorBrush x:Key="MutedTextBrush" Color="#637386" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#1F5D8C" />
+    <SolidColorBrush x:Key="AccentDarkBrush" Color="#17486E" />
+    <SolidColorBrush x:Key="SuccessBrush" Color="#2F855A" />
+    <SolidColorBrush x:Key="WarningBrush" Color="#C77912" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#C83B2B" />
+
+    <Style TargetType="{x:Type TextBlock}">
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <Style x:Key="IconTextStyle" TargetType="{x:Type TextBlock}">
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+    </Style>
+
+    <Style x:Key="LabelTextStyle" TargetType="{x:Type TextBlock}">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+
+    <Style x:Key="SectionTitleStyle" TargetType="{x:Type TextBlock}">
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    </Style>
+
+    <Style x:Key="MutedTextStyle" TargetType="{x:Type TextBlock}">
+      <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+
+    <Style x:Key="PanelBorderStyle" TargetType="{x:Type Border}">
+      <Setter Property="Background" Value="{StaticResource PanelFillBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="16" />
+      <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="MetricCardStyle" TargetType="{x:Type Border}" BasedOn="{StaticResource PanelBorderStyle}">
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="Margin" Value="0,0,12,0" />
+      <Setter Property="MinHeight" Value="56" />
+    </Style>
+
+    <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
+      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="Padding" Value="16,8" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="4"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="{StaticResource AccentDarkBrush}" />
+          <Setter Property="BorderBrush" Value="{StaticResource AccentDarkBrush}" />
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.5" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="SecondaryButtonStyle" TargetType="{x:Type Button}">
+      <Setter Property="MinHeight" Value="38" />
+      <Setter Property="Padding" Value="16,8" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource StrongStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="4"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#F4F7FA" />
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.45" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type TextBox}">
+      <Setter Property="Height" Value="34" />
+      <Setter Property="Padding" Value="9,5" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="White" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+    </Style>
+
+    <Style TargetType="{x:Type ComboBox}">
+      <Setter Property="Height" Value="34" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Background" Value="White" />
+    </Style>
+
+    <Style TargetType="{x:Type DatePicker}">
+      <Setter Property="Height" Value="34" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStrokeBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="SelectedDateFormat" Value="Short" />
+    </Style>
+
+    <Style x:Key="PopupCalendarNavigationButtonStyle" TargetType="{x:Type Button}">
+      <Setter Property="Width" Value="28" />
+      <Setter Property="Height" Value="28" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}" CornerRadius="14">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#EAF2F8" />
+        </Trigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.28" />
+          <Setter Property="Cursor" Value="Arrow" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="PopupCalendarDayButtonStyle" TargetType="{x:Type Button}">
+      <Setter Property="Width" Value="24" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="1" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type Button}">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="3">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#EAF2F8" />
+        </Trigger>
+        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+          <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+          <Setter Property="Foreground" Value="White" />
+          <Setter Property="FontWeight" Value="SemiBold" />
+        </DataTrigger>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.32" />
+          <Setter Property="Cursor" Value="Arrow" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+    <Style TargetType="{x:Type DataGrid}">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="GridLinesVisibility" Value="None" />
+      <Setter Property="HorizontalGridLinesBrush" Value="Transparent" />
+      <Setter Property="RowHeaderWidth" Value="0" />
+      <Setter Property="HeadersVisibility" Value="Column" />
+      <Setter Property="CanUserResizeRows" Value="False" />
+      <Setter Property="SelectionMode" Value="Single" />
+      <Setter Property="SelectionUnit" Value="FullRow" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="RowHeight" Value="22" />
+      <Setter Property="ColumnHeaderHeight" Value="24" />
+      <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+      <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+      <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+    </Style>
+
+    <Style TargetType="{x:Type DataGridColumnHeader}">
+      <Setter Property="Background" Value="#F8FAFC" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="BorderBrush" Value="#EDF1F5" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="Padding" Value="4,0" />
+    </Style>
+
+    <Style TargetType="{x:Type DataGridCell}">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="4,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+    </Style>
+
+    <Style TargetType="{x:Type DataGridRow}">
+      <Setter Property="Height" Value="22" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style TargetType="{x:Type TabControl}">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style TargetType="{x:Type TabItem}">
+      <Setter Property="MinWidth" Value="190" />
+      <Setter Property="Height" Value="48" />
+      <Setter Property="Margin" Value="0,0,4,0" />
+      <Setter Property="Padding" Value="18,0" />
+      <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="{x:Type TabItem}">
+            <Grid>
+              <Border x:Name="TabBorder"
+                      Margin="0,4,0,0"
+                      Background="#EEF1F5"
+                      BorderBrush="{StaticResource StrongStrokeBrush}"
+                      BorderThickness="1,1,1,0"
+                      CornerRadius="7,7,0,0">
+                <ContentPresenter ContentSource="Header"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Margin="{TemplateBinding Padding}" />
+              </Border>
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="TabBorder" Property="Background" Value="{StaticResource PanelFillBrush}" />
+                <Setter TargetName="TabBorder" Property="BorderBrush" Value="{StaticResource PanelStrokeBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+              </Trigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="TabBorder" Property="Background" Value="#F8FAFC" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TabControl Name="MainTabControl" Grid.Row="0" Margin="18,0,18,18" SelectionChanged="MainTabControl_SelectionChanged">
+      <TabItem>
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE721;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="Zoeken" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <Grid Background="{StaticResource PanelFillBrush}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <Border Grid.Row="0" Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,12">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="120" />
+                  <ColumnDefinition Width="120" />
+                  <ColumnDefinition Width="212" />
+                  <ColumnDefinition Width="212" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="Van" Style="{StaticResource LabelTextStyle}" />
+                  <DatePicker Name="SearchFromDatePicker" SelectedDateChanged="DatePicker_SelectedDateChanged" PreviewMouseDown="DatePicker_PreviewMouseDown" PreviewMouseUp="DatePicker_PreviewMouseUp" PreviewKeyDown="DatePicker_PreviewKeyDown" CalendarOpened="DatePicker_CalendarOpened" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                  <TextBlock Text="Tot en met" Style="{StaticResource LabelTextStyle}" />
+                  <DatePicker Name="SearchThroughDatePicker" SelectedDateChanged="DatePicker_SelectedDateChanged" PreviewMouseDown="DatePicker_PreviewMouseDown" PreviewMouseUp="DatePicker_PreviewMouseUp" PreviewKeyDown="DatePicker_PreviewKeyDown" CalendarOpened="DatePicker_CalendarOpened" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                  <TextBlock Text="Afzender" Style="{StaticResource LabelTextStyle}" />
+                  <TextBox Name="SenderTextBox" TextChanged="SearchDashboardInputs_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="3">
+                  <TextBlock Text="Ontvanger" Style="{StaticResource LabelTextStyle}" />
+                  <TextBox Name="RecipientTextBox" TextChanged="SearchDashboardInputs_Changed" />
+                </StackPanel>
+              </Grid>
+              <Grid Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="144" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="Resultaten" Style="{StaticResource LabelTextStyle}" />
+                  <ComboBox Name="SearchLimitComboBox" SelectedIndex="2">
+                    <ComboBoxItem Content="100" Tag="100" />
+                    <ComboBoxItem Content="250" Tag="250" />
+                    <ComboBoxItem Content="500" Tag="500" />
+                    <ComboBoxItem Content="1000" Tag="1000" />
+                    <ComboBoxItem Content="5000" Tag="5000" />
+                    <ComboBoxItem Content="alles" Tag="-1" />
+                  </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                  <CheckBox Name="SenderDomainDashboardCheckBox"
+                            Content="Domeinanalyse tonen"
+                            Margin="0,0,16,0"
+                            VerticalAlignment="Center"
+                            IsEnabled="False"
+                            Checked="SenderDomainDashboardOption_Changed"
+                            Unchecked="SenderDomainDashboardOption_Changed" />
+                  <Button Name="SearchButton" Style="{StaticResource PrimaryButtonStyle}" Click="SearchButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                      <TextBlock Text="Zoeken" Foreground="White" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Button>
+                  <Button Name="LoadMoreSearchResultsButton" Content="Meer laden" Style="{StaticResource SecondaryButtonStyle}" IsEnabled="False" Click="LoadMoreSearchResultsButton_Click" />
+                  <Button Name="ExportSearchResultsButton" Style="{StaticResource SecondaryButtonStyle}" Click="ExportSearchResultsButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE8A5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                      <TextBlock Text="Excel exporteren" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Grid>
+          </Border>
+
+          <UniformGrid Grid.Row="1" Columns="5" Margin="0,0,0,8">
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="SearchTotalCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Verzonden">
+                  <TextBlock Text="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="SearchDeliveredCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="Afgeleverd">
+                  <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SuccessBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="SearchDeliveredPercentTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="% Afgeleverd">
+                  <TextBlock Text="%" Foreground="{StaticResource SuccessBrush}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Name="SearchUnderwayMetricCard" Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="SearchUnderwayCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#FFF4DE" HorizontalAlignment="Left" ToolTip="Onderweg">
+                  <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource WarningBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}" Margin="0">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="SearchBounceCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#FDECE9" HorizontalAlignment="Left" ToolTip="Bounce">
+                  <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource DangerBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+          </UniformGrid>
+
+          <Grid Name="SearchResultsDashboardLayoutGrid" Grid.Row="2">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Name="SearchResultsPanel" Grid.Column="0" Grid.ColumnSpan="5" Style="{StaticResource PanelBorderStyle}" Padding="0">
+              <DataGrid Name="SearchResultsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="30" ColumnHeaderHeight="30">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Accepted" Width="132" Binding="{Binding AcceptedDisplay}" />
+                  <DataGridTemplateColumn Header="" Width="28">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Button Content="{Binding ToggleGlyph}"
+                                Click="SearchResultToggleButton_Click"
+                                Width="18"
+                                Height="18"
+                                Padding="0"
+                                FontSize="10"
+                                FontWeight="Bold"
+                                Background="Transparent"
+                                BorderThickness="0">
+                          <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                              <Setter Property="Visibility" Value="Visible" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsGroup}" Value="False">
+                                  <Setter Property="Visibility" Value="Hidden" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </Button.Style>
+                        </Button>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Afzender" Width="230" Binding="{Binding SenderDisplay}" />
+                  <DataGridTextColumn Header="Ontvanger" Width="215" Binding="{Binding RecipientDisplay}" />
+                  <DataGridTextColumn Header="Aantal" Width="62" SortMemberPath="CountValue" Binding="{Binding CountDisplay}" />
+                  <DataGridTemplateColumn Width="160" SortMemberPath="StatusDisplay">
+                    <DataGridTemplateColumn.Header>
+                      <ComboBox Width="108" SelectedIndex="0" Loaded="SearchResultsStatusHeaderComboBox_Loaded" SelectionChanged="SearchResultsStatusHeaderComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Alle" Tag="" />
+                        <ComboBoxItem Content="Afgeleverd" Tag="afgeleverd" />
+                        <ComboBoxItem Content="Onderweg" Tag="onderweg" />
+                        <ComboBoxItem Content="Bounce" Tag="bounce" />
+                      </ComboBox>
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                          <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" Margin="0,0,8,0" />
+                          <TextBlock Text="{Binding StatusDisplay}" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Duur" Width="88" Binding="{Binding DurationDisplay}" />
+                </DataGrid.Columns>
+              </DataGrid>
+            </Border>
+            <Grid Name="SenderDomainDashboardPanel" Grid.Column="3" Grid.ColumnSpan="2" Visibility="Collapsed">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="1.2*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <Border Grid.Row="0" Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,8">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="Afleversnelheid laatste 30 dagen" FontWeight="SemiBold" />
+                  <UniformGrid Grid.Row="1" Columns="2" Margin="0,10,0,8">
+                    <StackPanel>
+                      <TextBlock Text="Gem. aflevertijd" Style="{StaticResource LabelTextStyle}" />
+                      <TextBlock Name="SenderDomainAverageDurationTextBlock" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="95% binnen" Style="{StaticResource LabelTextStyle}" />
+                      <TextBlock Name="SenderDomainP95DurationTextBlock" FontSize="20" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </UniformGrid>
+                  <Grid Grid.Row="2" MinHeight="120">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="62" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0">
+                      <TextBlock Name="SenderDomainTrendMaximumTextBlock" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,0,8,0" />
+                      <TextBlock Name="SenderDomainTrendMiddleTextBlock" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,0,8,0" />
+                      <TextBlock Text="0" HorizontalAlignment="Right" VerticalAlignment="Bottom" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,0,8,0" />
+                    </Grid>
+                    <Grid Grid.Column="1">
+                      <Border BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="0,1,0,0" VerticalAlignment="Top" />
+                      <Border BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="0,1,0,0" VerticalAlignment="Center" />
+                      <Border BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="0,0,0,1" />
+                      <ItemsControl Name="SenderDomainTrendItemsControl" VerticalAlignment="Stretch">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate><UniformGrid Rows="1" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid Margin="1,0" Background="Transparent" ToolTip="{Binding ToolTip}">
+                              <Border Width="8" Height="{Binding Height}" Background="{StaticResource SuccessBrush}" VerticalAlignment="Bottom" CornerRadius="2,2,0,0" />
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Grid>
+                  </Grid>
+                  <Grid Grid.Row="3" Margin="62,5,0,0">
+                    <TextBlock Name="SenderDomainTrendFromTextBlock" HorizontalAlignment="Left" Foreground="{StaticResource MutedTextBrush}" FontSize="10" />
+                    <TextBlock Name="SenderDomainTrendThroughTextBlock" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" FontSize="10" />
+                  </Grid>
+                </Grid>
+              </Border>
+              <Border Grid.Row="1" Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,8">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="Afleververtraging geselecteerde periode" FontWeight="SemiBold" />
+                  <UniformGrid Grid.Row="1" Columns="2" Margin="0,10,0,4">
+                    <StackPanel>
+                      <TextBlock Text="Binnen 1 minuut" Style="{StaticResource LabelTextStyle}" />
+                      <TextBlock Name="SenderDurationWithinOneSummaryTextBlock" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" />
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="Vertraagd" Style="{StaticResource LabelTextStyle}" />
+                      <TextBlock Name="SenderDurationDelayedSummaryTextBlock" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" />
+                    </StackPanel>
+                  </UniformGrid>
+                  <ItemsControl Name="SenderDurationDelayItemsControl" Grid.Row="2" Margin="0,6,0,0">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><UniformGrid Columns="1" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,4">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="78" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="190" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                          <Border Grid.Column="1" Background="#E7EDF3" Height="16" VerticalAlignment="Center">
+                            <Border Width="{Binding Width}" Background="{Binding Color}" HorizontalAlignment="Left" />
+                          </Border>
+                          <TextBlock Grid.Column="2" Text="{Binding Summary}" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Name="SenderDurationCoverageTextBlock" Grid.Row="3" Margin="0,7,0,0" Foreground="{StaticResource MutedTextBrush}" />
+                </Grid>
+              </Border>
+              <Border Grid.Row="2" Style="{StaticResource PanelBorderStyle}">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="Bounce-oorzaken geselecteerde periode" FontWeight="SemiBold" />
+                  <ItemsControl Name="SenderDomainCauseItemsControl" Grid.Row="1" Margin="0,10,0,0">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate><UniformGrid Columns="1" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,3">
+                          <Grid.ColumnDefinitions><ColumnDefinition Width="112" /><ColumnDefinition Width="*" /><ColumnDefinition Width="54" /></Grid.ColumnDefinitions>
+                          <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          <Border Grid.Column="1" Background="#E7EDF3" Height="16" VerticalAlignment="Center">
+                            <Border Width="{Binding Width}" Background="{StaticResource DangerBrush}" HorizontalAlignment="Left" />
+                          </Border>
+                          <TextBlock Grid.Column="2" Text="{Binding Count}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Grid>
+              </Border>
+            </Grid>
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <TabItem>
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE9D2;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="Analyse" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <Grid Background="{StaticResource PanelFillBrush}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <Border Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,12">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid Grid.Column="0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="120" />
+                  <ColumnDefinition Width="120" />
+                  <ColumnDefinition Width="212" />
+                  <ColumnDefinition Width="212" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="Van" Style="{StaticResource LabelTextStyle}" />
+                  <DatePicker Name="AnalysisFromDatePicker" SelectedDateChanged="DatePicker_SelectedDateChanged" PreviewMouseDown="DatePicker_PreviewMouseDown" PreviewMouseUp="DatePicker_PreviewMouseUp" PreviewKeyDown="DatePicker_PreviewKeyDown" CalendarOpened="DatePicker_CalendarOpened" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                  <TextBlock Text="Tot en met" Style="{StaticResource LabelTextStyle}" />
+                  <DatePicker Name="AnalysisThroughDatePicker" SelectedDateChanged="DatePicker_SelectedDateChanged" PreviewMouseDown="DatePicker_PreviewMouseDown" PreviewMouseUp="DatePicker_PreviewMouseUp" PreviewKeyDown="DatePicker_PreviewKeyDown" CalendarOpened="DatePicker_CalendarOpened" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                  <TextBlock Text="Afzender" Style="{StaticResource LabelTextStyle}" />
+                  <TextBox Name="AnalysisSenderTextBox" TextChanged="AnalysisInputs_Changed" />
+                </StackPanel>
+                <StackPanel Grid.Column="3">
+                  <TextBlock Text="Ontvanger" Style="{StaticResource LabelTextStyle}" />
+                  <TextBox Name="AnalysisRecipientTextBox" TextChanged="AnalysisInputs_Changed" />
+                </StackPanel>
+              </Grid>
+              <Grid Grid.Column="2">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="104" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                  <TextBlock Text="Top" Style="{StaticResource LabelTextStyle}" />
+                  <ComboBox Name="AnalysisTopDomainLimitComboBox" SelectedIndex="1" SelectionChanged="AnalysisInputs_Changed">
+                    <ComboBoxItem Content="10" Tag="10" />
+                    <ComboBoxItem Content="25" Tag="25" />
+                    <ComboBoxItem Content="50" Tag="50" />
+                    <ComboBoxItem Content="100" Tag="100" />
+                    <ComboBoxItem Content="200" Tag="200" />
+                    <ComboBoxItem Content="500" Tag="500" />
+                  </ComboBox>
+                </StackPanel>
+                <Button Name="AnalysisRunButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" Click="AnalysisRefreshButton_Click" IsEnabled="False">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                    <TextBlock Text="Analyse uitvoeren" Foreground="White" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Grid>
+          </Border>
+
+
+          <UniformGrid Grid.Row="1" Columns="5" Margin="0,0,0,12">
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="AnalysisTotalCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Records in periode">
+                  <TextBlock Text="&#xE9D2;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="DeliveredCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="Afgeleverd">
+                  <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SuccessBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="AnalysisDeliveredPercentTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="% Afgeleverd">
+                  <TextBlock Text="%" Foreground="{StaticResource SuccessBrush}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="UnderwayCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#FFF4DE" HorizontalAlignment="Left" ToolTip="Onderweg">
+                  <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource WarningBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}" Margin="0">
+              <Grid>
+                <StackPanel Margin="58,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Name="BounceCountTextBlock" FontSize="26" FontWeight="SemiBold" Margin="0,1,0,0" />
+                </StackPanel>
+                <Border Width="42" Height="42" CornerRadius="21" Background="#FDECE9" HorizontalAlignment="Left" ToolTip="Bounce">
+                  <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource DangerBrush}" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+          </UniformGrid>
+
+            <Grid Grid.Row="2">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="208" />
+              </Grid.RowDefinitions>
+            <Grid Grid.Row="0" Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}" Padding="0" Margin="0,0,10,0">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Top" Text="Afzender" Style="{StaticResource SectionTitleStyle}" Margin="14,12,14,8" />
+                  <Grid Margin="0,0,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Name="SenderVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
+                        <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
+                        <DataGridTextColumn Header="Problemen" Width="88" Binding="{Binding ProblemCount}" />
+                        <DataGridTextColumn Header="% probleem" Width="92" Binding="{Binding ProblemRateDisplay}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                    <DataGrid Grid.Column="1" Name="SenderSuccessGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
+                        <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
+                        <DataGridTextColumn Header="Problemen" Width="88" Binding="{Binding ProblemCount}" />
+                        <DataGridTextColumn Header="% probleem" Width="92" Binding="{Binding ProblemRateDisplay}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                  </Grid>
+                </DockPanel>
+              </Border>
+              <Border Grid.Column="1" Style="{StaticResource PanelBorderStyle}" Padding="0">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Top" Text="Ontvanger" Style="{StaticResource SectionTitleStyle}" Margin="14,12,14,8" />
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Name="RecipientProblemVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisRecipientGrid_MouseDoubleClick">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
+                        <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
+                        <DataGridTextColumn Header="Problemen" Width="88" Binding="{Binding ProblemCount}" />
+                        <DataGridTextColumn Header="% probleem" Width="92" Binding="{Binding ProblemRateDisplay}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                    <DataGrid Grid.Column="1" Name="RecipientProblemRateGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisRecipientGrid_MouseDoubleClick">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
+                        <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
+                        <DataGridTextColumn Header="Problemen" Width="88" Binding="{Binding ProblemCount}" />
+                        <DataGridTextColumn Header="% probleem" Width="92" Binding="{Binding ProblemRateDisplay}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                  </Grid>
+                </DockPanel>
+              </Border>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Stretch" MinHeight="208">
+              <Border Style="{StaticResource PanelBorderStyle}" Padding="0">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Top" Text="SMTP-responsen" Style="{StaticResource SectionTitleStyle}" Margin="14,12,14,8" />
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Name="ResponseCodesLeftGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" Margin="0,0,10,0">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Code" Width="80" Binding="{Binding Value}" />
+                        <DataGridTextColumn Header="Aantal" Width="100" Binding="{Binding Count}" />
+                        <DataGridTextColumn Header="Omschrijving" Width="*" Binding="{Binding Meaning}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                    <DataGrid Grid.Column="1" Name="ResponseCodesRightGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                      <DataGrid.Columns>
+                        <DataGridTextColumn Header="Code" Width="80" Binding="{Binding Value}" />
+                        <DataGridTextColumn Header="Aantal" Width="100" Binding="{Binding Count}" />
+                        <DataGridTextColumn Header="Omschrijving" Width="*" Binding="{Binding Meaning}" />
+                      </DataGrid.Columns>
+                    </DataGrid>
+                  </Grid>
+                </DockPanel>
+              </Border>
+            </Grid>
+          </Grid>
+        </Grid>
+      </TabItem>
+
+      <TabItem>
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE713;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="Dashboard" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <ScrollViewer Background="{StaticResource PanelFillBrush}" VerticalScrollBarVisibility="Auto">
+          <Grid Background="{StaticResource PanelFillBrush}" Margin="18,0,18,12">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Name="ManageMetricsGrid" Grid.Row="0" MinWidth="1840" Margin="0,0,0,12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Border Grid.Column="0" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0,0,10,0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="DB grootte" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="DatabaseSizeTextBlock" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="1" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0,0,10,0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="Records" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="RecordCountTextBlock" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0,0,10,0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="Imports" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="ImportCountTextBlock" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="3" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0,0,10,0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="Vanaf" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="ImportFromTextBlock" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="4" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0,0,10,0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="T/m" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="ImportThroughTextBlock" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="5" Style="{StaticResource PanelBorderStyle}" Padding="14,10" Margin="0" MinHeight="66">
+                <StackPanel>
+                  <TextBlock Text="Laatste update" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LastUpdateTextBlock" FontSize="16" FontWeight="SemiBold" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <Grid Name="ManageFixedColumnsGrid" Grid.Row="1" MinWidth="1840">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="286" />
+                <RowDefinition Height="340" />
+                <RowDefinition Height="252" />
+              </Grid.RowDefinitions>
+
+              <Border Name="DeliveredThirtyDayTrendPanel" Grid.Row="0" Grid.Column="0" Style="{StaticResource PanelBorderStyle}" Padding="12" Margin="0,0,12,12">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Afleversnelheid laatste 30 dagen" Style="{StaticResource LabelTextStyle}" Margin="0" />
+                    <TextBlock Grid.Column="1" Name="DeliveredThirtyDayLatestTextBlock" Style="{StaticResource MutedTextStyle}" Foreground="{StaticResource SuccessBrush}" FontWeight="SemiBold" />
+                  </Grid>
+                  <UniformGrid Grid.Row="1" Columns="3" Margin="0,0,0,10">
+                    <Border Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="9" Margin="0,0,8,0">
+                      <StackPanel>
+                        <TextBlock Text="Laatste dag" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Name="DeliveredThirtyDayLatestValueTextBlock" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0" />
+                      </StackPanel>
+                    </Border>
+                    <Border Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="9" Margin="0,0,8,0">
+                      <StackPanel>
+                        <TextBlock Text="Gem. aflevertijd" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Name="DeliveredThirtyDayAverageTextBlock" FontSize="18" FontWeight="SemiBold" Margin="0,4,0,0" />
+                      </StackPanel>
+                    </Border>
+                    <Border Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="9" Margin="0">
+                      <StackPanel>
+                        <TextBlock Text="95% binnen" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Name="DeliveredThirtyDayLowestTextBlock" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource DangerBrush}" Margin="0,4,0,0" />
+                      </StackPanel>
+                    </Border>
+                  </UniformGrid>
+                  <Grid Grid.Row="2" MinHeight="132">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="42" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid Grid.Column="0" Margin="0,9,8,22">
+                      <TextBlock Name="DeliveredThirtyDayYAxisMaximumTextBlock" Style="{StaticResource MutedTextStyle}" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Top" />
+                      <TextBlock Name="DeliveredThirtyDayYAxisMidpointTextBlock" Style="{StaticResource MutedTextStyle}" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                      <TextBlock Text="0" Style="{StaticResource MutedTextStyle}" FontSize="9" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    </Grid>
+                    <Border Grid.Column="1" Background="#FBFDFF" BorderBrush="#E2EAF3" BorderThickness="1" CornerRadius="4" Padding="8,8">
+                      <ItemsControl Name="DeliveredThirtyDayTrendItemsControl" VerticalAlignment="Stretch">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid Height="126" ToolTip="{Binding ToolTip}">
+                              <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                              </Grid.RowDefinitions>
+                              <Border Grid.Row="0" Width="10" Height="{Binding BarHeight}" Background="{Binding BarBrush}" CornerRadius="3,3,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
+                              <TextBlock Grid.Row="1" Text="{Binding DayAxisLabel}" FontSize="9" Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" Margin="0,5,0,0" />
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Border>
+                  </Grid>
+                  <TextBlock Grid.Row="3" Name="DeliveredThirtyDaySummaryTextBlock" Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis" Margin="0,8,0,0" />
+                </Grid>
+              </Border>
+
+              <Border Name="ImportsPanel" Grid.Row="1" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource PanelBorderStyle}" Padding="0" Margin="0,0,12,0">
+                <DockPanel>
+                  <Grid DockPanel.Dock="Top" Margin="14,12,14,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Imports" Style="{StaticResource SectionTitleStyle}" />
+                    <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0" Click="RefreshButton_Click" ToolTip="Imports vernieuwen">
+                      <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" />
+                    </Button>
+                  </Grid>
+                  <DataGrid Name="ImportsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="24" ColumnHeaderHeight="24">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="Datum" Width="116" Binding="{Binding Timestamp, StringFormat=dd-MM-yyyy HH:mm}" SortMemberPath="Timestamp" />
+                      <DataGridTextColumn Header="Bron" Width="72" Binding="{Binding Source}" SortMemberPath="Source" />
+                      <DataGridTemplateColumn Header="Bestand" Width="*" SortMemberPath="FileName">
+                        <DataGridTemplateColumn.CellTemplate>
+                          <DataTemplate>
+                            <TextBlock Text="{Binding FileName}" ToolTip="{Binding FileName}" TextTrimming="CharacterEllipsis" />
+                          </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                      </DataGridTemplateColumn>
+                      <DataGridTextColumn Header="Rapportperiode" Width="176" Binding="{Binding ReportPeriod}" SortMemberPath="ReportPeriod" />
+                      <DataGridTextColumn Header="Mails" Width="66" Binding="{Binding MailCountDisplay}" SortMemberPath="MailCount" />
+                      <DataGridTextColumn Header="Afgeleverd" Width="76" Binding="{Binding DeliveredCountDisplay}" SortMemberPath="DeliveredCount" />
+                      <DataGridTextColumn Header="Bounce" Width="62" Binding="{Binding BounceCountDisplay}" SortMemberPath="BounceCount" />
+                      <DataGridTextColumn Header="Onderweg" Width="68" Binding="{Binding UnderwayCountDisplay}" SortMemberPath="UnderwayCount" />
+                      <DataGridTemplateColumn Header="Status" Width="190" SortMemberPath="Status">
+                        <DataGridTemplateColumn.CellTemplate>
+                          <DataTemplate>
+                            <TextBlock Text="{Binding Status}" ToolTip="{Binding ErrorText}" TextTrimming="CharacterEllipsis" />
+                          </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                      </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </DockPanel>
+              </Border>              <Border Name="ImportQualityPanel" Grid.Row="0" Grid.Column="1" Style="{StaticResource PanelBorderStyle}" Padding="12" Margin="0,0,12,12">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0" Text="Totalen: laatste import vs vorige week" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" />
+                  <ItemsControl Grid.Row="1" Name="ImportQualityMeasureCardsItemsControl">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Columns="3" Rows="1" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="5" Padding="10" Margin="0,0,8,0">
+                          <Grid>
+                            <Grid.RowDefinitions>
+                              <RowDefinition Height="Auto" />
+                              <RowDefinition Height="Auto" />
+                              <RowDefinition Height="*" />
+                              <RowDefinition Height="Auto" />
+                              <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="{Binding Label}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" />
+                            <TextBlock Grid.Row="1" Text="{Binding LatestDisplay}" FontSize="22" FontWeight="Bold" Foreground="{Binding LatestBrush}" Margin="0,6,0,0" />
+                            <Grid Grid.Row="2" Height="92" Margin="0,10,0,0">
+                              <Border Width="56" Height="{Binding PreviousWeekBarHeight}" Background="#DCE5EE" CornerRadius="4,4,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="0" />
+                              <Border Width="36" Height="{Binding LatestBarHeight}" Background="{Binding LatestBrush}" CornerRadius="4,4,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom" Panel.ZIndex="1" />
+                            </Grid>
+                            <TextBlock Grid.Row="3" Text="{Binding PreviousWeekDisplay}" Style="{StaticResource MutedTextStyle}" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,6,0,0" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </Grid>
+              </Border>
+              <Border Grid.Row="0" Grid.Column="2" Style="{StaticResource PanelBorderStyle}" Padding="12" Margin="0,0,0,12">
+                <DockPanel>
+                  <TextBlock DockPanel.Dock="Top" Text="Oorzaken laatste import" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" />
+                  <TextBlock DockPanel.Dock="Bottom" Text="Onderweg wordt apart geteld en niet als bounce-oorzaak getoond." Style="{StaticResource MutedTextStyle}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                                    <ItemsControl Name="ImportQualityBounceCauseItemsControl" VerticalContentAlignment="Stretch" VerticalAlignment="Stretch">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <UniformGrid Columns="1" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Grid Margin="0,0,0,10">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="116" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="58" />
+                          </Grid.ColumnDefinitions>
+                          <TextBlock Grid.Column="0" Text="{Binding Label}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                          <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding BarValue}" Foreground="{StaticResource DangerBrush}" Background="#E8EEF5" />
+                          <TextBlock Grid.Column="2" Text="{Binding Count}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </DockPanel>
+              </Border>
+
+                            <Border Name="ActionsStoragePanel" Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" Style="{StaticResource PanelBorderStyle}" Padding="0" Margin="0">
+                <DockPanel>
+<Grid DockPanel.Dock="Top" Margin="12,12,12,12">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0" Text="Acties en opslag" Style="{StaticResource SectionTitleStyle}" Margin="0,0,0,10" />
+                  <Border Grid.Row="1" Name="ImportDropZone" BorderBrush="#B8C4D1" BorderThickness="1" CornerRadius="4" Background="#FAFCFE" Padding="10" AllowDrop="True" DragOver="ImportDropZone_DragOver" Drop="ImportDropZone_Drop" Margin="0,0,0,10">
+                    <StackPanel>
+                      <TextBlock Text="Import" Style="{StaticResource LabelTextStyle}" />
+                      <TextBlock Text="Dropzone: .csv en .zip" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0" />
+                    </StackPanel>
+                  </Border>
+                  <UniformGrid Grid.Row="2" Name="ManageActionsButtonGrid" Columns="4">
+                    <Button Name="ImportFilesButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="ImportButton_Click">
+                      <TextBlock Text="Importeren" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    </Button>
+                    <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="RefreshButton_Click">
+                      <TextBlock Text="Database verversen" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </Button>
+                    <Button Name="OpenWorkspaceFolderButton" Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="OpenWorkspaceFolderButton_Click">
+                      <TextBlock Text="Open map" HorizontalAlignment="Center" />
+                    </Button>
+                    <Button Name="SyncGmailReportsButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0" Click="SyncGmailReportsButton_Click">
+                      <TextBlock Text="Sync nu" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    </Button>
+                  </UniformGrid>
+                </Grid>
+                  <Border DockPanel.Dock="Top" Height="1" Background="#D8E1EC" Margin="12,0,12,0" />
+<Grid Margin="14,12,14,12">
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Grid.Row="0" Text="Maandarchieven zijn hier geintegreerd." Style="{StaticResource MutedTextStyle}" Margin="0,0,0,8" />
+                  <Grid Name="StorageInfoCardsGrid" Grid.Row="1" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="1.0*" />
+                      <ColumnDefinition Width="1.2*" />
+                      <ColumnDefinition Width="0.72*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,8,0" MinHeight="62">
+                      <StackPanel>
+                        <TextBlock Text="Actuele database" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Name="DatabaseHealthTextBlock" FontWeight="SemiBold" FontSize="13" Margin="0,5,0,0" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,8,0" MinHeight="62">
+                      <StackPanel>
+                        <TextBlock Text="Archiefmap" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Name="ArchivePathTextBlock" FontWeight="SemiBold" FontSize="12" Margin="0,5,0,0" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="Workspace" Style="{StaticResource MutedTextStyle}" Margin="0,6,0,0" />
+                        <TextBlock Name="StorageWorkspaceTextBlock" FontWeight="SemiBold" FontSize="12" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Background="{StaticResource PanelSubtleFillBrush}" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,8,0" MinHeight="62">
+                      <StackPanel>
+                        <TextBlock Text="Retentie" Style="{StaticResource MutedTextStyle}" />
+                        <TextBlock Text="90 dagen" FontWeight="SemiBold" FontSize="13" Margin="0,5,0,0" />
+                      </StackPanel>
+                    </Border>
+                    <Button Name="ReturnToActiveDatabaseButton" Grid.Column="3" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0" Click="ReturnToActiveDatabaseButton_Click" Visibility="Collapsed">
+                      <TextBlock Text="Terug" />
+                    </Button>
+                  </Grid>
+                  <DataGrid Name="MonthArchiveGrid" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="23" ColumnHeaderHeight="24" MinHeight="92">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="Maand" Width="70" Binding="{Binding MonthKey}" />
+                      <DataGridTextColumn Header="Records" Width="84" Binding="{Binding MailItemCount}" />
+                      <DataGridTextColumn Header="Periode" Width="120" Binding="{Binding ImportFromDisplay}" />
+                      <DataGridTextColumn Header="T/m" Width="120" Binding="{Binding ImportThroughDisplay}" />
+                      <DataGridTextColumn Header="Grootte" Width="70" Binding="{Binding DatabaseSizeDisplay}" />
+                      <DataGridTemplateColumn Header="Actie" Width="62">
+                        <DataGridTemplateColumn.CellTemplate>
+                          <DataTemplate>
+                            <Button Style="{StaticResource SecondaryButtonStyle}" Padding="8,3" Margin="0" Click="OpenArchiveMonthButton_Click">
+                              <TextBlock Text="Open" />
+                            </Button>
+                          </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                      </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </Grid>
+                </DockPanel>
+              </Border>
+
+
+
+
+
+
+
+            </Grid>
+          </Grid>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Name="HelpTab">
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE897;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="Help" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <ScrollViewer Background="{StaticResource PanelSubtleFillBrush}" VerticalScrollBarVisibility="Auto">
+          <StackPanel Name="HelpTabContent" MaxWidth="980" Margin="24,20,24,28" HorizontalAlignment="Center">
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="24" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Mail Log Inspector" FontSize="23" FontWeight="SemiBold" Margin="0,0,0,5" />
+                <TextBlock Text="Zakelijke naslag voor controle van SMTP-rapporten" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,0,0,8" />
+                <TextBlock Text="Mail Log Inspector importeert SMTP-rapporten en maakt afleverresultaten doorzoekbaar. Gebruik de applicatie om volumes, aflevertijden, bounces en oorzaken te controleren zonder de bronbestanden handmatig te bewerken." TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" FontSize="13" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Doel en snel beginnen" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Open Zoeken voor afzonderlijke berichten, adressen of domeinen." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Open Analyse voor totalen, ranglijsten en SMTP-responsen over een periode." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Open Dashboard voor imports, synchronisatie, databasegegevens en archieven." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Bij het opstarten maakt de applicatie automatisch de analyse van gisteren. Als gisteren geen gegevens bevat, wordt de laatst beschikbare dag gebruikt." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Zoeken" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Van en Tot en met bepalen de volledige zoekperiode. De datumkiezer toont twee aaneengesloten maanden en navigeert per twee maanden." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afzender en Ontvanger accepteren een volledig e-mailadres of een domein. Een afzenderdomein mag met of zonder @ worden ingevoerd." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Resultaten bepaalt hoeveel regels eerst worden geladen. Meer laden voegt de volgende regels aan dezelfde zoekactie toe." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij één gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De statusfilter werkt op de volledige zoekset. Afgeleverd is door de ontvangende server geaccepteerd, Onderweg heeft nog geen eindstatus en Bounce toont waar mogelijk direct de korte reden." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Domeinanalyse en Excel" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Domeinanalyse tonen is beschikbaar bij een afzenderdomein zonder ontvangerfilter. Een exact afzenderadres geeft geen domeinanalyse." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleversnelheid toont maximaal de laatste 30 dagen binnen de gekozen periode, met dagelijks afgeleverd volume, gemiddelde aflevertijd en de 95%-grens." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleververtraging verdeelt afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Excel exporteren neemt de werkelijk geladen en zichtbare detailregels over. Een actieve domeinanalyse voegt een eerste werkblad Domeinanalyse toe met KPI's, brondata en grafieken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Een statusfilter, bijvoorbeeld alleen bounce, bepaalt welke detailregels naar Excel gaan. De domeinanalyse blijft een overzicht van de volledige gekozen periode." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Analyse" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Kies een periode en eventueel een afzender- of ontvangerfilter. Top bepaalt hoeveel domeinen in de ranglijsten worden getoond." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De KPI's tonen geaccepteerd, afgeleverd, afleverratio, onderweg en bounced." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De ranglijsten tonen de belangrijkste afzender- en ontvangerdomeinen. SMTP-responsen toont Code, Aantal en een korte Omschrijving." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Dubbelklik op een domein om dit als filter in Zoeken te openen. De applicatie schakelt daarbij direct naar de tab Zoeken." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Dashboard" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; De bovenste balk toont databasegrootte, aantal records, imports, beschikbare periode en laatste update." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De grafieken tonen afleversnelheid, de laatste import ten opzichte van de vorige week en de belangrijkste oorzaken van de laatste import." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Imports is één overzicht van handmatige, SMTP.com- en IMAP-imports. Bron, statusaantallen en eventuele foutinformatie blijven per regel zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Gebruik Importeren voor een lokaal CSV- of ZIP-bestand. Nu synchroniseren gebruikt de ingestelde bron en importeert beschikbare dagrapporten." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Database verversen leest de beheerinformatie opnieuw. Open map opent de werkmap met database, bronarchief, logs en maandarchieven." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Synchronisatie en beheerdersinstellingen" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; De bronkeuze is: direct downloaden met IMAP-terugval, alleen direct downloaden of alleen IMAP. De gekozen bron geldt voor automatische en handmatige synchronisatie." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De eerste automatische poging start dagelijks om 01:00 lokale tijd. Als het rapport van gisteren nog ontbreekt, volgt iedere 15 minuten een nieuwe poging. Rapportdagen worden uit UTC-tijdstempels bepaald." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; SMTP.com direct gebruikt een bestaande Ready-rapportregel. Proefdownload controleert download, ZIP en hash zonder te importeren; Diagnose toont dezelfde portaalflow zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; IMAP ondersteunt Gmail, Microsoft 365 / Outlook.com en een eigen IMAP-server. Verbindingen gebruiken altijd TLS: direct SSL of verplichte STARTTLS." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Een actieve synchronisatie kan met Stop worden afgebroken. Downloads, import en databasewrites reageren op die annulering." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Wachtwoorden, tokens en het SMTP.com MFA-secret worden versleuteld voor de huidige Windows-gebruiker opgeslagen." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Standaardsyntax herkent de vaste NextGen-rapportnaam met delivered, bounced en queue. Aangepaste syntax gebruikt dezelfde zichtbare placeholders voor start- en einddatum." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; ZIP-bestanden zijn begrensd op 512 MB en CSV-bestanden uitgepakt op 3 GB; ZIPs mogen maximaal 100 bestanden en een compressieverhouding van 200 bevatten." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Database en maandarchieven" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; De actieve database bevat standaard de laatste 90 dagen. Oudere gegevens worden door de applicatie naar Maandarchieven verplaatst." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Open een maandarchief vanuit Dashboard om binnen die maand te zoeken en analyseren. Sluit het archief of kies terug om de actieve database opnieuw te gebruiken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De applicatie maakt een lege database automatisch aan en beheert schemawijzigingen, retentie en rebuilds zelf." TextWrapping="Wrap" Margin="0,0,0,6" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Systeemvak en afsluiten" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Met Sluiten naar systeemvak blijft de applicatie actief en kan automatische synchronisatie doorgaan." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Dubbelklik op het systeemvakpictogram om het bestaande venster te openen. Een tweede start van de EXE opent eveneens de al actieve instantie." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Kies Afsluiten via het systeemvakmenu om de applicatie en automatische synchronisatie volledig te stoppen." TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22">
+              <StackPanel>
+                <TextBlock Text="Veelvoorkomende situaties" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Geen resultaten: controleer de periode, spelling van adres of domein en het actieve maandarchief." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Rapport nog niet beschikbaar: laat automatische synchronisatie actief; de applicatie probeert het ontbrekende dagrapport opnieuw." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Synchronisatie- of importfout: open Dashboard en bekijk de bron, status en foutinformatie in Imports. Test daarna zo nodig de ingestelde verbinding via /admin." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Domeinanalyse niet beschikbaar: gebruik alleen een afzenderdomein en laat Ontvanger leeg." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Technische details staan in Logs\mail-log-inspector.log binnen de actieve werkmap. Oudere logbestanden worden automatisch geroteerd." TextWrapping="Wrap" Margin="0,0,0,12" />
+                <Button Name="OpenAdminSettingsButton" Style="{StaticResource SecondaryButtonStyle}" Padding="10,5" Margin="0" HorizontalAlignment="Left" Click="OpenAdminSettingsButton_Click">
+                  <TextBlock Text="Beheerdersinstellingen openen" />
+                </Button>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+
+    <Popup Name="DateSelectionPopup" Placement="Bottom" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade" Closed="DateSelectionPopup_Closed">
+      <Border Background="White" BorderBrush="{StaticResource StrongStrokeBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,4,0,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="28" />
+            <ColumnDefinition Width="182" />
+            <ColumnDefinition Width="182" />
+            <ColumnDefinition Width="28" />
+          </Grid.ColumnDefinitions>
+
+          <Button Name="PopupCalendarPreviousButton" Grid.Row="0" Grid.Column="0" Style="{StaticResource PopupCalendarNavigationButtonStyle}" Content="&#xE76B;" ToolTip="2 maanden terug" Click="PopupCalendarPreviousButton_Click" />
+          <TextBlock Name="LeftMonthTitleTextBlock" Grid.Row="0" Grid.Column="1" TextAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+          <TextBlock Name="RightMonthTitleTextBlock" Grid.Row="0" Grid.Column="2" TextAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+          <Button Name="PopupCalendarNextButton" Grid.Row="0" Grid.Column="3" Style="{StaticResource PopupCalendarNavigationButtonStyle}" Content="&#xE76C;" ToolTip="2 maanden vooruit" Click="PopupCalendarNextButton_Click" />
+          <Border Name="PopupCalendarMonthDivider" Grid.Row="0" Grid.RowSpan="3" Grid.Column="2"
+                  Width="1" HorizontalAlignment="Left" Margin="-1,0,0,0"
+                  Background="{StaticResource PanelStrokeBrush}" Panel.ZIndex="2" />
+
+          <UniformGrid Grid.Row="1" Grid.Column="1" Columns="7" Margin="0,8,0,4">
+            <TextBlock Text="M" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="D" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="W" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="D" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="V" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="Z" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="Z" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+          </UniformGrid>
+          <UniformGrid Grid.Row="1" Grid.Column="2" Columns="7" Margin="0,8,0,4">
+            <TextBlock Text="M" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="D" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="W" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="D" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="V" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="Z" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+            <TextBlock Text="Z" TextAlignment="Center" FontWeight="SemiBold" FontSize="11" />
+          </UniformGrid>
+
+          <ItemsControl Name="LeftMonthDaysItemsControl" Grid.Row="2" Grid.Column="1">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="7" Rows="6" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource PopupCalendarDayButtonStyle}" Content="{Binding DisplayText}" Tag="{Binding Date}" IsEnabled="{Binding IsSelectable}" Click="PopupCalendarDayButton_Click" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <ItemsControl Name="RightMonthDaysItemsControl" Grid.Row="2" Grid.Column="2">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="7" Rows="6" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Style="{StaticResource PopupCalendarDayButtonStyle}" Content="{Binding DisplayText}" Tag="{Binding Date}" IsEnabled="{Binding IsSelectable}" Click="PopupCalendarDayButton_Click" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </Border>
+    </Popup>
+
+    <Border Panel.ZIndex="5"
+            VerticalAlignment="Top"
+            Height="48"
+            Margin="775,0,18,0"
+            Padding="14,8,14,0"
+            Background="#F3F5F8"
+            BorderBrush="{StaticResource PanelStrokeBrush}"
+            BorderThickness="0,0,0,1"
+            SnapsToDevicePixels="True">
+      <Grid VerticalAlignment="Center">
+        <Grid Name="SearchTopStatusPanel">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+          </Grid.RowDefinitions>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+              <TextBlock Name="SearchRunStateTextBlock" Text="Kies filters en klik Zoeken." VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Name="SearchRunDetailTextBlock" Grid.Column="1" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Text="" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+            <Button Name="SearchCancelButton" Grid.Column="2" Style="{StaticResource SecondaryButtonStyle}" Padding="10,3" Margin="14,0,0,0" Visibility="Collapsed" Click="SearchCancelButton_Click">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource DangerBrush}" Margin="0,0,6,0" />
+                <TextBlock Text="Stop" Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" />
+              </StackPanel>
+            </Button>
+          </Grid>
+          <ProgressBar Name="SearchRunProgressBar" Grid.Row="1" Height="6" Minimum="0" Maximum="100" Value="0" Visibility="Collapsed" />
+        </Grid>
+
+        <Grid Name="AnalysisTopStatusPanel" Visibility="Collapsed">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+          </Grid.RowDefinitions>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+              <TextBlock Name="AnalysisRunStateTextBlock" Text="Kies eerst een expliciete periode en start daarna de analyse." VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock Name="AnalysisRunDurationTextBlock" Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="Nog niet uitgevoerd." />
+          </Grid>
+          <TextBlock Name="AnalysisDataCoverageTextBlock" Grid.Row="1" Foreground="{StaticResource MutedTextBrush}" Text="" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+          <ProgressBar Name="AnalysisRunProgressBar" Grid.Row="2" Height="6" Minimum="0" Maximum="100" Value="0" Visibility="Collapsed" />
+        </Grid>
+
+        <Grid Name="ManageTopStatusPanel" Visibility="Collapsed">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="170" />
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Name="StatusTextBlock" Text="Gereed." FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          <ProgressBar Name="ImportProgressBar" Grid.Column="1" Height="8" Minimum="0" Maximum="100" Value="0" VerticalAlignment="Center" Margin="16,0,16,0" />
+          <TextBlock Name="ImportProgressTextBlock" Grid.Column="2" Text="Nog geen actieve import." Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+          <Button Name="SyncCancelButton"
+                  Grid.Column="3"
+                  Style="{StaticResource SecondaryButtonStyle}"
+                  Padding="10,3"
+                  Margin="14,0,0,0"
+                  Visibility="Collapsed"
+                  Click="SyncCancelButton_Click">
+            <TextBlock Text="Stop" Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" />
+          </Button>
+        </Grid>
+
+        <Grid Name="HelpTopStatusPanel" Visibility="Collapsed">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+            <TextBlock Text="Korte uitleg over import, zoeken, analyse en maandarchieven." VerticalAlignment="Center" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+    <Border Name="StartupOverlay" Panel.ZIndex="20" Background="#F3F6FA" Opacity="0.98" Visibility="Visible">
+      <Border Width="440" Padding="26" Background="White" BorderBrush="{StaticResource PanelStrokeBrush}" BorderThickness="1" CornerRadius="8" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel>
+          <TextBlock Text="Mail Log Inspector" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center" />
+          <TextBlock Name="StartupStatusTextBlock" Text="Applicatie wordt voorbereid..." Foreground="{StaticResource MutedTextBrush}" HorizontalAlignment="Center" Margin="0,8,0,14" />
+          <ProgressBar Name="StartupProgressBar" Height="7" IsIndeterminate="True" />
+          <TextBlock Text="De database en analysegegevens worden gecontroleerd." Style="{StaticResource MutedTextStyle}" HorizontalAlignment="Center" Margin="0,12,0,0" />
+        </StackPanel>
+      </Border>
+    </Border>
+  </Grid>
+</Window>

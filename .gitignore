@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+artifacts/
+*.user
+*.suo
+# Local runtime databases
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+Logs/
+.worktrees/

@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>MailLogInspector</AssemblyName>
+    <ApplicationIcon>Assets\MailLogInspector.ico</ApplicationIcon>
+    <Version>0.197.0</Version>
+    <AssemblyVersion>0.197.0.0</AssemblyVersion>
+    <FileVersion>0.197.0.0</FileVersion>
+    <InformationalVersion>0.197</InformationalVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MailLogInspector.Core\MailLogInspector.Core.csproj" />
+    <ProjectReference Include="..\MailLogInspector.Storage\MailLogInspector.Storage.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4078.44" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\MailLogInspector.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>MailLogInspector.Storage.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

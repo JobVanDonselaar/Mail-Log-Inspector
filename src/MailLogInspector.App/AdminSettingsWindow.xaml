@@ -1,0 +1,152 @@
+<Window x:Class="MailLogInspector.App.AdminSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mail Log Inspector - Admin"
+        Width="1060"
+        Height="720"
+        MinWidth="1060"
+        MinHeight="720"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#F3F5F8"
+        FontFamily="Segoe UI"
+        FontSize="13">
+  <Window.Resources>
+    <Style TargetType="TextBox"><Setter Property="Height" Value="32" /><Setter Property="Padding" Value="9,5" /><Setter Property="BorderBrush" Value="#B9C7D6" /></Style>
+    <Style TargetType="PasswordBox"><Setter Property="Height" Value="32" /><Setter Property="Padding" Value="9,5" /><Setter Property="BorderBrush" Value="#B9C7D6" /></Style>
+    <Style TargetType="ComboBox"><Setter Property="Height" Value="32" /><Setter Property="Padding" Value="8,4" /><Setter Property="BorderBrush" Value="#B9C7D6" /></Style>
+    <Style TargetType="Button"><Setter Property="MinHeight" Value="34" /><Setter Property="Padding" Value="14,6" /><Setter Property="Margin" Value="0,0,8,0" /></Style>
+  </Window.Resources>
+
+  <Grid Margin="20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="14" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,14">
+      <TextBlock Text="Synchronisatie-instellingen" FontSize="21" FontWeight="SemiBold" Foreground="#14233A" />
+      <TextBlock Text="Kies de bron voor automatische en handmatige synchronisatie. De eerste automatische poging start dagelijks om 01:00." Foreground="#51657F" Margin="0,5,0,0" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Background="White" BorderBrush="#CBD7E4" BorderThickness="1" CornerRadius="6" Padding="16">
+      <Grid>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Margin="0,0,16,0">
+          <TextBlock Text="Synchronisatiebron" FontSize="16" FontWeight="SemiBold" Foreground="#14233A" />
+          <TextBlock Text="Algemene instellingen voor handmatige en automatische synchronisatie." Foreground="#51657F" Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+        <ComboBox Name="AdminSyncSourceComboBox" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+          <ComboBoxItem Content="Direct downloaden, bij fout IMAP" Tag="direct-with-gmail-fallback" />
+          <ComboBoxItem Content="Alleen direct downloaden" Tag="direct-only" />
+          <ComboBoxItem Content="Alleen IMAP" Tag="gmail-only" />
+        </ComboBox>
+        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
+          <CheckBox Name="AdminAutoSyncCheckBox" Content="Automatisch synchroniseren - elke 15 min" Margin="0,0,20,0" VerticalAlignment="Center" />
+          <CheckBox Name="AdminCloseToTrayCheckBox" Content="Sluiten naar systeemvak" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
+          <StackPanel Orientation="Horizontal">
+            <Button Name="RunReportSyncNowButton" Content="Nu synchroniseren" Background="#176596" Foreground="White" BorderBrush="#176596" FontWeight="SemiBold" Click="RunReportSyncNowButton_Click" />
+            <Button Name="CancelReportSyncButton" Content="Stop" Foreground="#B42318" FontWeight="SemiBold" Margin="8,0,0,0" Visibility="Collapsed" Click="CancelReportSyncButton_Click" />
+          </StackPanel>
+          <TextBlock Name="AdminReportSyncStatusTextBlock" Text="Gebruikt de gekozen bron. Bij een lege database wordt alleen het nieuwste rapport geïmporteerd." Foreground="#51657F" TextWrapping="Wrap" Margin="0,6,0,0" />
+          <ProgressBar Name="AdminReportSyncProgressBar" Height="6" IsIndeterminate="True" Visibility="Collapsed" Margin="0,6,0,0" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="3">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+
+      <Border Grid.Column="0" Background="White" BorderBrush="#CBD7E4" BorderThickness="1" CornerRadius="6" Padding="14">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+          <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="SMTP.com direct downloaden" FontSize="16" FontWeight="SemiBold" Foreground="#14233A" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Text="Ready-dagrapport. Proefdownload valideert zonder import." Foreground="#51657F" Margin="0,4,0,0" TextWrapping="Wrap" />
+          <StackPanel Grid.Row="3" Grid.Column="0"><TextBlock Text="SMTP.com gebruikersnaam" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminSmtpPortalUsernameTextBox" /></StackPanel>
+          <StackPanel Grid.Row="3" Grid.Column="2"><TextBlock Text="Wachtwoord" FontWeight="SemiBold" Margin="0,0,0,5" /><PasswordBox Name="AdminSmtpPortalPasswordBox" GotKeyboardFocus="AdminSmtpPortalSecretBox_GotKeyboardFocus" /><TextBlock Name="AdminSmtpPortalPasswordSavedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,4,0,0" /></StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="0"><TextBlock Text="MFA-secret (Base32)" FontWeight="SemiBold" Margin="0,0,0,5" /><PasswordBox Name="AdminSmtpPortalTotpSecretBox" GotKeyboardFocus="AdminSmtpPortalSecretBox_GotKeyboardFocus" /><TextBlock Name="AdminSmtpPortalTotpSavedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,4,0,0" /></StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="2" VerticalAlignment="Bottom" Orientation="Horizontal">
+            <Button Name="RunSmtpPortalProbeButton" Content="Proefdownload" Click="RunSmtpPortalProbeButton_Click" />
+            <Button Name="RunVisibleSmtpPortalProbeButton" Content="Diagnose" Margin="0" Click="RunVisibleSmtpPortalProbeButton_Click" />
+          </StackPanel>
+          <StackPanel Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
+            <RadioButton Name="AdminDefaultReportSyntaxRadioButton" GroupName="SmtpReportSyntax" Content="Standaardsyntax" IsChecked="True" Margin="0,0,12,0" Checked="AdminReportSyntaxMode_Changed" />
+            <RadioButton Name="AdminCustomReportSyntaxRadioButton" GroupName="SmtpReportSyntax" Content="Aangepaste syntax" Checked="AdminReportSyntaxMode_Changed" />
+          </StackPanel>
+          <Grid Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="3">
+            <TextBox Name="AdminDefaultReportSyntaxTextBox" IsReadOnly="True" Height="26" FontSize="10" />
+            <TextBox Name="AdminCustomReportSyntaxTextBox" Height="26" FontSize="10" Visibility="Collapsed" TextChanged="AdminCustomReportSyntaxTextBox_TextChanged" />
+          </Grid>
+          <TextBlock Name="AdminReportSyntaxExplanationTextBlock" Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="3" Text="Gebruik {start} en {end} voor yyyy-MM-dd; overige tekst blijft letterlijk." Foreground="#51657F" FontSize="10" Margin="0,3,0,0" TextWrapping="NoWrap" />
+          <TextBlock Name="AdminReportSyntaxPreviewTextBlock" Grid.Row="11" Grid.Column="0" Grid.ColumnSpan="3" Foreground="#51657F" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+          <TextBlock Name="AdminReportSyntaxValidationTextBlock" Grid.Row="12" Grid.Column="0" Grid.ColumnSpan="3" Foreground="#B42318" FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap" />
+          <StackPanel Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0" VerticalAlignment="Bottom">
+            <TextBlock Name="AdminSmtpPortalStatusTextBlock" Foreground="#51657F" TextWrapping="Wrap" />
+            <TextBlock Name="AdminSmtpPortalLastUsedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,3,0,0" />
+            <ProgressBar Name="AdminSmtpPortalProgressBar" Height="6" IsIndeterminate="True" Visibility="Collapsed" Margin="0,6,0,0" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="2" Background="White" BorderBrush="#CBD7E4" BorderThickness="1" CornerRadius="6" Padding="16">
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+          <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Text="IMAP-rapportkoppeling" FontSize="16" FontWeight="SemiBold" Foreground="#14233A" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Text="Gmail en Microsoft 365 gebruiken vaste veilige instellingen. Kies Eigen IMAP-server voor een eigen mailboxserver." Foreground="#51657F" Margin="0,4,0,0" TextWrapping="Wrap" />
+          <StackPanel Grid.Row="3" Grid.Column="0"><TextBlock Text="IMAP-provider" FontWeight="SemiBold" Margin="0,0,0,5" /><ComboBox Name="AdminImapProviderComboBox" SelectionChanged="AdminImapProviderComboBox_SelectionChanged"><ComboBoxItem Content="Gmail" Tag="gmail" /><ComboBoxItem Content="Microsoft 365 / Outlook.com" Tag="microsoft365" /><ComboBoxItem Content="Eigen IMAP-server" Tag="custom" /></ComboBox></StackPanel>
+          <StackPanel Grid.Row="3" Grid.Column="2"><TextBlock Text="E-mailadres" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminGmailAccountTextBox" /></StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="0"><TextBlock Text="Aanmeldmethode" FontWeight="SemiBold" Margin="0,0,0,5" /><ComboBox Name="AdminGmailAuthModeComboBox" SelectionChanged="AdminGmailAuthModeComboBox_SelectionChanged"><ComboBoxItem Name="AdminGmailOAuthComboBoxItem" Content="Google OAuth" Tag="oauth" /><ComboBoxItem Content="Wachtwoord" Tag="app-password" /></ComboBox></StackPanel>
+          <StackPanel Name="AdminAppPasswordPanel" Grid.Row="5" Grid.Column="2"><TextBlock Name="AdminImapPasswordLabel" Text="Gmail app-wachtwoord" FontWeight="SemiBold" Margin="0,0,0,5" /><PasswordBox Name="AdminGmailAppPasswordBox" GotKeyboardFocus="AdminImapSecretBox_GotKeyboardFocus" /><TextBlock Name="AdminGmailAppPasswordSavedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,4,0,0" /></StackPanel>
+          <Grid Name="AdminOAuthPanel" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Name="AdminOAuthClientIdPanel"><TextBlock Text="Google client id" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminGmailClientIdTextBox" /></StackPanel>
+            <StackPanel Grid.Column="2" Name="AdminOAuthClientSecretPanel"><TextBlock Text="Google client secret" FontWeight="SemiBold" Margin="0,0,0,5" /><PasswordBox Name="AdminGmailClientSecretBox" /></StackPanel>
+          </Grid>
+          <Grid Name="AdminCustomImapPanel" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="3" Visibility="Collapsed">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="92" /></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0"><TextBlock Text="IMAP-server" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminCustomImapHostTextBox" /></StackPanel>
+            <StackPanel Grid.Column="2"><TextBlock Text="Poort" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminCustomImapPortTextBox" /></StackPanel>
+          </Grid>
+          <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,10,0,0">
+            <CheckBox Name="AdminCustomImapUseSslCheckBox" Content="SSL/TLS gebruiken" IsChecked="True" Visibility="Collapsed" />
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0"><Button Name="TestAdminConnectionButton" Content="IMAP-verbinding testen" Click="TestAdminConnectionButton_Click" /></StackPanel>
+            <TextBlock Name="AdminConnectionStatusTextBlock" Foreground="#51657F" TextWrapping="Wrap" Margin="0,4,0,0" />
+            <ProgressBar Name="AdminConnectionProgressBar" Height="6" IsIndeterminate="True" Visibility="Collapsed" Margin="0,6,0,0" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <Grid Grid.Row="4" Margin="0,14,0,0">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+      <TextBlock Grid.Column="0" Text="Wachtwoorden en secrets worden versleuteld opgeslagen." Foreground="#51657F" VerticalAlignment="Center" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <Button Name="CancelAdminSettingsButton" Content="Annuleren" Click="CancelAdminSettingsButton_Click" />
+        <Button Name="SaveAdminSettingsButton" Content="Opslaan" Margin="0" Background="#176596" Foreground="White" BorderBrush="#176596" FontWeight="SemiBold" Click="SaveAdminSettingsButton_Click" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>
