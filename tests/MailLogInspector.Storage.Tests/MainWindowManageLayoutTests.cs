@@ -34,11 +34,10 @@ public sealed class MainWindowManageLayoutTests
         Assert.Contains("Name=\"ManageFixedColumnsGrid\"", xaml, StringComparison.Ordinal);
         Assert.Contains("<Grid Name=\"ManageMetricsGrid\" Grid.Row=\"0\" MinWidth=\"1840\"", xaml, StringComparison.Ordinal);
         Assert.Contains("<Grid Name=\"ManageFixedColumnsGrid\" Grid.Row=\"1\" MinWidth=\"1840\"", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("<ColumnDefinition Width=\"260\" />", xaml, StringComparison.Ordinal);
-
         int fixedGridStart = xaml.IndexOf("<Grid Name=\"ManageFixedColumnsGrid\"", StringComparison.Ordinal);
         int fixedGridColumnsEnd = xaml.IndexOf("</Grid.ColumnDefinitions>", fixedGridStart, StringComparison.Ordinal);
         string fixedGridColumns = xaml.Substring(fixedGridStart, fixedGridColumnsEnd - fixedGridStart);
+        Assert.DoesNotContain("<ColumnDefinition Width=\"260\" />", fixedGridColumns, StringComparison.Ordinal);
         Assert.Equal(3, fixedGridColumns.Split("<ColumnDefinition", StringSplitOptions.None).Length - 1);
     }
 

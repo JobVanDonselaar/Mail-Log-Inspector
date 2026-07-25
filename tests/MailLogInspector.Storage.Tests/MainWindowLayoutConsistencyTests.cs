@@ -66,14 +66,14 @@ public sealed class MainWindowLayoutConsistencyTests
     }
 
     [Fact]
-    public void BusinessHelpUsesVersion0197()
+    public void BusinessHelpUsesVersion0198()
     {
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         string project = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspector.App.csproj"));
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
-        Assert.Contains("<InformationalVersion>0.197</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.197\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.198</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.198\"", version, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -84,6 +84,22 @@ public sealed class MainWindowLayoutConsistencyTests
 
         Assert.DoesNotContain("Beheerdersinstellingen wijzigen de synchronisatiebron", helpXaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Wijzig of vervang SQLite-bestanden nooit handmatig", helpXaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ManageStatusTextWrapsWithoutEllipsis()
+    {
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        string xaml = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MainWindow.xaml"));
+        int panelStart = xaml.IndexOf("<Grid Name=\"ManageTopStatusPanel\"", StringComparison.Ordinal);
+        int panelEnd = xaml.IndexOf("</Grid>", panelStart, StringComparison.Ordinal);
+        string panel = xaml[panelStart..panelEnd];
+
+        Assert.Contains("<TextBlock Name=\"StatusTextBlock\"", panel, StringComparison.Ordinal);
+        Assert.Contains("StatusTextBlock\" Text=\"Gereed.\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\" TextWrapping=\"Wrap\"", panel, StringComparison.Ordinal);
+        Assert.DoesNotContain("StatusTextBlock\" Text=\"Gereed.\" FontWeight=\"SemiBold\" VerticalAlignment=\"Center\" TextTrimming=\"CharacterEllipsis\"", panel, StringComparison.Ordinal);
+        Assert.Contains("<ColumnDefinition Width=\"150\" />", panel, StringComparison.Ordinal);
+        Assert.Contains("<ColumnDefinition Width=\"260\" />", panel, StringComparison.Ordinal);
     }
     [Fact]
     public void AnalysisDomainNavigationReactivatesSearchAfterApplyingFilters()

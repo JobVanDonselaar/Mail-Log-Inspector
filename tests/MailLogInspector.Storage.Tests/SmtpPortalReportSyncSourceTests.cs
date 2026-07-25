@@ -31,6 +31,24 @@ public sealed class SmtpPortalReportSyncSourceTests
     }
 
     [Fact]
+    public async Task UsesPortalPeriodStartWhenImportedCsvRangeFallsOnPreviousDay()
+    {
+        TestContext context = CreateContext();
+        string zip = CreateZip(context.Root, "portal-period-start.zip");
+        var browser = new FakeBrowser(zip, CreateRows(18));
+        var importer = new FakeImportRunner(new DateTime(2026, 7, 17, 23, 59, 0));
+        var source = context.CreateSource(browser, importer);
+
+        ReportSyncSourceResult result = await source.SyncAsync(
+            latestOnly: true,
+            minimumReportDayExclusive: null,
+            CancellationToken.None);
+
+        ReportImportSourceRow recorded = Assert.Single(context.SyncStore.ReadImportSources(10));
+        Assert.Equal(new DateTime(2026, 7, 18), result.LatestReportDay);
+        Assert.Equal(new DateTime(2026, 7, 18), recorded.ReportDay);
+    }
+    [Fact]
     public async Task MissingReadyReportReturnsFallbackSignal()
     {
         TestContext context = CreateContext();
@@ -154,15 +172,23 @@ public sealed class SmtpPortalReportSyncSourceTests
 
     private sealed class FakeImportRunner : IReportZipImportRunner
     {
+        private readonly DateTime? _reportStart;
+
+        public FakeImportRunner(DateTime? reportStart = null)
+        {
+            _reportStart = reportStart ?? new DateTime(2026, 7, 18);
+        }
+
         public List<string> ImportedPaths { get; } = [];
 
         public Task<GmailZipImportOutcome> ImportAsync(string zipPath, CancellationToken cancellationToken)
         {
             ImportedPaths.Add(zipPath);
+            DateTime reportStart = _reportStart ?? new DateTime(2026, 7, 18);
             return Task.FromResult(new GmailZipImportOutcome(
                 true,
                 "HASH-DIRECT",
-                new DateTime(2026, 7, 18),
+                reportStart,
                 new DateTime(2026, 7, 18, 23, 59, 0),
                 false));
         }

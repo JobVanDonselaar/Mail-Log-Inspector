@@ -139,7 +139,8 @@ public sealed class SmtpPortalReportSyncSource : IReportSyncSource
             }
 
             imported++;
-            DateTime reportDay = (outcome.ReportStart ?? report.PeriodStart).Date;
+            // Gebruik de rapportperiode uit de portalbestandsnaam als leidende dag; CSV-timestamps kunnen door lokale tijdzonegrenzen naar een andere datum vallen.
+            DateTime reportDay = report.PeriodStart.Date;
             latestReportDay = MaxDate(latestReportDay, reportDay);
             _syncStore.RecordImportSource(new ReportImportSourceRow(
                 outcome.SourceHash,
