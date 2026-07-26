@@ -64,7 +64,7 @@ public sealed class SmtpPortalProbeService
                     _unprotectSecret(config.EncryptedTotpSecret!),
                     DateTimeOffset.UtcNow));
 
-            await _browser.InitializeAsync(credentials, visible, cancellationToken);
+            await _browser.InitializeAsync(credentials, visible, SmtpPortalBrowserTitles.Diagnose, cancellationToken);
             int? requestedPageSize = SmtpPortalPageSizePolicy.Resolve(latestSuccessfulReportDay, _todayProvider());
             if (requestedPageSize.HasValue)
             {

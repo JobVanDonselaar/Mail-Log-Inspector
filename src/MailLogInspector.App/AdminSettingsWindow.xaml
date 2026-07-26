@@ -47,7 +47,8 @@
         </ComboBox>
         <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="0,10,0,0">
           <CheckBox Name="AdminAutoSyncCheckBox" Content="Automatisch synchroniseren - elke 15 min" Margin="0,0,20,0" VerticalAlignment="Center" />
-          <CheckBox Name="AdminCloseToTrayCheckBox" Content="Sluiten naar systeemvak" VerticalAlignment="Center" />
+          <CheckBox Name="AdminCloseToTrayCheckBox" Content="Sluiten naar systeemvak" Margin="0,0,20,0" VerticalAlignment="Center" />
+          <CheckBox Name="AdminPortalVisibleSyncCheckBox" Content="SMTP.com-venster tonen tijdens sync (anders headless)" VerticalAlignment="Center" />
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,10,0,0">
           <StackPanel Orientation="Horizontal">

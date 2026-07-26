@@ -58,6 +58,7 @@ public partial class AdminSettingsWindow : Window
             : GmailAdminConfigBuilder.StoredSecretPlaceholder;
         AdminAutoSyncCheckBox.IsChecked = _storedSyncConfig.AutoSyncEnabled;
         AdminCloseToTrayCheckBox.IsChecked = _storedSyncConfig.CloseToTrayEnabled;
+        AdminPortalVisibleSyncCheckBox.IsChecked = _storedSyncConfig.PortalSyncVisible;
         AdminConnectionStatusTextBlock.Text = string.IsNullOrWhiteSpace(_storedConfig.ConnectionStatus)
             ? "Wijzig de IMAP-instellingen of test de verbinding."
             : "Huidige IMAP-status: " + _storedConfig.ConnectionStatus;
@@ -204,7 +205,8 @@ public partial class AdminSettingsWindow : Window
         return new AdminSyncSettingsInput(
             SelectedSyncMode,
             AdminAutoSyncCheckBox.IsChecked == true,
-            AdminCloseToTrayCheckBox.IsChecked == true);
+            AdminCloseToTrayCheckBox.IsChecked == true,
+            AdminPortalVisibleSyncCheckBox.IsChecked == true);
     }
 
     private SmtpPortalAdminSettingsInput ReadPortalInput()

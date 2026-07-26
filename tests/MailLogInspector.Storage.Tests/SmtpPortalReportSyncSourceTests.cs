@@ -65,6 +65,30 @@ public sealed class SmtpPortalReportSyncSourceTests
         Assert.Equal(0, result.ImportedCount);
     }
 
+    [Fact]
+    public async Task PassesSyncTitleAndHonorsPortalSyncVisibleFromConfig()
+    {
+        TestContext context = CreateContext();
+        context.SyncStore.SaveConfig(new ReportSyncConfig(
+            ReportSyncMode.GmailOnly,
+            null,
+            null,
+            AutoSyncEnabled: false,
+            CloseToTrayEnabled: false,
+            PortalSyncVisible: true));
+        string zip = CreateZip(context.Root, "portal-visible.zip");
+        var browser = new FakeBrowser(zip, CreateRows(17, 18));
+        var source = context.CreateSource(browser, new FakeImportRunner());
+
+        await source.SyncAsync(
+            latestOnly: true,
+            minimumReportDayExclusive: null,
+            CancellationToken.None);
+
+        Assert.True(browser.LastVisible);
+        Assert.Equal(SmtpPortalBrowserTitles.Sync, browser.LastWindowTitle);
+    }
+
     private static TestContext CreateContext()
     {
         string root = Path.Combine(Path.GetTempPath(), "mail-log-inspector-direct-source-" + Guid.NewGuid().ToString("N"));
@@ -148,8 +172,15 @@ public sealed class SmtpPortalReportSyncSourceTests
             _rows = rows;
         }
 
-        public Task InitializeAsync(SmtpPortalCredentials credentials, bool visible, CancellationToken cancellationToken) =>
-            Task.CompletedTask;
+        public bool? LastVisible { get; private set; }
+        public string? LastWindowTitle { get; private set; }
+
+        public Task InitializeAsync(SmtpPortalCredentials credentials, bool visible, string windowTitle, CancellationToken cancellationToken)
+        {
+            LastVisible = visible;
+            LastWindowTitle = windowTitle;
+            return Task.CompletedTask;
+        }
 
         public Task SetPageSizeAsync(int pageSize, CancellationToken cancellationToken) => Task.CompletedTask;
 

@@ -45,6 +45,42 @@ public sealed partial class MailLogInspectorStore
         return rows;
     }
 
+    public MailLogInspectorDailyStatusTotals ReadDailyStatusTotals(DateTime day)
+    {
+        using SqliteConnection connection = OpenConnection();
+        MailLogInspectorSchema.Ensure(connection);
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT status, SUM(total)
+            FROM analysis_daily_status
+            WHERE day_key = $day
+            GROUP BY status;
+            """;
+        command.Parameters.AddWithValue("$day", day.Date.Ticks / TimeSpan.TicksPerDay);
+        using SqliteDataReader reader = command.ExecuteReader();
+        int accepted = 0;
+        int delivered = 0;
+        int bounce = 0;
+        bool hasData = false;
+        while (reader.Read())
+        {
+            hasData = true;
+            int status = (int)reader.GetInt64(0);
+            int total = (int)reader.GetInt64(1);
+            accepted += total;
+            if (status == 1)
+            {
+                delivered += total;
+            }
+            else if (status == 3)
+            {
+                bounce += total;
+            }
+        }
+
+        return new MailLogInspectorDailyStatusTotals(day.Date, accepted, delivered, bounce, hasData);
+    }
+
     public bool EnsureDeliveryLatencyAggregates()
     {
         using SqliteConnection connection = OpenConnection();

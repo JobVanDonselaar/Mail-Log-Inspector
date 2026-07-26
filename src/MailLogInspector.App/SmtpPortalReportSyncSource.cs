@@ -62,7 +62,8 @@ public sealed class SmtpPortalReportSyncSource : IReportSyncSource
                 DateTimeOffset.UtcNow));
 
         progress?.Report("SMTP.com direct openen...");
-        await browser.InitializeAsync(credentials, visible: false, cancellationToken);
+        bool portalVisible = _syncStore.LoadConfig().PortalSyncVisible;
+        await browser.InitializeAsync(credentials, portalVisible, SmtpPortalBrowserTitles.Sync, cancellationToken);
         int? requestedPageSize = SmtpPortalPageSizePolicy.Resolve(
             minimumReportDayExclusive,
             _todayProvider());

@@ -69,6 +69,8 @@ De gekozen modus geldt voor automatische synchronisatie, `Sync nu` en de beheerd
 
 SMTP.com-gebruikersnaam, wachtwoord en MFA-secret worden Windows-gebruikergebonden versleuteld opgeslagen. De WebView2-sessie gebruikt een blijvend lokaal profiel. De knoppen `Proefdownload uitvoeren` en `Zichtbare diagnose` blijven veilige diagnostiek: ze valideren en bewaren een ZIP, maar roepen de importservice niet aan.
 
+Standaard draait de SMTP.com-sync headless (het WebView2-venster blijft verborgen). Met de instelling `SMTP.com-venster tonen tijdens sync` in de synchronisatie-instellingen kan het portalvenster tijdens handmatige en automatische sync zichtbaar worden gemaakt om mee te kijken.
+
 Downloads en imports zijn begrensd: maximaal 512 MB per ZIP en maximaal 3 GB per uitgepakte of losse CSV, maximaal 100 ZIP-entries en maximaal compressieverhouding 200. Een ZIP moet precies één niet-lege CSV bevatten. Een header-only rapport is een geldig nulrapport; een leeg of volledig foutief rapport wordt niet geregistreerd als succesvolle import.
 
 Zie [docs/smtp-report-download-flow.md](docs/smtp-report-download-flow.md) voor de volledige selectie-, fallback- en beveiligingsregels.

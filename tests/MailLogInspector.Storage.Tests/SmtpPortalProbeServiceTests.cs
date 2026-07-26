@@ -164,7 +164,7 @@ public sealed class SmtpPortalProbeServiceTests
         public int? RequestedPageSize { get; private set; }
         public bool IsDisposed { get; private set; }
 
-        public Task InitializeAsync(SmtpPortalCredentials credentials, bool visible, CancellationToken cancellationToken)
+        public Task InitializeAsync(SmtpPortalCredentials credentials, bool visible, string windowTitle, CancellationToken cancellationToken)
         {
             if (_failInitialization)
             {

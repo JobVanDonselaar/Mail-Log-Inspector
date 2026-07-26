@@ -133,13 +133,15 @@ public sealed class AdminStartupTests
         var input = new AdminSyncSettingsInput(
             ReportSyncMode.DirectOnly,
             AutoSyncEnabled: true,
-            CloseToTrayEnabled: true);
+            CloseToTrayEnabled: true,
+            PortalSyncVisible: true);
 
         ReportSyncConfig result = AdminSyncConfigBuilder.Build(stored, input);
 
         Assert.Equal(ReportSyncMode.DirectOnly, result.Mode);
         Assert.True(result.AutoSyncEnabled);
         Assert.True(result.CloseToTrayEnabled);
+        Assert.True(result.PortalSyncVisible);
     }
 
     [Fact]

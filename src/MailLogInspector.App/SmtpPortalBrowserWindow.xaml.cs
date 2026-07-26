@@ -25,9 +25,11 @@ public partial class SmtpPortalBrowserWindow : Window, ISmtpPortalBrowser
     public async Task InitializeAsync(
         SmtpPortalCredentials credentials,
         bool visible,
+        string windowTitle,
         CancellationToken cancellationToken)
     {
         _credentials = credentials;
+        Title = windowTitle;
         ConfigureVisibility(visible);
         Show();
 
@@ -575,19 +577,24 @@ public partial class SmtpPortalBrowserWindow : Window, ISmtpPortalBrowser
     {
         if (visible)
         {
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
             ShowInTaskbar = true;
             ShowActivated = true;
             return;
         }
 
+        // Headless: WebView2 rendert in een eigen native HWND en negeert WPF-Opacity,
+        // en WindowStartupLocation=CenterScreen overschrijft handmatige Left/Top bij Show().
+        // Zet daarom Manual + volledig offscreen zodat het venster echt onzichtbaar blijft.
+        WindowStartupLocation = WindowStartupLocation.Manual;
         ShowInTaskbar = false;
         ShowActivated = false;
-        WindowStyle = WindowStyle.ToolWindow;
-        Width = 2;
-        Height = 2;
-        Left = -32_000;
-        Top = -32_000;
-        Opacity = 0.01;
+        WindowStyle = WindowStyle.None;
+        Width = MinWidth;
+        Height = MinHeight;
+        Left = -32000;
+        Top = -32000;
+        Opacity = 0;
     }
 
     private void SetStatus(string status)

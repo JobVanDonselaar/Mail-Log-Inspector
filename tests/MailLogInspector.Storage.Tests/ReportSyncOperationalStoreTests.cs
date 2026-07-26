@@ -16,8 +16,19 @@ public sealed class ReportSyncOperationalStoreTests
         Assert.Equal(ReportSyncMode.GmailOnly, config.Mode);
         Assert.False(config.AutoSyncEnabled);
         Assert.False(config.CloseToTrayEnabled);
+        Assert.False(config.PortalSyncVisible);
         Assert.Null(config.LastAttemptAtUtc);
         Assert.Null(config.LastSuccessAtUtc);
+    }
+
+    [Fact]
+    public void SaveConfigRoundTripsPortalSyncVisible()
+    {
+        ReportSyncOperationalStore store = CreateStore();
+
+        store.SaveConfig(new ReportSyncConfig(ReportSyncMode.DirectOnly, null, null, false, false, true));
+
+        Assert.True(store.LoadConfig().PortalSyncVisible);
     }
 
     [Theory]

@@ -5,7 +5,8 @@ namespace MailLogInspector.App;
 public sealed record AdminSyncSettingsInput(
     string Mode,
     bool AutoSyncEnabled,
-    bool CloseToTrayEnabled);
+    bool CloseToTrayEnabled,
+    bool PortalSyncVisible);
 
 public static class AdminSyncConfigBuilder
 {
@@ -17,7 +18,8 @@ public static class AdminSyncConfigBuilder
         {
             Mode = ReportSyncMode.Normalize(input.Mode),
             AutoSyncEnabled = input.AutoSyncEnabled,
-            CloseToTrayEnabled = input.CloseToTrayEnabled
+            CloseToTrayEnabled = input.CloseToTrayEnabled,
+            PortalSyncVisible = input.PortalSyncVisible
         };
     }
 }

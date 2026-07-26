@@ -196,6 +196,7 @@ public sealed class SmtpPortalConfiguredSyntaxIntegrationTests
         public Task InitializeAsync(
             SmtpPortalCredentials credentials,
             bool visible,
+            string windowTitle,
             CancellationToken cancellationToken) => Task.CompletedTask;
 
         public Task SetPageSizeAsync(int pageSize, CancellationToken cancellationToken) =>

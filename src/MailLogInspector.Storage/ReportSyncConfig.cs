@@ -5,8 +5,9 @@ public sealed record ReportSyncConfig(
     DateTime? LastAttemptAtUtc,
     DateTime? LastSuccessAtUtc,
     bool AutoSyncEnabled = false,
-    bool CloseToTrayEnabled = false)
+    bool CloseToTrayEnabled = false,
+    bool PortalSyncVisible = false)
 {
     public static ReportSyncConfig Default { get; } =
-        new(ReportSyncMode.GmailOnly, null, null, false, false);
+        new(ReportSyncMode.GmailOnly, null, null, false, false, false);
 }

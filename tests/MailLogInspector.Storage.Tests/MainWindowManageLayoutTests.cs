@@ -88,7 +88,7 @@ public sealed class MainWindowManageLayoutTests
         Assert.DoesNotContain("Name=\"ImportQualityStatusMixGrid\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"ImportQualityBounceCauseItemsControl\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"ImportQualityMeasureCardsItemsControl\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Totalen: laatste import vs vorige week", xaml, StringComparison.Ordinal);
+        Assert.Contains("Totalen: gisteren vs vorige week", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding LatestDisplay}", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding PreviousWeekDisplay}", xaml, StringComparison.Ordinal);
         Assert.Contains("{Binding PreviousWeekBarHeight}", xaml, StringComparison.Ordinal);
@@ -227,16 +227,14 @@ public sealed class MainWindowManageLayoutTests
         Assert.Contains("binnen 5 min", ReadStringProperty(result, "SummaryText"), StringComparison.Ordinal);
     }
     [Fact]
-    public void ImportQualityComparison_ShowsNoShadowWhenExactPreviousWeekIsMissing()
+    public void ImportQualityComparison_ShowsNoShadowWhenPreviousDayHasNoData()
     {
         string xaml = ReadMainWindowXaml();
-        IReadOnlyList<MailLogInspectorImportedFile> imports = new[]
-        {
-            CreateImport(1, importedAt: new DateTime(2026, 7, 18, 3, 0, 0), reportStart: new DateTime(2026, 7, 16, 4, 0, 0), reportEnd: new DateTime(2026, 7, 17, 23, 0, 0), rows: 100, delivered: 90, bounced: 5)
-        };
+        MailLogInspectorDailyStatusTotals yesterday = new(new DateTime(2026, 7, 24), 100, 90, 5, true);
+        MailLogInspectorDailyStatusTotals previousWeek = new(new DateTime(2026, 7, 17), 0, 0, 0, false);
 
         MethodInfo method = typeof(MainWindow).GetMethod("BuildImportQualityComparisonGroups", BindingFlags.NonPublic | BindingFlags.Static)!;
-        object result = method.Invoke(null, new object[] { imports })!;
+        object result = method.Invoke(null, new object[] { yesterday, previousWeek })!;
         object acceptedBar = ReadFirstBar(result);
 
         Assert.False(ReadBoolProperty(result, "HasPreviousWeek"));
@@ -245,19 +243,13 @@ public sealed class MainWindowManageLayoutTests
         Assert.DoesNotContain("Geen vergelijkbasis", xaml, StringComparison.Ordinal);
     }
     [Fact]
-    public void ImportQualityComparison_UsesOnlyExactPreviousWeekDailyImports()
+    public void ImportQualityComparison_UsesDayBasedYesterdayVersusSameDayLastWeek()
     {
-        IReadOnlyList<MailLogInspectorImportedFile> imports = new[]
-        {
-            CreateImport(1, importedAt: new DateTime(2026, 7, 18, 3, 0, 0), reportStart: new DateTime(2026, 7, 16, 4, 0, 0), reportEnd: new DateTime(2026, 7, 17, 23, 0, 0), rows: 100, delivered: 90, bounced: 5),
-            CreateImport(2, importedAt: new DateTime(2026, 7, 11, 3, 0, 0), reportStart: new DateTime(2026, 7, 9, 4, 0, 0), reportEnd: new DateTime(2026, 7, 10, 23, 0, 0), rows: 300, delivered: 270, bounced: 15),
-            CreateImport(5, importedAt: new DateTime(2026, 7, 11, 2, 0, 0), reportStart: new DateTime(2026, 7, 9, 4, 0, 0), reportEnd: new DateTime(2026, 7, 10, 23, 0, 0), rows: 300, delivered: 270, bounced: 15),
-            CreateImport(3, importedAt: new DateTime(2026, 7, 4, 3, 0, 0), reportStart: new DateTime(2026, 7, 2, 4, 0, 0), reportEnd: new DateTime(2026, 7, 3, 23, 0, 0), rows: 900, delivered: 800, bounced: 50),
-            CreateImport(4, importedAt: new DateTime(2026, 7, 11, 4, 0, 0), reportStart: new DateTime(2026, 6, 1, 0, 0, 0), reportEnd: new DateTime(2026, 7, 10, 23, 0, 0), rows: 10000, delivered: 9000, bounced: 500)
-        };
+        MailLogInspectorDailyStatusTotals yesterday = new(new DateTime(2026, 7, 24), 100, 90, 5, true);
+        MailLogInspectorDailyStatusTotals previousWeek = new(new DateTime(2026, 7, 17), 300, 270, 15, true);
 
         MethodInfo method = typeof(MainWindow).GetMethod("BuildImportQualityComparisonGroups", BindingFlags.NonPublic | BindingFlags.Static)!;
-        object result = method.Invoke(null, new object[] { imports })!;
+        object result = method.Invoke(null, new object[] { yesterday, previousWeek })!;
         object acceptedBar = ReadFirstBar(result);
 
         Assert.True(ReadBoolProperty(result, "HasPreviousWeek"));
@@ -284,11 +276,6 @@ public sealed class MainWindowManageLayoutTests
         Assert.Contains("Name=\"AdminCloseToTrayCheckBox\" Content=\"Sluiten naar systeemvak\"", adminXaml, StringComparison.Ordinal);
         Assert.Contains("FixedGmailAutoSyncIntervalMinutes = 15", code, StringComparison.Ordinal);
         Assert.DoesNotContain("ReadGmailAutoSyncIntervalMinutes", code, StringComparison.Ordinal);
-    }
-
-    private static MailLogInspectorImportedFile CreateImport(long id, DateTime importedAt, DateTime reportStart, DateTime reportEnd, int rows, int delivered, int bounced)
-    {
-        return new MailLogInspectorImportedFile(id, $"C:\\Temp\\report-{id}.zip", $"report-{id}.zip", $"hash-{id}", importedAt, reportStart, reportEnd, rows, null, delivered, bounced, rows - delivered - bounced);
     }
 
     private static string ReadStringProperty(object instance, string propertyName)

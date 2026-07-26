@@ -1071,7 +1071,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                   </Grid.RowDefinitions>
-                  <TextBlock Grid.Row="0" Text="Totalen: laatste import vs vorige week" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" />
+                  <TextBlock Grid.Row="0" Text="Totalen: gisteren vs vorige week" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" />
                   <ItemsControl Grid.Row="1" Name="ImportQualityMeasureCardsItemsControl">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate>

@@ -25,6 +25,7 @@ public sealed class ReportSyncOperationalStore
                 last_success_at_utc TEXT NULL,
                 auto_sync_enabled INTEGER NOT NULL DEFAULT 0,
                 close_to_tray_enabled INTEGER NOT NULL DEFAULT 0,
+                portal_sync_visible INTEGER NOT NULL DEFAULT 0,
                 general_settings_version INTEGER NOT NULL DEFAULT 0
             );
 
@@ -43,6 +44,7 @@ public sealed class ReportSyncOperationalStore
         command.ExecuteNonQuery();
         EnsureColumnExists(connection, "report_sync_config", "auto_sync_enabled", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "report_sync_config", "close_to_tray_enabled", "INTEGER NOT NULL DEFAULT 0");
+        EnsureColumnExists(connection, "report_sync_config", "portal_sync_visible", "INTEGER NOT NULL DEFAULT 0");
         EnsureColumnExists(connection, "report_sync_config", "general_settings_version", "INTEGER NOT NULL DEFAULT 0");
         using (SqliteCommand seedCommand = connection.CreateCommand())
         {
@@ -54,9 +56,10 @@ public sealed class ReportSyncOperationalStore
                     last_success_at_utc,
                     auto_sync_enabled,
                     close_to_tray_enabled,
+                    portal_sync_visible,
                     general_settings_version
                 )
-                VALUES (1, 'gmail-only', NULL, NULL, 0, 0, 0);
+                VALUES (1, 'gmail-only', NULL, NULL, 0, 0, 0, 0);
                 """;
             seedCommand.ExecuteNonQuery();
         }
@@ -69,7 +72,7 @@ public sealed class ReportSyncOperationalStore
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             SELECT mode, last_attempt_at_utc, last_success_at_utc,
-                   auto_sync_enabled, close_to_tray_enabled
+                   auto_sync_enabled, close_to_tray_enabled, portal_sync_visible
             FROM report_sync_config
             WHERE singleton_id = 1;
             """;
@@ -84,7 +87,8 @@ public sealed class ReportSyncOperationalStore
             ReadNullableDateTime(reader, 1),
             ReadNullableDateTime(reader, 2),
             !reader.IsDBNull(3) && reader.GetInt32(3) == 1,
-            !reader.IsDBNull(4) && reader.GetInt32(4) == 1);
+            !reader.IsDBNull(4) && reader.GetInt32(4) == 1,
+            !reader.IsDBNull(5) && reader.GetInt32(5) == 1);
     }
 
     public void SaveConfig(ReportSyncConfig config)
@@ -99,15 +103,17 @@ public sealed class ReportSyncOperationalStore
                 last_success_at_utc,
                 auto_sync_enabled,
                 close_to_tray_enabled,
+                portal_sync_visible,
                 general_settings_version
             )
-            VALUES (1, $mode, $lastAttempt, $lastSuccess, $autoSync, $closeToTray, 1)
+            VALUES (1, $mode, $lastAttempt, $lastSuccess, $autoSync, $closeToTray, $portalVisible, 1)
             ON CONFLICT(singleton_id) DO UPDATE SET
                 mode = excluded.mode,
                 last_attempt_at_utc = excluded.last_attempt_at_utc,
                 last_success_at_utc = excluded.last_success_at_utc,
                 auto_sync_enabled = excluded.auto_sync_enabled,
                 close_to_tray_enabled = excluded.close_to_tray_enabled,
+                portal_sync_visible = excluded.portal_sync_visible,
                 general_settings_version = 1;
             """;
         command.Parameters.AddWithValue("$mode", ReportSyncMode.Normalize(config.Mode));
@@ -115,6 +121,7 @@ public sealed class ReportSyncOperationalStore
         command.Parameters.AddWithValue("$lastSuccess", FormatNullableDateTime(config.LastSuccessAtUtc));
         command.Parameters.AddWithValue("$autoSync", config.AutoSyncEnabled ? 1 : 0);
         command.Parameters.AddWithValue("$closeToTray", config.CloseToTrayEnabled ? 1 : 0);
+        command.Parameters.AddWithValue("$portalVisible", config.PortalSyncVisible ? 1 : 0);
         command.ExecuteNonQuery();
     }
 

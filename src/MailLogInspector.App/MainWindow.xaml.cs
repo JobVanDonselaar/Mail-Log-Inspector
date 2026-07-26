@@ -637,6 +637,8 @@ public partial class MainWindow : Window
 		IReadOnlyList<MailLogInspectorDeliveryLatencyDay> deliveryLatency =
 			_store.ReadDeliveryLatencyTrend(latencyThrough.AddDays(-29), latencyThrough);
 		bool latencyPending = stats.MailItemCount > 0 && deliveryLatency.Count == 0;
+		MailLogInspectorDailyStatusTotals yesterdayTotals = _store.ReadDailyStatusTotals(latencyThrough);
+		MailLogInspectorDailyStatusTotals previousWeekTotals = _store.ReadDailyStatusTotals(latencyThrough.AddDays(-7));
 		((DispatcherObject)this).Dispatcher.Invoke((Action)delegate
 		{
 			DatabaseSizeTextBlock.Text = FormatCompactBytes(stats.DatabaseSizeBytes);
@@ -651,7 +653,7 @@ public partial class MainWindow : Window
 			ReturnToActiveDatabaseButton.Visibility = archiveMode ? Visibility.Visible : Visibility.Collapsed;
 			MonthArchiveGrid.ItemsSource = archiveMonths;
 			ImportsGrid.ItemsSource = importHistory;
-			ApplyImportQualitySummary(imports);
+			ApplyImportQualitySummary(imports, yesterdayTotals, previousWeekTotals);
 			ApplyDeliveryLatencyTrend(deliveryLatency, latencyPending);
 			SyncGmailReportsButton.IsEnabled = !_gmailSyncIsRunning && _activeArchiveMonthKey == null && IsReportSyncConfigurationReady(gmailConfig);
 			UpdateImportControlsEnabled();
@@ -675,9 +677,12 @@ public partial class MainWindow : Window
 		int PreviousWeekBounce,
 		double PreviousWeekDeliveredRatio,
 		bool HasPreviousWeek);
-	private void ApplyImportQualitySummary(IReadOnlyList<MailLogInspectorImportedFile> imports)
+	private void ApplyImportQualitySummary(
+		IReadOnlyList<MailLogInspectorImportedFile> imports,
+		MailLogInspectorDailyStatusTotals yesterdayTotals,
+		MailLogInspectorDailyStatusTotals previousWeekTotals)
 	{
-		ImportQualityComparisonData comparison = BuildImportQualityComparisonGroups(imports);
+		ImportQualityComparisonData comparison = BuildImportQualityComparisonGroups(yesterdayTotals, previousWeekTotals);
 		ImportQualityMeasureCardsItemsControl.ItemsSource = comparison.Bars;
 
 		MailLogInspectorImportedFile? latest = imports.FirstOrDefault();
@@ -690,56 +695,34 @@ public partial class MainWindow : Window
 		ImportQualityBounceCauseItemsControl.ItemsSource = latest.BounceCauses;
 	}
 
-	private static ImportQualityComparisonData BuildImportQualityComparisonGroups(IReadOnlyList<MailLogInspectorImportedFile> imports)
+	private static ImportQualityComparisonData BuildImportQualityComparisonGroups(
+		MailLogInspectorDailyStatusTotals latest,
+		MailLogInspectorDailyStatusTotals previousWeek)
 	{
-		MailLogInspectorImportedFile? latest = imports.FirstOrDefault(IsDailyReportImport) ?? imports.FirstOrDefault();
-		if (latest is null)
+		if (!latest.HasData)
 		{
 			return new ImportQualityComparisonData(Array.Empty<ImportQualityComparisonBar>(), 0, 0, 0, 0, 0, 0.0, false);
 		}
 
-		DateTime previousWeekDate = GetImportComparisonDate(latest).AddDays(-7);
-		MailLogInspectorImportedFile? previousWeekImport = imports
-			.Where(import => import.ImportId != latest.ImportId
-				&& IsDailyReportImport(import)
-				&& GetImportComparisonDate(import) == previousWeekDate)
-			.OrderByDescending(import => import.ImportedAt)
-			.ThenByDescending(import => import.ImportId)
-			.FirstOrDefault();
-		bool hasPreviousWeek = previousWeekImport is not null;
-		int previousWeekAccepted = previousWeekImport?.RowCount ?? 0;
-		int previousWeekDelivered = previousWeekImport?.DeliveredCount ?? 0;
-		int previousWeekBounce = previousWeekImport?.BounceCount ?? 0;
+		bool hasPreviousWeek = previousWeek.HasData;
+		int previousWeekAccepted = previousWeek.Accepted;
+		int previousWeekDelivered = previousWeek.Delivered;
+		int previousWeekBounce = previousWeek.Bounce;
 		double previousWeekDeliveredRatio = Ratio(previousWeekDelivered, previousWeekAccepted);
 
-		int acceptedScale = Math.Max(Math.Max(latest.RowCount, latest.DeliveredCount), Math.Max(previousWeekAccepted, previousWeekDelivered));
-		int bounceScale = Math.Max(latest.BounceCount, previousWeekBounce);
+		int acceptedScale = Math.Max(Math.Max(latest.Accepted, latest.Delivered), Math.Max(previousWeekAccepted, previousWeekDelivered));
+		int bounceScale = Math.Max(latest.Bounce, previousWeekBounce);
 		acceptedScale = Math.Max(1, acceptedScale);
 		bounceScale = Math.Max(1, bounceScale);
 
 		List<ImportQualityComparisonBar> bars = new()
 		{
-			BuildImportQualityComparisonBar("Geaccepteerd", latest.RowCount, previousWeekAccepted, acceptedScale, CreateBrush("#1F5F8B"), hasPreviousWeek),
-			BuildImportQualityComparisonBar("Afgeleverd", latest.DeliveredCount, previousWeekDelivered, acceptedScale, CreateBrush("#2E8B57"), hasPreviousWeek),
-			BuildImportQualityComparisonBar("Bounced", latest.BounceCount, previousWeekBounce, bounceScale, CreateBrush("#D33A2C"), hasPreviousWeek)
+			BuildImportQualityComparisonBar("Geaccepteerd", latest.Accepted, previousWeekAccepted, acceptedScale, CreateBrush("#1F5F8B"), hasPreviousWeek),
+			BuildImportQualityComparisonBar("Afgeleverd", latest.Delivered, previousWeekDelivered, acceptedScale, CreateBrush("#2E8B57"), hasPreviousWeek),
+			BuildImportQualityComparisonBar("Bounced", latest.Bounce, previousWeekBounce, bounceScale, CreateBrush("#D33A2C"), hasPreviousWeek)
 		};
 
 		return new ImportQualityComparisonData(bars, acceptedScale, bounceScale, previousWeekAccepted, previousWeekDelivered, previousWeekBounce, previousWeekDeliveredRatio, hasPreviousWeek);
-	}
-
-	private static DateTime GetImportComparisonDate(MailLogInspectorImportedFile import)
-	{
-		return (import.ReportEnd ?? import.ImportedAt).Date;
-	}
-	private static bool IsDailyReportImport(MailLogInspectorImportedFile import)
-	{
-		if (!import.ReportStart.HasValue || !import.ReportEnd.HasValue)
-		{
-			return false;
-		}
-
-		TimeSpan duration = import.ReportEnd.Value - import.ReportStart.Value;
-		return duration > TimeSpan.Zero && duration <= TimeSpan.FromHours(48);
 	}
 
 	private static ImportQualityComparisonBar BuildImportQualityComparisonBar(string label, int latest, int previousWeek, int scale, System.Windows.Media.Brush latestBrush, bool hasPreviousWeek)
