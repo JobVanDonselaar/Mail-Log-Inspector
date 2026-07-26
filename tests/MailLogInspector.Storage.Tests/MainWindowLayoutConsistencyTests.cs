@@ -66,14 +66,14 @@ public sealed class MainWindowLayoutConsistencyTests
     }
 
     [Fact]
-    public void BusinessHelpUsesVersion0202()
+    public void BusinessHelpUsesVersion0203()
     {
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         string project = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspector.App.csproj"));
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
-        Assert.Contains("<InformationalVersion>0.202</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.202\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.203</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.203\"", version, StringComparison.Ordinal);
     }
 
     [Fact]

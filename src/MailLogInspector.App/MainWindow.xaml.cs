@@ -46,6 +46,10 @@ public partial class MainWindow : Window
 
 	private string? _activeArchiveMonthKey;
 
+	private DateTime _importQualityReferenceDay = DateTime.Today.AddDays(-1);
+	private DateTime _importQualityMaxDay = DateTime.Today.AddDays(-1);
+	private const int ImportQualityNavigationRangeDays = 120;
+
 	private MailLogInspectorSearchCriteria? _lastSearchCriteria;
 
 	private IReadOnlyList<MailLogInspectorSearchRow> _lastSearchRows = Array.Empty<MailLogInspectorSearchRow>();
@@ -637,8 +641,9 @@ public partial class MainWindow : Window
 		IReadOnlyList<MailLogInspectorDeliveryLatencyDay> deliveryLatency =
 			_store.ReadDeliveryLatencyTrend(latencyThrough.AddDays(-29), latencyThrough);
 		bool latencyPending = stats.MailItemCount > 0 && deliveryLatency.Count == 0;
-		MailLogInspectorDailyStatusTotals yesterdayTotals = _store.ReadDailyStatusTotals(latencyThrough);
-		MailLogInspectorDailyStatusTotals previousWeekTotals = _store.ReadDailyStatusTotals(latencyThrough.AddDays(-7));
+		DateTime referenceDay = latencyThrough;
+		MailLogInspectorDailyStatusTotals yesterdayTotals = _store.ReadDailyStatusTotals(referenceDay);
+		MailLogInspectorDailyStatusTotals previousWeekTotals = _store.ReadDailyStatusTotals(referenceDay.AddDays(-7));
 		((DispatcherObject)this).Dispatcher.Invoke((Action)delegate
 		{
 			DatabaseSizeTextBlock.Text = FormatCompactBytes(stats.DatabaseSizeBytes);
@@ -653,7 +658,8 @@ public partial class MainWindow : Window
 			ReturnToActiveDatabaseButton.Visibility = archiveMode ? Visibility.Visible : Visibility.Collapsed;
 			MonthArchiveGrid.ItemsSource = archiveMonths;
 			ImportsGrid.ItemsSource = importHistory;
-			ApplyImportQualitySummary(imports, yesterdayTotals, previousWeekTotals);
+			_importQualityMaxDay = referenceDay;
+			ApplyImportQualitySummary(imports, referenceDay, yesterdayTotals, previousWeekTotals);
 			ApplyDeliveryLatencyTrend(deliveryLatency, latencyPending);
 			SyncGmailReportsButton.IsEnabled = !_gmailSyncIsRunning && _activeArchiveMonthKey == null && IsReportSyncConfigurationReady(gmailConfig);
 			UpdateImportControlsEnabled();
@@ -679,11 +685,12 @@ public partial class MainWindow : Window
 		bool HasPreviousWeek);
 	private void ApplyImportQualitySummary(
 		IReadOnlyList<MailLogInspectorImportedFile> imports,
+		DateTime referenceDay,
 		MailLogInspectorDailyStatusTotals yesterdayTotals,
 		MailLogInspectorDailyStatusTotals previousWeekTotals)
 	{
-		ImportQualityComparisonData comparison = BuildImportQualityComparisonGroups(yesterdayTotals, previousWeekTotals);
-		ImportQualityMeasureCardsItemsControl.ItemsSource = comparison.Bars;
+		_importQualityReferenceDay = referenceDay;
+		ApplyImportQualityComparison(referenceDay, yesterdayTotals, previousWeekTotals);
 
 		MailLogInspectorImportedFile? latest = imports.FirstOrDefault();
 		if (latest is null)
@@ -693,6 +700,83 @@ public partial class MainWindow : Window
 		}
 
 		ImportQualityBounceCauseItemsControl.ItemsSource = latest.BounceCauses;
+	}
+
+	private void ApplyImportQualityComparison(
+		DateTime referenceDay,
+		MailLogInspectorDailyStatusTotals dayTotals,
+		MailLogInspectorDailyStatusTotals previousWeekTotals)
+	{
+		ImportQualityComparisonData comparison = BuildImportQualityComparisonGroups(dayTotals, previousWeekTotals);
+		ImportQualityMeasureCardsItemsControl.ItemsSource = comparison.Bars;
+		ImportQualityTitleTextBlock.Text = BuildImportQualityTitle(referenceDay);
+		UpdateImportQualityNavigationState();
+	}
+
+	private static string BuildImportQualityTitle(DateTime referenceDay)
+	{
+		DateTime yesterday = DateTime.Today.AddDays(-1);
+		string dayLabel = referenceDay.Date == yesterday.Date
+			? "gisteren"
+			: referenceDay.ToString("dddd d MMM", MailLogInspectorDisplayFormats.Culture);
+		return $"Totalen: {dayLabel} vs vorige week";
+	}
+
+	private void UpdateImportQualityNavigationState()
+	{
+		DateTime minDay = _importQualityMaxDay.AddDays(-ImportQualityNavigationRangeDays);
+		ImportQualityNextDayButton.IsEnabled = _importQualityReferenceDay.Date < _importQualityMaxDay.Date;
+		ImportQualityPreviousDayButton.IsEnabled = _importQualityReferenceDay.Date > minDay.Date;
+	}
+
+	private void ImportQualityPreviousDayButton_Click(object sender, RoutedEventArgs e) =>
+		ShiftImportQualityReferenceDay(-1);
+
+	private void ImportQualityNextDayButton_Click(object sender, RoutedEventArgs e) =>
+		ShiftImportQualityReferenceDay(1);
+
+	private void ShiftImportQualityReferenceDay(int deltaDays)
+	{
+		DateTime candidate = _importQualityReferenceDay.AddDays(deltaDays).Date;
+		DateTime maxDay = _importQualityMaxDay.Date;
+		DateTime minDay = maxDay.AddDays(-ImportQualityNavigationRangeDays);
+		if (candidate > maxDay)
+		{
+			candidate = maxDay;
+		}
+		else if (candidate < minDay)
+		{
+			candidate = minDay;
+		}
+
+		if (candidate == _importQualityReferenceDay.Date)
+		{
+			return;
+		}
+
+		_importQualityReferenceDay = candidate;
+		UpdateImportQualityNavigationState();
+		_ = RefreshImportQualityComparisonAsync(candidate);
+	}
+
+	private async Task RefreshImportQualityComparisonAsync(DateTime referenceDay)
+	{
+		try
+		{
+			(MailLogInspectorDailyStatusTotals dayTotals, MailLogInspectorDailyStatusTotals previousWeekTotals) = await Task.Run(
+				() => (_store.ReadDailyStatusTotals(referenceDay), _store.ReadDailyStatusTotals(referenceDay.AddDays(-7))));
+
+			if (_importQualityReferenceDay.Date != referenceDay.Date)
+			{
+				return;
+			}
+
+			ApplyImportQualityComparison(referenceDay, dayTotals, previousWeekTotals);
+		}
+		catch
+		{
+			// Navigatie mag nooit de UI laten crashen; laat de huidige weergave staan.
+		}
 	}
 
 	private static ImportQualityComparisonData BuildImportQualityComparisonGroups(

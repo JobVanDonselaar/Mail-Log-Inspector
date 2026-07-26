@@ -1071,7 +1071,17 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                   </Grid.RowDefinitions>
-                  <TextBlock Grid.Row="0" Text="Totalen: gisteren vs vorige week" Style="{StaticResource LabelTextStyle}" Margin="0,0,0,8" />
+                  <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Name="ImportQualityTitleTextBlock" Text="Totalen: gisteren vs vorige week" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                      <Button Name="ImportQualityPreviousDayButton" Style="{StaticResource PopupCalendarNavigationButtonStyle}" Content="&#xE76B;" ToolTip="Dag eerder" Click="ImportQualityPreviousDayButton_Click" />
+                      <Button Name="ImportQualityNextDayButton" Style="{StaticResource PopupCalendarNavigationButtonStyle}" Content="&#xE76C;" ToolTip="Dag later" Margin="2,0,0,0" Click="ImportQualityNextDayButton_Click" />
+                    </StackPanel>
+                  </Grid>
                   <ItemsControl Grid.Row="1" Name="ImportQualityMeasureCardsItemsControl">
                     <ItemsControl.ItemsPanel>
                       <ItemsPanelTemplate>
