@@ -3,10 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Mail Log Inspector - Admin"
         Width="1060"
-        Height="720"
+        Height="820"
         MinWidth="1060"
         MinHeight="720"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         Background="#F3F5F8"
         FontFamily="Segoe UI"
@@ -64,6 +64,7 @@
 
     <TabControl Grid.Row="3" Name="AdminSourceTabControl" Background="White" BorderBrush="#CBD7E4">
       <TabItem Name="AdminSmtpApiTabItem" Header="SMTP.com API">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <Border Background="White" BorderBrush="#CBD7E4" BorderThickness="0" Padding="14">
         <Grid>
           <Grid.RowDefinitions>
@@ -76,7 +77,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
           </Grid.RowDefinitions>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -93,15 +94,14 @@
           <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5" Text="Gebruik {start} en {end} voor yyyy-MM-dd; lege velden worden genegeerd." Foreground="#51657F" FontSize="10" Margin="0,3,0,0" TextWrapping="Wrap" />
           <TextBlock Name="AdminSmtpApiSyntaxPreviewTextBlock" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="5" Foreground="#51657F" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
           <TextBlock Name="AdminSmtpApiSyntaxValidationTextBlock" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="5" Foreground="#B42318" FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap" />
-          <Grid Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,8,0,0">
-            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
-            <StackPanel Grid.Row="0" Orientation="Horizontal">
+          <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal">
               <Button Name="TestSmtpApiConnectionButton" Content="Verbinding testen" Click="TestSmtpApiConnectionButton_Click" />
               <Button Name="LoadSmtpApiReportsButton" Content="Beschikbare rapporten ophalen" Click="LoadSmtpApiReportsButton_Click" />
               <Button Name="ImportSelectedSmtpApiReportsButton" Content="Geselecteerde importeren" Margin="0" Click="ImportSelectedSmtpApiReportsButton_Click" />
             </StackPanel>
-            <ListBox Name="AdminSmtpApiReportsListBox" Grid.Row="1" Margin="0,8,0,0" SelectionMode="Extended" BorderBrush="#B9C7D6" FontSize="11" />
-          </Grid>
+            <ListBox Name="AdminSmtpApiReportsListBox" MinHeight="120" MaxHeight="260" Margin="0,8,0,0" SelectionMode="Extended" BorderBrush="#B9C7D6" FontSize="11" />
+          </StackPanel>
           <StackPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,6,0,0">
             <TextBlock Name="AdminSmtpApiStatusTextBlock" Foreground="#51657F" TextWrapping="Wrap" />
             <TextBlock Name="AdminSmtpApiLastUsedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,3,0,0" />
@@ -109,6 +109,7 @@
           </StackPanel>
         </Grid>
       </Border>
+      </ScrollViewer>
       </TabItem>
 
       <TabItem Name="AdminSmtpDirectTabItem" Header="SMTP.com direct">

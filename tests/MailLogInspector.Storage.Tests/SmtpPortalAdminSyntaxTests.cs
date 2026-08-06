@@ -85,8 +85,8 @@ public sealed class SmtpPortalAdminSyntaxTests
             Path.Combine(root, "src", "MailLogInspector.App", "AdminSettingsWindow.xaml"));
 
         Assert.Contains("Width=\"1060\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("Height=\"720\"", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("<ScrollViewer", xaml, StringComparison.Ordinal);
+        Assert.Contains("Height=\"820\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ScrollViewer", xaml.Split("AdminSmtpApiTabItem")[0], StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminDefaultReportSyntaxRadioButton\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminCustomReportSyntaxRadioButton\"", xaml, StringComparison.Ordinal);
         Assert.Contains("GroupName=\"SmtpReportSyntax\"", xaml, StringComparison.Ordinal);
