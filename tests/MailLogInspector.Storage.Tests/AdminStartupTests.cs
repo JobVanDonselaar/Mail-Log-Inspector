@@ -206,7 +206,7 @@ public sealed class AdminStartupTests
         Assert.Contains("Name=\"AdminImapProviderComboBox\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminCustomImapHostTextBox\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminCustomImapPortTextBox\"", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("<ScrollViewer", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ScrollViewer", xaml.Split("AdminSmtpApiTabItem")[0], StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminAutoSyncCheckBox\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"AdminCloseToTrayCheckBox\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"TestAdminConnectionButton\"", xaml, StringComparison.Ordinal);

@@ -2,7 +2,8 @@ namespace MailLogInspector.App;
 
 public static class MailLogInspectorVersion
 {
-	public const string SemanticVersion = "0.204";
+	public const string SemanticVersion = "0.205";
 
 	public const string WindowTitle = "Mail Log Inspector " + SemanticVersion;
 }
+
