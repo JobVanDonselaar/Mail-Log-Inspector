@@ -56,7 +56,7 @@ public sealed class ReportSyncOperationalStore
                     close_to_tray_enabled,
                     general_settings_version
                 )
-                VALUES (1, 'gmail-only', NULL, NULL, 0, 0, 0);
+                VALUES (1, 'api-only', NULL, NULL, 0, 0, 0);
                 """;
             seedCommand.ExecuteNonQuery();
         }

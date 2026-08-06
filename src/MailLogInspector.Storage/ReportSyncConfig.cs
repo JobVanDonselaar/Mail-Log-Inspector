@@ -8,5 +8,5 @@ public sealed record ReportSyncConfig(
     bool CloseToTrayEnabled = false)
 {
     public static ReportSyncConfig Default { get; } =
-        new(ReportSyncMode.GmailOnly, null, null, false, false);
+        new(ReportSyncMode.Default, null, null, false, false);
 }

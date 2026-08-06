@@ -13,13 +13,16 @@ public partial class AdminSettingsWindow : Window
     private readonly GmailReportOperationalStore _store;
     private readonly SmtpPortalOperationalStore _smtpPortalStore;
     private readonly ReportSyncOperationalStore _syncStore;
+    private readonly SmtpApiOperationalStore _smtpApiStore;
     private readonly AdminReportSyncRunner _reportSyncRunner;
     private readonly MailLogInspectorWorkspacePaths _workspace;
     private readonly GmailOAuthService _oauthService = new(new HttpClient());
     private readonly IGmailImapReportClient _mailClient = new GmailImapReportClient();
+    private readonly ISmtpApiClient _smtpApiClient = new SmtpApiClient(new HttpClient());
     private GmailReportConfig _storedConfig;
     private SmtpPortalConfig _storedPortalConfig;
     private ReportSyncConfig _storedSyncConfig;
+    private SmtpApiConfig _storedApiConfig;
     private CancellationTokenSource? _reportSyncCancellation;
     private string? _pendingRefreshToken;
     private string? _connectionStatus;
@@ -28,17 +31,20 @@ public partial class AdminSettingsWindow : Window
         GmailReportOperationalStore store,
         SmtpPortalOperationalStore smtpPortalStore,
         ReportSyncOperationalStore syncStore,
+        SmtpApiOperationalStore smtpApiStore,
         MailLogInspectorWorkspacePaths workspace)
     {
         InitializeComponent();
         _store = store;
         _smtpPortalStore = smtpPortalStore;
         _syncStore = syncStore;
+        _smtpApiStore = smtpApiStore;
         _workspace = workspace;
-        _reportSyncRunner = new AdminReportSyncRunner(workspace, store, smtpPortalStore, syncStore);
+        _reportSyncRunner = new AdminReportSyncRunner(workspace, store, smtpPortalStore, syncStore, smtpApiStore);
         _storedConfig = store.LoadConfig();
         _storedPortalConfig = smtpPortalStore.LoadConfig();
         _storedSyncConfig = syncStore.LoadConfig();
+        _storedApiConfig = smtpApiStore.LoadConfig();
         Closed += (_, _) => _reportSyncCancellation?.Cancel();
         LoadConfig();
     }
@@ -83,9 +89,30 @@ public partial class AdminSettingsWindow : Window
               _storedPortalConfig.LastSuccessfulPortalUseAtUtc.Value.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
             : "Portaalsessie nog niet succesvol gebruikt.";
         UpdateReportSyntaxUi();
+        LoadApiConfig();
         UpdatePortalSecretSavedStatus();
         UpdateImapSecretSavedStatus();
         UpdateAuthenticationPanels();
+    }
+
+    private void LoadApiConfig()
+    {
+        AdminSmtpApiKeyBox.Password = _storedApiConfig.HasApiKey
+            ? SmtpApiAdminConfigBuilder.StoredSecretPlaceholder
+            : string.Empty;
+        AdminSmtpApiKeySavedTextBlock.Text = _storedApiConfig.HasApiKey
+            ? "******** versleuteld opgeslagen."
+            : "Nog niet opgeslagen.";
+        AdminSmtpApiChannelComboBox.Text = _storedApiConfig.Channel ?? string.Empty;
+        AdminSmtpApiSyntax1TextBox.Text =
+            _storedApiConfig.ReportSyntax1 ?? SmtpPortalReportNameSyntax.DefaultTemplate;
+        AdminSmtpApiSyntax2TextBox.Text = _storedApiConfig.ReportSyntax2 ?? string.Empty;
+        AdminSmtpApiSyntax3TextBox.Text = _storedApiConfig.ReportSyntax3 ?? string.Empty;
+        AdminSmtpApiStatusTextBlock.Text = string.IsNullOrWhiteSpace(_storedApiConfig.ConnectionStatus)
+            ? "Nog geen API-verbinding getest."
+            : _storedApiConfig.ConnectionStatus;
+        UpdateApiLastUsedStatus();
+        UpdateApiSyntaxUi();
     }
 
     private void UpdatePortalSecretSavedStatus()
@@ -272,6 +299,311 @@ public partial class AdminSettingsWindow : Window
             AdminReportSyntaxValidationTextBlock.Text = ex.Message;
             AdminSmtpPortalStatusTextBlock.Text = "Rapportsyntax is ongeldig: " + ex.Message;
             return false;
+        }
+    }
+
+    private void AdminSmtpApiSecretBox_GotKeyboardFocus(
+        object sender,
+        KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is PasswordBox passwordBox &&
+            string.Equals(
+                passwordBox.Password,
+                SmtpApiAdminConfigBuilder.StoredSecretPlaceholder,
+                StringComparison.Ordinal))
+        {
+            passwordBox.Clear();
+        }
+    }
+
+    private void AdminSmtpApiSyntaxTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (IsLoaded)
+        {
+            UpdateApiSyntaxUi();
+        }
+    }
+
+    private void UpdateApiSyntaxUi()
+    {
+        SmtpApiReportSyntaxSetValidation validation = SmtpApiReportSyntaxSet.Validate(
+            AdminSmtpApiSyntax1TextBox.Text,
+            AdminSmtpApiSyntax2TextBox.Text,
+            AdminSmtpApiSyntax3TextBox.Text);
+        AdminSmtpApiSyntaxValidationTextBlock.Text = validation.ErrorMessage ?? string.Empty;
+        AdminSmtpApiSyntaxPreviewTextBlock.Text = validation.IsValid
+            ? "Voorbeeld: " + string.Join(
+                "  |  ",
+                SmtpApiReportSyntaxSet
+                    .Resolve(
+                        AdminSmtpApiSyntax1TextBox.Text,
+                        AdminSmtpApiSyntax2TextBox.Text,
+                        AdminSmtpApiSyntax3TextBox.Text)
+                    .Select(template => SmtpPortalReportNameSyntax.BuildExample(template)))
+            : "Voorbeeld is beschikbaar zodra alle ingevulde syntaxen geldig zijn.";
+    }
+
+    private void UpdateApiLastUsedStatus()
+    {
+        AdminSmtpApiLastUsedTextBlock.Text = _storedApiConfig.LastSuccessfulUseAtUtc.HasValue
+            ? "API laatst succesvol gebruikt: " +
+              _storedApiConfig.LastSuccessfulUseAtUtc.Value.ToLocalTime().ToString("dd-MM-yyyy HH:mm")
+            : "API nog niet succesvol gebruikt.";
+    }
+
+    private SmtpApiAdminSettingsInput ReadApiInput()
+    {
+        return new SmtpApiAdminSettingsInput(
+            AdminSmtpApiKeyBox.Password,
+            AdminSmtpApiChannelComboBox.Text ?? string.Empty,
+            AdminSmtpApiSyntax1TextBox.Text,
+            AdminSmtpApiSyntax2TextBox.Text,
+            AdminSmtpApiSyntax3TextBox.Text);
+    }
+
+    private bool TrySaveApiSettingsOnly()
+    {
+        try
+        {
+            SmtpApiConfig updated = SmtpApiAdminConfigBuilder.Build(
+                _smtpApiStore.LoadConfig(),
+                ReadApiInput());
+            _smtpApiStore.SaveConfig(updated);
+            _storedApiConfig = updated;
+            AdminSmtpApiSyntaxValidationTextBlock.Text = string.Empty;
+            AdminSmtpApiKeySavedTextBlock.Text = updated.HasApiKey
+                ? "******** versleuteld opgeslagen."
+                : "Nog niet opgeslagen.";
+            if (updated.HasApiKey && string.IsNullOrEmpty(AdminSmtpApiKeyBox.Password))
+            {
+                AdminSmtpApiKeyBox.Password = SmtpApiAdminConfigBuilder.StoredSecretPlaceholder;
+            }
+
+            return true;
+        }
+        catch (InvalidOperationException ex)
+        {
+            AdminSmtpApiSyntaxValidationTextBlock.Text = ex.Message;
+            AdminSmtpApiStatusTextBlock.Text = "Instellingen niet opgeslagen: " + ex.Message;
+            return false;
+        }
+    }
+
+    private string? ResolveApiKeyForRequest()
+    {
+        if (!_storedApiConfig.HasApiKey)
+        {
+            AdminSmtpApiStatusTextBlock.Text = "Vul eerst een API-sleutel in.";
+            return null;
+        }
+
+        try
+        {
+            return SmtpPortalSecretProtector.Unprotect(_storedApiConfig.EncryptedApiKey!);
+        }
+        catch (Exception ex)
+        {
+            AdminSmtpApiStatusTextBlock.Text = "API-sleutel kon niet worden gelezen: " + ex.Message;
+            return null;
+        }
+    }
+
+    private async void TestSmtpApiConnectionButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!TrySaveApiSettingsOnly())
+        {
+            return;
+        }
+
+        string? apiKey = ResolveApiKeyForRequest();
+        if (apiKey is null)
+        {
+            return;
+        }
+
+        SetApiBusy(true, "SMTP.com API-verbinding testen...");
+        try
+        {
+            IReadOnlyList<SmtpApiChannel> channels =
+                await _smtpApiClient.ListChannelsAsync(apiKey, CancellationToken.None);
+            _smtpApiStore.RecordSuccessfulUse(DateTime.UtcNow);
+            _storedApiConfig = _smtpApiStore.LoadConfig() with
+            {
+                ConnectionStatus = $"Verbinding geslaagd; {channels.Count} channel(s) gevonden."
+            };
+            _smtpApiStore.SaveConfig(_storedApiConfig);
+            FillChannelComboBox(channels);
+            UpdateApiLastUsedStatus();
+            AdminSmtpApiStatusTextBlock.Text = _storedApiConfig.ConnectionStatus!;
+        }
+        catch (Exception ex)
+        {
+            MailLogInspectorLog.Error("smtp-api", "SMTP.com API-verbindingstest mislukt", ex);
+            AdminSmtpApiStatusTextBlock.Text = "Verbinding mislukt: " + ex.Message;
+        }
+        finally
+        {
+            SetApiBusy(false, AdminSmtpApiStatusTextBlock.Text);
+        }
+    }
+
+    private async void LoadSmtpApiChannelsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!TrySaveApiSettingsOnly())
+        {
+            return;
+        }
+
+        string? apiKey = ResolveApiKeyForRequest();
+        if (apiKey is null)
+        {
+            return;
+        }
+
+        SetApiBusy(true, "Channels ophalen...");
+        try
+        {
+            IReadOnlyList<SmtpApiChannel> channels =
+                await _smtpApiClient.ListChannelsAsync(apiKey, CancellationToken.None);
+            FillChannelComboBox(channels);
+            _smtpApiStore.RecordSuccessfulUse(DateTime.UtcNow);
+            _storedApiConfig = _smtpApiStore.LoadConfig();
+            UpdateApiLastUsedStatus();
+            AdminSmtpApiStatusTextBlock.Text = $"{channels.Count} channel(s) opgehaald.";
+        }
+        catch (Exception ex)
+        {
+            MailLogInspectorLog.Error("smtp-api", "Channels ophalen mislukt", ex);
+            AdminSmtpApiStatusTextBlock.Text = "Channels ophalen mislukt: " + ex.Message;
+        }
+        finally
+        {
+            SetApiBusy(false, AdminSmtpApiStatusTextBlock.Text);
+        }
+    }
+
+    private void FillChannelComboBox(IReadOnlyList<SmtpApiChannel> channels)
+    {
+        string current = AdminSmtpApiChannelComboBox.Text ?? string.Empty;
+        AdminSmtpApiChannelComboBox.ItemsSource = channels.Select(channel => channel.Name).ToArray();
+        AdminSmtpApiChannelComboBox.Text = current;
+    }
+
+    private async void LoadSmtpApiReportsButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!TrySaveApiSettingsOnly())
+        {
+            return;
+        }
+
+        string? apiKey = ResolveApiKeyForRequest();
+        if (apiKey is null)
+        {
+            return;
+        }
+
+        SetApiBusy(true, "Beschikbare rapporten ophalen...");
+        try
+        {
+            IReadOnlyList<SmtpApiReport> reports =
+                await _smtpApiClient.ListOndemandReportsAsync(apiKey, CancellationToken.None);
+            IReadOnlyList<string> templates = SmtpApiReportSyntaxSet.Resolve(
+                _storedApiConfig.ReportSyntax1,
+                _storedApiConfig.ReportSyntax2,
+                _storedApiConfig.ReportSyntax3);
+            IReadOnlyList<SmtpApiSelectedReport> available =
+                SmtpApiReportMatcher.ParseAvailable(reports, templates, _storedApiConfig.Channel);
+            AdminSmtpApiReportsListBox.ItemsSource = available
+                .Select(report => new SmtpApiReportListItem(report))
+                .ToArray();
+            _smtpApiStore.RecordSuccessfulUse(DateTime.UtcNow);
+            _storedApiConfig = _smtpApiStore.LoadConfig();
+            UpdateApiLastUsedStatus();
+            AdminSmtpApiStatusTextBlock.Text = available.Count == 0
+                ? $"Geen passende rapporten gevonden ({reports.Count} on-demand rapporten bekeken)."
+                : $"{available.Count} passend(e) rapport(en) gevonden. Selecteer wat je wilt importeren.";
+        }
+        catch (Exception ex)
+        {
+            MailLogInspectorLog.Error("smtp-api", "Rapporten ophalen via API mislukt", ex);
+            AdminSmtpApiStatusTextBlock.Text = "Rapporten ophalen mislukt: " + ex.Message;
+        }
+        finally
+        {
+            SetApiBusy(false, AdminSmtpApiStatusTextBlock.Text);
+        }
+    }
+
+    private async void ImportSelectedSmtpApiReportsButton_Click(object sender, RoutedEventArgs e)
+    {
+        SmtpApiSelectedReport[] selected = AdminSmtpApiReportsListBox.SelectedItems
+            .OfType<SmtpApiReportListItem>()
+            .Select(item => item.Report)
+            .ToArray();
+        if (selected.Length == 0)
+        {
+            AdminSmtpApiStatusTextBlock.Text = "Selecteer eerst een of meer rapporten.";
+            return;
+        }
+
+        if (!TrySaveApiSettingsOnly())
+        {
+            return;
+        }
+
+        SetApiBusy(true, "Geselecteerde rapporten downloaden en importeren...");
+        try
+        {
+            var mailStore = new MailLogInspectorStore(_workspace.DatabasePath);
+            mailStore.Initialize();
+            var importService = new MailLogInspectorImportService(mailStore, _workspace);
+            var source = new SmtpApiReportSyncSource(
+                _smtpApiStore,
+                _syncStore,
+                mailStore,
+                new GmailZipImportRunner(importService),
+                _smtpApiClient,
+                _workspace);
+            var progress = new Progress<string>(message =>
+                AdminSmtpApiStatusTextBlock.Text = message);
+            ReportSyncSourceResult result = await source.ImportSelectedAsync(
+                selected,
+                CancellationToken.None,
+                progress);
+            _storedApiConfig = _smtpApiStore.LoadConfig();
+            UpdateApiLastUsedStatus();
+            AdminSmtpApiStatusTextBlock.Text = "Import gereed. " + result.Summary;
+        }
+        catch (Exception ex)
+        {
+            MailLogInspectorLog.Error("smtp-api", "Import van geselecteerde API-rapporten mislukt", ex);
+            AdminSmtpApiStatusTextBlock.Text = "Import mislukt: " + ex.Message;
+        }
+        finally
+        {
+            SetApiBusy(false, AdminSmtpApiStatusTextBlock.Text);
+        }
+    }
+
+    private void SetApiBusy(bool busy, string status)
+    {
+        AdminSmtpApiStatusTextBlock.Text = status;
+        AdminSmtpApiProgressBar.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        SetSharedControlsEnabled(!busy);
+    }
+
+    private sealed class SmtpApiReportListItem
+    {
+        public SmtpApiReportListItem(SmtpApiSelectedReport report)
+        {
+            Report = report;
+        }
+
+        public SmtpApiSelectedReport Report { get; }
+
+        public override string ToString()
+        {
+            return $"{Report.PeriodStart:dd-MM-yyyy} → {Report.PeriodEnd:dd-MM-yyyy}  |  syntax {Report.SyntaxSlot}  |  {Report.Name}";
         }
     }
 
@@ -489,7 +821,8 @@ public partial class AdminSettingsWindow : Window
 
         GmailReportConfig gmailConfig = _store.LoadConfig();
         SmtpPortalConfig portalConfig = _smtpPortalStore.LoadConfig();
-        if (!IsSelectedSourceReady(_storedSyncConfig.Mode, gmailConfig, portalConfig))
+        SmtpApiConfig apiConfig = _smtpApiStore.LoadConfig();
+        if (!IsSelectedSourceReady(_storedSyncConfig.Mode, gmailConfig, portalConfig, apiConfig))
         {
             AdminReportSyncStatusTextBlock.Text = "De gekozen synchronisatiebron is nog niet volledig ingesteld.";
             return;
@@ -557,7 +890,7 @@ public partial class AdminSettingsWindow : Window
 
     private bool TrySaveCurrentSettings()
     {
-        if (!TrySavePortalSettingsOnly())
+        if (!TrySavePortalSettingsOnly() || !TrySaveApiSettingsOnly())
         {
             return false;
         }
@@ -588,14 +921,18 @@ public partial class AdminSettingsWindow : Window
     private static bool IsSelectedSourceReady(
         string mode,
         GmailReportConfig gmailConfig,
-        SmtpPortalConfig portalConfig)
+        SmtpPortalConfig portalConfig,
+        SmtpApiConfig apiConfig)
     {
         bool gmailReady = IsGmailConfigReady(gmailConfig);
         bool directReady = !string.IsNullOrWhiteSpace(portalConfig.Username) &&
                            !string.IsNullOrWhiteSpace(portalConfig.EncryptedPassword) &&
                            !string.IsNullOrWhiteSpace(portalConfig.EncryptedTotpSecret);
+        bool apiReady = apiConfig.HasApiKey;
         return ReportSyncMode.Normalize(mode) switch
         {
+            ReportSyncMode.ApiOnly => apiReady,
+            ReportSyncMode.ApiWithImapFallback => apiReady || gmailReady,
             ReportSyncMode.DirectOnly => directReady,
             ReportSyncMode.DirectWithGmailFallback => directReady || gmailReady,
             _ => gmailReady
@@ -662,6 +999,10 @@ public partial class AdminSettingsWindow : Window
         RunSmtpPortalProbeButton.IsEnabled = enabled;
         RunVisibleSmtpPortalProbeButton.IsEnabled = enabled;
         RunReportSyncNowButton.IsEnabled = enabled;
+        TestSmtpApiConnectionButton.IsEnabled = enabled;
+        LoadSmtpApiChannelsButton.IsEnabled = enabled;
+        LoadSmtpApiReportsButton.IsEnabled = enabled;
+        ImportSelectedSmtpApiReportsButton.IsEnabled = enabled;
         SaveAdminSettingsButton.IsEnabled = enabled;
         CancelAdminSettingsButton.IsEnabled = enabled;
     }

@@ -23,6 +23,7 @@ Klaar:
 - basis analyse-tab
 - versie in titelbalk
 - directe SMTP.com-download met MFA, sessiebehoud, validatie en IMAP-fallback
+- SMTP.com REST API v4 als standaard synchronisatiebron, met instelbare API-sleutel, channel, drie rapportsyntaxen en handmatige rapportselectie
 - Gmail, Microsoft 365 en eigen IMAP met verplichte TLS
 - dagelijkse planning vanaf 01:00 met herhaling per 15 minuten en oudste ontbrekende dag eerst
 - annuleerbare synchronisatie en databasewrites

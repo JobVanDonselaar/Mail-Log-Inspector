@@ -40,6 +40,9 @@ public partial class MainWindow : Window
 	private readonly SmtpPortalOperationalStore _smtpPortalOperationalStore;
 
 	private readonly ReportSyncOperationalStore _reportSyncOperationalStore;
+
+	private readonly SmtpApiOperationalStore _smtpApiOperationalStore;
+
 	private readonly ReportSyncRuntime _reportSyncRuntime;
 
 	private readonly ReportSyncCoordinator _reportSyncCoordinator;
@@ -112,13 +115,16 @@ public partial class MainWindow : Window
 		_smtpPortalOperationalStore.Initialize();
 		_reportSyncOperationalStore = new ReportSyncOperationalStore(_workspace.GmailOperationalDatabasePath);
 		_reportSyncOperationalStore.Initialize();
+		_smtpApiOperationalStore = new SmtpApiOperationalStore(_workspace.GmailOperationalDatabasePath);
+		_smtpApiOperationalStore.Initialize();
 		_reportSyncRuntime = ReportSyncRuntime.Create(
 			_workspace,
 			_store,
 			_importService,
 			_gmailOperationalStore,
 			_smtpPortalOperationalStore,
-			_reportSyncOperationalStore);
+			_reportSyncOperationalStore,
+			_smtpApiOperationalStore);
 		_reportSyncCoordinator = _reportSyncRuntime.Coordinator;
 		_gmailAutoSyncTimer = new DispatcherTimer
 		{
