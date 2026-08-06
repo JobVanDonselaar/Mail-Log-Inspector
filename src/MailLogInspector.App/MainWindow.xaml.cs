@@ -83,6 +83,8 @@ public partial class MainWindow : Window
 
 	private bool _applyingDatePickerBounds;
 
+	private bool _isOpeningDateSelectionPopup;
+
 	private bool _gmailSyncIsRunning;
 
 	private readonly DispatcherTimer _gmailAutoSyncTimer;

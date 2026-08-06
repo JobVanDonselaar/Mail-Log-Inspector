@@ -55,8 +55,8 @@ public sealed class MainWindowDatePopupLayoutTests
         string methodBlock = source.Substring(methodStart, methodEnd - methodStart);
 
         Assert.Contains("picker.IsDropDownOpen = false", methodBlock, StringComparison.Ordinal);
-        Assert.Contains("Dispatcher.BeginInvoke", methodBlock, StringComparison.Ordinal);
-        Assert.True(methodBlock.IndexOf("picker.IsDropDownOpen = false", StringComparison.Ordinal) < methodBlock.IndexOf("Dispatcher.BeginInvoke", StringComparison.Ordinal));
+        Assert.Contains("QueueDateSelectionPopupOpen", methodBlock, StringComparison.Ordinal);
+        Assert.True(methodBlock.IndexOf("picker.IsDropDownOpen = false", StringComparison.Ordinal) < methodBlock.IndexOf("QueueDateSelectionPopupOpen", StringComparison.Ordinal));
     }
     [Fact]
     public void DatePickers_InterceptNativeDropdownBeforeItOpens()
@@ -85,13 +85,12 @@ public sealed class MainWindowDatePopupLayoutTests
 
         int methodStart = source.IndexOf("private void DatePicker_PreviewMouseDown", StringComparison.Ordinal);
         Assert.True(methodStart >= 0);
-        int methodEnd = source.IndexOf("private void DatePicker_PreviewKeyDown", methodStart, StringComparison.Ordinal);
+        int methodEnd = source.IndexOf("private void DatePicker_PreviewMouseUp", methodStart, StringComparison.Ordinal);
         Assert.True(methodEnd > methodStart);
         string methodBlock = source.Substring(methodStart, methodEnd - methodStart);
-
         Assert.Contains("e.Handled = true", methodBlock, StringComparison.Ordinal);
-        Assert.Contains("Dispatcher.BeginInvoke", methodBlock, StringComparison.Ordinal);
-        Assert.True(methodBlock.IndexOf("e.Handled = true", StringComparison.Ordinal) < methodBlock.IndexOf("Dispatcher.BeginInvoke", StringComparison.Ordinal));
+        Assert.Contains("e.Handled = true", methodBlock, StringComparison.Ordinal);
+        Assert.DoesNotContain("QueueDateSelectionPopupOpen", methodBlock, StringComparison.Ordinal);
     }
     [Fact]
     public void DatePickerPreviewMouseUp_DefersPopupUntilCurrentClickFinishes()
@@ -106,7 +105,24 @@ public sealed class MainWindowDatePopupLayoutTests
         string methodBlock = source.Substring(methodStart, methodEnd - methodStart);
 
         Assert.Contains("e.Handled = true", methodBlock, StringComparison.Ordinal);
-        Assert.Contains("Dispatcher.BeginInvoke", methodBlock, StringComparison.Ordinal);
-        Assert.True(methodBlock.IndexOf("e.Handled = true", StringComparison.Ordinal) < methodBlock.IndexOf("Dispatcher.BeginInvoke", StringComparison.Ordinal));
+        Assert.Contains("QueueDateSelectionPopupOpen", methodBlock, StringComparison.Ordinal);
+        Assert.True(methodBlock.IndexOf("e.Handled = true", StringComparison.Ordinal) < methodBlock.IndexOf("QueueDateSelectionPopupOpen", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void OpenDateSelectionPopup_GuardsAgainstReentrantOpenForSamePicker()
+    {
+        string sourcePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "src", "MailLogInspector.App", "MainWindow.DatePopup.cs"));
+        string source = File.ReadAllText(sourcePath);
+
+        int methodStart = source.IndexOf("private void OpenDateSelectionPopup", StringComparison.Ordinal);
+        Assert.True(methodStart >= 0);
+        int methodEnd = source.IndexOf("private void QueueDateSelectionPopupOpen", methodStart, StringComparison.Ordinal);
+        Assert.True(methodEnd > methodStart);
+        string methodBlock = source.Substring(methodStart, methodEnd - methodStart);
+
+        Assert.Contains("if (_isOpeningDateSelectionPopup)", methodBlock, StringComparison.Ordinal);
+        Assert.Contains("if (DateSelectionPopup.IsOpen && ReferenceEquals(_popupDatePicker, picker))", methodBlock, StringComparison.Ordinal);
+        Assert.Contains("DateSelectionPopup.IsOpen = false", methodBlock, StringComparison.Ordinal);
     }
 }

@@ -49,7 +49,7 @@ public partial class MainWindow
 		}
 
 		e.Handled = true;
-		Dispatcher.BeginInvoke(new Action(() => OpenDateSelectionPopup(picker)), DispatcherPriority.Background);
+		QueueDateSelectionPopupOpen(picker, DispatcherPriority.Background);
 	}
 
 	private void DatePicker_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -76,7 +76,7 @@ public partial class MainWindow
 		}
 
 		picker.IsDropDownOpen = false;
-		Dispatcher.BeginInvoke(new Action(() => OpenDateSelectionPopup(picker)), DispatcherPriority.Input);
+		QueueDateSelectionPopupOpen(picker, DispatcherPriority.Input);
 	}
 	private void PopupCalendarDayButton_Click(object sender, RoutedEventArgs e)
 	{
@@ -162,10 +162,34 @@ public partial class MainWindow
 
 	private void OpenDateSelectionPopup(DatePicker picker)
 	{
+		if (_isOpeningDateSelectionPopup)
+		{
+			return;
+		}
+
+		_isOpeningDateSelectionPopup = true;
+		try
+		{
+			if (DateSelectionPopup.IsOpen && ReferenceEquals(_popupDatePicker, picker))
+			{
+				return;
+			}
+
+			DateSelectionPopup.IsOpen = false;
 		_popupDatePicker = picker;
 		ConfigureDateSelectionPopup(picker);
 		DateSelectionPopup.PlacementTarget = picker;
 		DateSelectionPopup.IsOpen = true;
+		}
+		finally
+		{
+			_isOpeningDateSelectionPopup = false;
+		}
+	}
+
+	private void QueueDateSelectionPopupOpen(DatePicker picker, DispatcherPriority priority)
+	{
+		Dispatcher.BeginInvoke(new Action(() => OpenDateSelectionPopup(picker)), priority);
 	}
 
 	private void ConfigureDateSelectionPopup(DatePicker picker)
