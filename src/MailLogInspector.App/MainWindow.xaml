@@ -882,6 +882,153 @@
         </Grid>
       </TabItem>
 
+      <TabItem Name="LiveApiTabItem">
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE968;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="Live API" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <Grid Name="LiveApiStatsPanel" Background="{StaticResource PanelFillBrush}">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <!-- Toolbar -->
+          <Border Grid.Row="0" Style="{StaticResource PanelBorderStyle}" Margin="0,0,0,12">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Periode:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold" />
+                <Button Name="LiveApiPeriodTodayButton" Content="Vandaag" Style="{StaticResource SecondaryButtonStyle}" Click="LiveApiPeriodToday_Click" Margin="0,0,4,0" />
+                <Button Name="LiveApiPeriod7DaysButton" Content="7 dagen" Style="{StaticResource SecondaryButtonStyle}" Click="LiveApiPeriod7Days_Click" Margin="0,0,4,0" />
+                <Button Name="LiveApiPeriod30DaysButton" Content="30 dagen" Style="{StaticResource SecondaryButtonStyle}" Click="LiveApiPeriod30Days_Click" Margin="0,0,16,0" />
+                <Button Name="LiveApiRefreshButton" Style="{StaticResource SecondaryButtonStyle}" Click="LiveApiRefreshButton_Click" ToolTip="Nu vernieuwen" Margin="0">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" />
+                    <TextBlock Text="Vernieuwen" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Auto-refresh (min, 0=nooit):" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                <TextBox Name="LiveApiAutoRefreshIntervalBox" Text="60" Width="48" Height="28" VerticalContentAlignment="Center" LostFocus="LiveApiAutoRefreshIntervalBox_LostFocus" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <!-- Metric cards -->
+          <UniformGrid Grid.Row="1" Columns="7" Margin="0,0,0,12">
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Accepted" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiAcceptedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Accepted — ontvangen door SMTP.com">
+                  <TextBlock Text="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Delivered" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiDeliveredTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="Succesvol afgeleverd">
+                  <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource SuccessBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="% Afgeleverd" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiDeliveredPctTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#EAF5EF" HorizontalAlignment="Left" ToolTip="Percentage succesvol afgeleverd">
+                  <TextBlock Text="%" Foreground="{StaticResource SuccessBrush}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Failed" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiFailedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#FDECE9" HorizontalAlignment="Left" ToolTip="Mislukt / bounced">
+                  <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource DangerBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Queue" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiQueuedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#FFF4DE" HorizontalAlignment="Left" ToolTip="Nog in wachtrij">
+                  <TextBlock Text="&#xE823;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource WarningBrush}" FontSize="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Uitgeschreven" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiUnsubTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#F3F0FD" HorizontalAlignment="Left" ToolTip="Uitgeschreven (unsubscribe)">
+                  <TextBlock Text="&#xE8F8;" FontFamily="Segoe MDL2 Assets" Foreground="#6B46C1" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+            <Border Style="{StaticResource MetricCardStyle}" Margin="0">
+              <Grid>
+                <StackPanel Margin="52,0,0,0" VerticalAlignment="Center">
+                  <TextBlock Text="Klachten" Style="{StaticResource MutedTextStyle}" />
+                  <TextBlock Name="LiveApiComplainedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
+                </StackPanel>
+                <Border Width="38" Height="38" CornerRadius="19" Background="#FDECE9" HorizontalAlignment="Left" ToolTip="Spamklachten">
+                  <TextBlock Text="&#xE7C1;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource DangerBrush}" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+              </Grid>
+            </Border>
+          </UniformGrid>
+
+          <!-- Status + progress -->
+          <StackPanel Grid.Row="2" Margin="0,0,0,8">
+            <ProgressBar Name="LiveApiProgressBar" Height="4" IsIndeterminate="True" Visibility="Collapsed" Margin="0,0,0,6" />
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Name="LiveApiLastUpdatedTextBlock" Style="{StaticResource MutedTextStyle}" Margin="0,0,16,0" />
+              <TextBlock Name="LiveApiStatusTextBlock" Style="{StaticResource MutedTextStyle}" />
+            </StackPanel>
+          </StackPanel>
+
+          <!-- Uitleg -->
+          <Border Grid.Row="3" Style="{StaticResource PanelBorderStyle}" VerticalAlignment="Top">
+            <StackPanel>
+              <TextBlock Text="Over Live API" FontWeight="SemiBold" Margin="0,0,0,8" />
+              <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" FontSize="12">
+                De Live API-tab haalt totaalstatistieken rechtstreeks op via de SMTP.com REST API v4 — zonder dat je een rapport hoeft te importeren.
+                Kies een periode (Vandaag / 7 dagen / 30 dagen) en druk op Vernieuwen, of stel een auto-refresh interval in.
+                Stel het interval in op 0 om automatisch vernieuwen uit te schakelen.
+                De API-sleutel wordt opgehaald uit de Admin-instellingen (SMTP.com API-tab).
+              </TextBlock>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </TabItem>
+
       <TabItem>
         <TabItem.Header>
           <StackPanel Orientation="Horizontal">

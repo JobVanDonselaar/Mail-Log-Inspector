@@ -121,6 +121,7 @@ public partial class MainWindow : Window
 		_reportSyncOperationalStore.Initialize();
 		_smtpApiOperationalStore = new SmtpApiOperationalStore(_workspace.GmailOperationalDatabasePath);
 		_smtpApiOperationalStore.Initialize();
+		_smtpApiStatsService = new SmtpApiStatsService(new System.Net.Http.HttpClient());
 		_reportSyncRuntime = ReportSyncRuntime.Create(
 			_workspace,
 			_store,
@@ -166,7 +167,8 @@ public partial class MainWindow : Window
 				syncConfig = _reportSyncOperationalStore.LoadConfig();
 				RefreshGmailSection();
 				ApplyGmailAutoSyncSchedule(syncConfig);
-				StartupStatusTextBlock.Text = "Klaar.";
+					LiveApi_InitializeTab();
+					StartupStatusTextBlock.Text = "Klaar.";
 			}
 			catch (Exception ex)
 			{
@@ -322,6 +324,11 @@ public partial class MainWindow : Window
 		}
 
 		UpdateTopStatusPanelVisibility();
+
+		if (MainTabControl.SelectedItem is System.Windows.Controls.TabItem { Name: "LiveApiTabItem" })
+		{
+			LiveApiTab_SelectionChanged();
+		}
 	}
 
 	private async void AnalysisRefreshButton_Click(object sender, RoutedEventArgs e)
