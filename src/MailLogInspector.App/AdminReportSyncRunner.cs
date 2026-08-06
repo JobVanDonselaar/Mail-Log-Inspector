@@ -9,17 +9,20 @@ internal sealed class AdminReportSyncRunner
     private readonly GmailReportOperationalStore _gmailStore;
     private readonly SmtpPortalOperationalStore _portalStore;
     private readonly ReportSyncOperationalStore _syncStore;
+    private readonly SmtpApiOperationalStore _apiStore;
 
     public AdminReportSyncRunner(
         MailLogInspectorWorkspacePaths workspace,
         GmailReportOperationalStore gmailStore,
         SmtpPortalOperationalStore portalStore,
-        ReportSyncOperationalStore syncStore)
+        ReportSyncOperationalStore syncStore,
+        SmtpApiOperationalStore apiStore)
     {
         _workspace = workspace;
         _gmailStore = gmailStore;
         _portalStore = portalStore;
         _syncStore = syncStore;
+        _apiStore = apiStore;
     }
 
     public async Task<ReportSyncSourceResult> RunAsync(
@@ -43,7 +46,8 @@ internal sealed class AdminReportSyncRunner
             importService,
             _gmailStore,
             _portalStore,
-            _syncStore);
+            _syncStore,
+            _apiStore);
 
         DateTime? latestReportDay = mailStore.ReadLatestDailyImportReportDayReadOnly();
         ReportSyncRunPlan plan = ReportSyncRunPlan.Create(latestReportDay);

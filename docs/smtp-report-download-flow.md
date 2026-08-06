@@ -2,12 +2,14 @@
 
 ## Doel
 
-Mail Log Inspector kan dagelijkse SMTP.com-rapporten rechtstreeks uit `My reports`, via IMAP of handmatig verwerken. Versie 0.197 gebruikt voor automatische synchronisatie één broncoördinator.
+Mail Log Inspector kan dagelijkse SMTP.com-rapporten via de REST API, rechtstreeks uit `My reports`, via IMAP of handmatig verwerken. Versie 0.200 gebruikt voor automatische synchronisatie één broncoördinator.
 
 ## Bronkeuze
 
 Onder `MailLogInspector.exe /admin` kiest de beheerder:
 
+- `API downloaden (aanbevolen)`: de SMTP.com REST API v4 is de standaardbron; er komt geen browser aan te pas.
+- `API downloaden, bij fout IMAP`: de API is primair; de ingestelde IMAP-mailbox wordt gebruikt bij een technische fout of wanneer geen passend rapport klaarstaat.
 - `Direct downloaden, bij fout IMAP`: SMTP.com direct is primair. De ingestelde IMAP-mailbox wordt gebruikt bij een technische fout of wanneer geen passend `Ready`-rapport beschikbaar is.
 - `Alleen IMAP`: het rapport wordt via de ingestelde IMAP-mailbox gedownload, geïmporteerd en na succes permanent uit die mailbox verwijderd.
 - `Alleen direct downloaden`: alleen het SMTP.com-portaal wordt gebruikt; fouten leiden niet tot IMAP-fallback.
@@ -26,6 +28,30 @@ Een lopende synchronisatie kan met `Stop` worden geannuleerd. De annulering loop
 - De rapportdag wordt uit UTC-tijdstempels bepaald; de planning om 01:00 blijft lokale tijd gebruiken.
 
 De EXE initialiseert een ontbrekende database zelf. GitHub Copilot of een beheerder hoeft de SQLite-database daarvoor niet handmatig aan te maken of te wijzigen.
+
+## SMTP.com API-selectie
+
+De API-flow:
+
+1. leest de DPAPI-versleutelde API-sleutel uit `smtp_api_config`;
+2. haalt `GET https://api.smtp.com/v4/reports` op met header `X-SMTPCOM-API` (de API geeft 404 op paden met afsluitende slash);
+3. gebruikt uitsluitend de lijst `data.ondemand`;
+4. houdt alleen rapporten met status `done` en een downloadlocatie over;
+5. filtert op het ingestelde channel wanneer dat is ingevuld;
+6. matcht de rapportnaam tegen de drie instelbare syntaxen, waarbij het laagste slotnummer wint;
+7. downloadt iedere ZIP naar `Incoming\SmtpApi` en valideert die met dezelfde ZIP-limieten als de portaalflow;
+8. vergelijkt SHA-256 met bestaande importhashes en importeert alleen nieuwe bestanden;
+9. registreert de bron als `SMTP.com API`.
+
+De downloadlocatie is een voorondertekende opslag-URL; die aanroep gebruikt bewust geen API-sleutel.
+
+### Rapportsyntax
+
+Er zijn drie syntaxslots. Elk slot gebruikt `{start}` en `{end}` voor `yyyy-MM-dd`; overige tekst blijft letterlijk. Lege slots worden genegeerd en minimaal één slot moet geldig zijn. Zonder configuratie geldt `NextGen_{start}(00)_{end}(00) (delivered + bounced + queue) (raw_event_stream)`.
+
+### Handmatige selectie
+
+`Beschikbare rapporten ophalen` toont alle klaarstaande rapporten die op een syntax passen, met periode, slotnummer en naam. `Geselecteerde importeren` downloadt en importeert alleen de aangevinkte regels via dezelfde importservice en dedupliceert op SHA-256.
 
 ## SMTP.com-selectie
 
@@ -94,6 +120,7 @@ De knoppen onder `/admin` blijven gescheiden van productie-import:
 
 Iedere import wordt aangeduid als:
 
+- `SMTP.com API`;
 - `SMTP.com direct`;
 - `Gmail`;
 - `IMAP`;
@@ -105,6 +132,11 @@ Het bronlabel staat in het lokale log en in de gecombineerde importlijst op Dash
 
 - Coördinatie: `src/MailLogInspector.App/ReportSyncCoordinator.cs`
 - Planning: `src/MailLogInspector.App/ReportSyncSchedulePolicy.cs`
+- API-bron: `src/MailLogInspector.App/SmtpApiReportSyncSource.cs`
+- API-client: `src/MailLogInspector.App/SmtpApiClient.cs`
+- API-selectieregels: `src/MailLogInspector.App/SmtpApiReportMatcher.cs`
+- API-syntaxslots: `src/MailLogInspector.App/SmtpApiReportSyntaxSet.cs`
+- API-configuratie: `src/MailLogInspector.Storage/SmtpApiOperationalStore.cs`
 - Directe bron: `src/MailLogInspector.App/SmtpPortalReportSyncSource.cs`
 - IMAP-bron: `src/MailLogInspector.App/GmailReportSyncSource.cs`
 - Portaalbesturing: `src/MailLogInspector.App/SmtpPortalBrowserWindow.xaml.cs`

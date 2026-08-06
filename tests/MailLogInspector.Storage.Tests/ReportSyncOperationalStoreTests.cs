@@ -7,13 +7,13 @@ namespace MailLogInspector.Storage.Tests;
 public sealed class ReportSyncOperationalStoreTests
 {
     [Fact]
-    public void NewStoreDefaultsToGmailOnly()
+    public void NewStoreDefaultsToApiOnly()
     {
         ReportSyncOperationalStore store = CreateStore();
 
         ReportSyncConfig config = store.LoadConfig();
 
-        Assert.Equal(ReportSyncMode.GmailOnly, config.Mode);
+        Assert.Equal(ReportSyncMode.ApiOnly, config.Mode);
         Assert.False(config.AutoSyncEnabled);
         Assert.False(config.CloseToTrayEnabled);
         Assert.False(config.PortalSyncVisible);
@@ -35,6 +35,8 @@ public sealed class ReportSyncOperationalStoreTests
     [InlineData(ReportSyncMode.DirectWithGmailFallback)]
     [InlineData(ReportSyncMode.GmailOnly)]
     [InlineData(ReportSyncMode.DirectOnly)]
+    [InlineData(ReportSyncMode.ApiOnly)]
+    [InlineData(ReportSyncMode.ApiWithImapFallback)]
     public void SaveConfigRoundTripsAllModes(string mode)
     {
         ReportSyncOperationalStore store = CreateStore();

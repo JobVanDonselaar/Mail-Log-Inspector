@@ -8,17 +8,20 @@ public sealed class ReportSyncCoordinator
     private readonly ReportSyncOperationalStore _store;
     private readonly IReportSyncSource _directSource;
     private readonly IReportSyncSource _gmailSource;
+    private readonly IReportSyncSource _apiSource;
     private readonly Func<DateTime> _utcNow;
 
     public ReportSyncCoordinator(
         ReportSyncOperationalStore store,
         IReportSyncSource directSource,
         IReportSyncSource gmailSource,
+        IReportSyncSource apiSource,
         Func<DateTime>? utcNow = null)
     {
         _store = store;
         _directSource = directSource;
         _gmailSource = gmailSource;
+        _apiSource = apiSource;
         _utcNow = utcNow ?? (() => DateTime.UtcNow);
     }
 
@@ -35,13 +38,26 @@ public sealed class ReportSyncCoordinator
 
         ReportSyncSourceResult result = normalizedMode switch
         {
+            ReportSyncMode.ApiOnly => await RunSourceAsync(
+                _apiSource,
+                latestOnly,
+                minimumReportDayExclusive,
+                cancellationToken,
+                progress),
+            ReportSyncMode.ApiWithImapFallback => await RunWithFallbackAsync(
+                _apiSource,
+                latestOnly,
+                minimumReportDayExclusive,
+                cancellationToken,
+                progress),
             ReportSyncMode.DirectOnly => await RunSourceAsync(
                 _directSource,
                 latestOnly,
                 minimumReportDayExclusive,
                 cancellationToken,
                 progress),
-            ReportSyncMode.DirectWithGmailFallback => await RunDirectWithFallbackAsync(
+            ReportSyncMode.DirectWithGmailFallback => await RunWithFallbackAsync(
+                _directSource,
                 latestOnly,
                 minimumReportDayExclusive,
                 cancellationToken,
@@ -62,33 +78,35 @@ public sealed class ReportSyncCoordinator
         return result;
     }
 
-    private async Task<ReportSyncSourceResult> RunDirectWithFallbackAsync(
+    private async Task<ReportSyncSourceResult> RunWithFallbackAsync(
+        IReportSyncSource primarySource,
         bool latestOnly,
         DateTime? minimumReportDayExclusive,
         CancellationToken cancellationToken,
         IProgress<string>? progress)
     {
+        string primaryLabel = primarySource.SourceLabel;
         try
         {
-            ReportSyncSourceResult direct = await RunSourceAsync(
-                _directSource,
+            ReportSyncSourceResult primary = await RunSourceAsync(
+                primarySource,
                 latestOnly,
                 minimumReportDayExclusive,
                 cancellationToken,
                 progress);
-            if (!direct.NoReadyReport)
+            if (!primary.NoReadyReport)
             {
-                return direct;
+                return primary;
             }
 
-            const string reason = "Geen Ready-rapport via SMTP.com direct.";
-            MailLogInspectorLog.Info("sync", $"Bron={ReportImportSource.SmtpDirect} | {reason} | Fallback=IMAP");
+            string reason = $"Geen Ready-rapport via {primaryLabel}.";
+            MailLogInspectorLog.Info("sync", $"Bron={primaryLabel} | {reason} | Fallback=IMAP");
             progress?.Report(reason + " IMAP wordt geprobeerd...");
             return WithFallbackSummary(
                 await RunSourceAsync(
                     _gmailSource,
                     latestOnly,
-                    direct.LatestReportDay ?? minimumReportDayExclusive,
+                    primary.LatestReportDay ?? minimumReportDayExclusive,
                     cancellationToken,
                     progress),
                 reason);
@@ -97,9 +115,9 @@ public sealed class ReportSyncCoordinator
         {
             MailLogInspectorLog.Error(
                 "sync",
-                $"Bron={ReportImportSource.SmtpDirect} | Directe synchronisatie mislukt | Fallback=IMAP",
+                $"Bron={primaryLabel} | Primaire synchronisatie mislukt | Fallback=IMAP",
                 ex);
-            progress?.Report("Direct downloaden mislukt. IMAP wordt geprobeerd...");
+            progress?.Report($"{primaryLabel} mislukt. IMAP wordt geprobeerd...");
             return WithFallbackSummary(
                 await RunSourceAsync(
                     _gmailSource,
@@ -132,11 +150,11 @@ public sealed class ReportSyncCoordinator
 
     private static ReportSyncSourceResult WithFallbackSummary(
         ReportSyncSourceResult result,
-        string directReason)
+        string primaryReason)
     {
         return result with
         {
-            Summary = $"Directe download niet gebruikt ({directReason}); fallback IMAP. {result.Summary}"
+            Summary = $"Primaire bron niet gebruikt ({primaryReason}); fallback IMAP. {result.Summary}"
         };
     }
 }

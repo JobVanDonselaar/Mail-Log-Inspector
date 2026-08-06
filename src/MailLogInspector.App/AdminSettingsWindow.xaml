@@ -41,6 +41,8 @@
           <TextBlock Text="Algemene instellingen voor handmatige en automatische synchronisatie." Foreground="#51657F" Margin="0,4,0,0" TextWrapping="Wrap" />
         </StackPanel>
         <ComboBox Name="AdminSyncSourceComboBox" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center">
+          <ComboBoxItem Content="API downloaden (aanbevolen)" Tag="api-only" />
+          <ComboBoxItem Content="API downloaden, bij fout IMAP" Tag="api-with-imap-fallback" />
           <ComboBoxItem Content="Direct downloaden, bij fout IMAP" Tag="direct-with-gmail-fallback" />
           <ComboBoxItem Content="Alleen direct downloaden" Tag="direct-only" />
           <ComboBoxItem Content="Alleen IMAP" Tag="gmail-only" />
@@ -61,10 +63,57 @@
       </Grid>
     </Border>
 
-    <Grid Grid.Row="3">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+    <TabControl Grid.Row="3" Name="AdminSourceTabControl" Background="White" BorderBrush="#CBD7E4">
+      <TabItem Name="AdminSmtpApiTabItem" Header="SMTP.com API">
+      <Border Background="White" BorderBrush="#CBD7E4" BorderThickness="0" Padding="14">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="8" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+          <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Text="SMTP.com API" FontSize="16" FontWeight="SemiBold" Foreground="#14233A" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Text="Standaardbron. Haalt klaarstaande on-demand rapporten op via de REST API en importeert ze zonder browser." Foreground="#51657F" Margin="0,4,0,0" TextWrapping="Wrap" />
+          <StackPanel Grid.Row="3" Grid.Column="0"><TextBlock Text="API-sleutel" FontWeight="SemiBold" Margin="0,0,0,5" /><PasswordBox Name="AdminSmtpApiKeyBox" GotKeyboardFocus="AdminSmtpApiSecretBox_GotKeyboardFocus" /><TextBlock Name="AdminSmtpApiKeySavedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,4,0,0" /></StackPanel>
+          <StackPanel Grid.Row="3" Grid.Column="2"><TextBlock Text="Channel" FontWeight="SemiBold" Margin="0,0,0,5" /><ComboBox Name="AdminSmtpApiChannelComboBox" IsEditable="True" /><TextBlock Text="Leeg laten om alle channels toe te staan." Foreground="#51657F" FontSize="11" Margin="0,4,0,0" /></StackPanel>
+          <StackPanel Grid.Row="3" Grid.Column="4" VerticalAlignment="Top" Margin="0,22,0,0">
+            <Button Name="LoadSmtpApiChannelsButton" Content="Channels ophalen" Click="LoadSmtpApiChannelsButton_Click" />
+          </StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="0"><TextBlock Text="Rapportsyntax 1" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminSmtpApiSyntax1TextBox" Height="26" FontSize="10" TextChanged="AdminSmtpApiSyntaxTextBox_TextChanged" /></StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="2"><TextBlock Text="Rapportsyntax 2" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminSmtpApiSyntax2TextBox" Height="26" FontSize="10" TextChanged="AdminSmtpApiSyntaxTextBox_TextChanged" /></StackPanel>
+          <StackPanel Grid.Row="5" Grid.Column="4"><TextBlock Text="Rapportsyntax 3" FontWeight="SemiBold" Margin="0,0,0,5" /><TextBox Name="AdminSmtpApiSyntax3TextBox" Height="26" FontSize="10" TextChanged="AdminSmtpApiSyntaxTextBox_TextChanged" /></StackPanel>
+          <TextBlock Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="5" Text="Gebruik {start} en {end} voor yyyy-MM-dd; lege velden worden genegeerd." Foreground="#51657F" FontSize="10" Margin="0,3,0,0" TextWrapping="Wrap" />
+          <TextBlock Name="AdminSmtpApiSyntaxPreviewTextBlock" Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="5" Foreground="#51657F" FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+          <TextBlock Name="AdminSmtpApiSyntaxValidationTextBlock" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="5" Foreground="#B42318" FontSize="10" Margin="0,2,0,0" TextWrapping="Wrap" />
+          <Grid Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,8,0,0">
+            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+              <Button Name="TestSmtpApiConnectionButton" Content="Verbinding testen" Click="TestSmtpApiConnectionButton_Click" />
+              <Button Name="LoadSmtpApiReportsButton" Content="Beschikbare rapporten ophalen" Click="LoadSmtpApiReportsButton_Click" />
+              <Button Name="ImportSelectedSmtpApiReportsButton" Content="Geselecteerde importeren" Margin="0" Click="ImportSelectedSmtpApiReportsButton_Click" />
+            </StackPanel>
+            <ListBox Name="AdminSmtpApiReportsListBox" Grid.Row="1" Margin="0,8,0,0" SelectionMode="Extended" BorderBrush="#B9C7D6" FontSize="11" />
+          </Grid>
+          <StackPanel Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,6,0,0">
+            <TextBlock Name="AdminSmtpApiStatusTextBlock" Foreground="#51657F" TextWrapping="Wrap" />
+            <TextBlock Name="AdminSmtpApiLastUsedTextBlock" Foreground="#51657F" FontSize="11" Margin="0,3,0,0" />
+            <ProgressBar Name="AdminSmtpApiProgressBar" Height="6" IsIndeterminate="True" Visibility="Collapsed" Margin="0,6,0,0" />
+          </StackPanel>
+        </Grid>
+      </Border>
+      </TabItem>
 
-      <Border Grid.Column="0" Background="White" BorderBrush="#CBD7E4" BorderThickness="1" CornerRadius="6" Padding="14">
+      <TabItem Name="AdminSmtpDirectTabItem" Header="SMTP.com direct">
+      <Border Background="White" BorderBrush="#CBD7E4" BorderThickness="0" Padding="14">
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -110,8 +159,10 @@
           </StackPanel>
         </Grid>
       </Border>
+      </TabItem>
 
-      <Border Grid.Column="2" Background="White" BorderBrush="#CBD7E4" BorderThickness="1" CornerRadius="6" Padding="16">
+      <TabItem Name="AdminImapTabItem" Header="IMAP">
+      <Border Background="White" BorderBrush="#CBD7E4" BorderThickness="0" Padding="16">
         <Grid>
           <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="6" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
           <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="14" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -139,7 +190,8 @@
           </StackPanel>
         </Grid>
       </Border>
-    </Grid>
+      </TabItem>
+    </TabControl>
 
     <Grid Grid.Row="4" Margin="0,14,0,0">
       <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

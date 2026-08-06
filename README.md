@@ -35,21 +35,31 @@ Bestaat er nog geen database, dan maakt de EXE die zelf aan. De eerste automatis
 - Zoek op datum, afzender, ontvanger en status. Bij een afzenderdomein staat `Domeinanalyse tonen` standaard aan en opent het een snel dashboard met 30-daagse aflevertrend, aflevertijdverdeling en bounce-oorzaken. Bij één gevonden afzendergroep worden de ontvangers automatisch uitgeklapt.
 - Excel exporteert de werkelijk zichtbare zoekregels. Met domeinanalyse actief staat als eerste werkblad een zakelijk Exquise Next Generation afleverrapport voor het praktijkdomein en verzending via SMTP.com. De filterbare zoekresultaten volgen op het tweede werkblad.
 - Analyse toont totalen, domeinen, SMTP-responsen en bounceoorzaken.
-- Dashboard toont importkwaliteit, één gecombineerde importlijst, acties en opslag. De importlijst vermeldt `SMTP.com direct`, `IMAP` of `Handmatig` als bron.
+- Dashboard toont importkwaliteit, één gecombineerde importlijst, acties en opslag. De importlijst vermeldt `SMTP.com API`, `SMTP.com direct`, `IMAP` of `Handmatig` als bron.
 - Start `MailLogInspector.exe /admin` om bronkeuze, inloggegevens, automatische synchronisatie en systeemvakgedrag te beheren. Dezelfde instellingen zijn onderaan Help bereikbaar.
 - Lokale diagnose staat in `Logs\mail-log-inspector.log` onder de workspace. Synchronisatie- en importregels bevatten altijd een bronlabel.
 
 De EXE bouwt benodigde domeinaggregaties na een upgrade eenmalig en transactioneel op voor de actieve database en maandarchieven. Gewone zoekresultaten blijven detaildata gebruiken; dashboardqueries lezen daarna alleen de compacte dagtotalen.
 
-## Synchronisatie en IMAP 0.197
+## Synchronisatie en IMAP 0.200
 
-Onder `/admin` zijn drie modi beschikbaar:
+Onder `/admin` zijn vijf modi beschikbaar:
 
-1. `Direct downloaden, bij fout IMAP`: probeert SMTP.com direct en gebruikt de ingestelde IMAP-mailbox bij een technische fout of wanneer geen passend `Ready`-rapport beschikbaar is.
-2. `Alleen IMAP`: gebruikt uitsluitend de ingestelde IMAP-rapportflow.
-3. `Alleen direct downloaden`: gebruikt uitsluitend het SMTP.com-portaal en valt nooit terug op IMAP.
+1. `API downloaden (aanbevolen)`: standaardbron. Haalt klaarstaande on-demand rapporten op via de SMTP.com REST API v4 en importeert ze zonder browser.
+2. `API downloaden, bij fout IMAP`: gebruikt de API en valt terug op de ingestelde IMAP-mailbox bij een technische fout of wanneer geen passend rapport klaarstaat.
+3. `Direct downloaden, bij fout IMAP`: probeert SMTP.com direct via WebView2 en gebruikt de ingestelde IMAP-mailbox bij een technische fout of wanneer geen passend `Ready`-rapport beschikbaar is.
+4. `Alleen IMAP`: gebruikt uitsluitend de ingestelde IMAP-rapportflow.
+5. `Alleen direct downloaden`: gebruikt uitsluitend het SMTP.com-portaal en valt nooit terug op IMAP.
 
-De gekozen modus geldt voor automatische synchronisatie, `Sync nu` en de beheerdersactie `Nu synchroniseren`.
+De gekozen modus geldt voor automatische synchronisatie, `Sync nu` en de beheerdersactie `Nu synchroniseren`. Nieuwe installaties starten op `API downloaden`; bestaande installaties behouden hun opgeslagen modus.
+
+### SMTP.com API-tab
+
+- De API-sleutel wordt Windows-gebruikergebonden versleuteld opgeslagen; een readonly-sleutel volstaat voor ophalen en downloaden.
+- `Channel` beperkt de rapportselectie tot één kanaal. Laat het veld leeg om alle kanalen toe te staan. `Channels ophalen` vult de keuzelijst met de kanalen van het account.
+- Er zijn drie rapportsyntaxvelden. Elk veld gebruikt `{start}` en `{end}` voor `yyyy-MM-dd`; lege velden worden genegeerd en minimaal één syntax is verplicht. Standaard staat slot 1 op `NextGen_{start}(00)_{end}(00) (delivered + bounced + queue) (raw_event_stream)`. Bij meerdere treffers per dag wint het laagste slotnummer.
+- `Verbinding testen` controleert de sleutel via de channels-endpoint. `Beschikbare rapporten ophalen` toont alle klaarstaande rapporten die op een van de syntaxen passen; `Geselecteerde importeren` downloadt en importeert de aangevinkte regels.
+- De API levert alleen afgeronde rapporten (`done`) met een downloadlocatie. Rapporten in behandeling worden overgeslagen.
 
 - De eerste automatische poging start dagelijks om `01:00` lokale tijd.
 - Zolang het rapport van gisteren ontbreekt, volgt iedere 15 minuten een nieuwe poging.

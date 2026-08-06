@@ -72,7 +72,9 @@ public class App : System.Windows.Application
         smtpPortalStore.Initialize();
         var syncStore = new ReportSyncOperationalStore(workspace.GmailOperationalDatabasePath);
         syncStore.Initialize();
-        var window = new AdminSettingsWindow(store, smtpPortalStore, syncStore, workspace);
+        var apiStore = new SmtpApiOperationalStore(workspace.GmailOperationalDatabasePath);
+        apiStore.Initialize();
+        var window = new AdminSettingsWindow(store, smtpPortalStore, syncStore, apiStore, workspace);
         if (owner is not null)
         {
             window.Owner = owner;

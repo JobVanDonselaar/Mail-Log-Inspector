@@ -1317,8 +1317,9 @@
             <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
               <StackPanel>
                 <TextBlock Text="Synchronisatie en beheerdersinstellingen" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
-                <TextBlock Text="&#x2022; De bronkeuze is: direct downloaden met IMAP-terugval, alleen direct downloaden of alleen IMAP. De gekozen bron geldt voor automatische en handmatige synchronisatie." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De bronkeuze is: API downloaden, API met IMAP-terugval, direct downloaden met IMAP-terugval, alleen direct downloaden of alleen IMAP. De gekozen bron geldt voor automatische en handmatige synchronisatie." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De eerste automatische poging start dagelijks om 01:00 lokale tijd. Als het rapport van gisteren nog ontbreekt, volgt iedere 15 minuten een nieuwe poging. Rapportdagen worden uit UTC-tijdstempels bepaald." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; SMTP.com API is de standaardbron. Vul de API-sleutel en eventueel een channel in, stel maximaal drie rapportsyntaxen in en gebruik Beschikbare rapporten ophalen om te kiezen welke klaarstaande rapporten worden geïmporteerd." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; SMTP.com direct gebruikt een bestaande Ready-rapportregel. Proefdownload controleert download, ZIP en hash zonder te importeren; Diagnose toont dezelfde portaalflow zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; IMAP ondersteunt Gmail, Microsoft 365 / Outlook.com en een eigen IMAP-server. Verbindingen gebruiken altijd TLS: direct SSL of verplichte STARTTLS." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een actieve synchronisatie kan met Stop worden afgebroken. Downloads, import en databasewrites reageren op die annulering." TextWrapping="Wrap" Margin="0,0,0,6" />

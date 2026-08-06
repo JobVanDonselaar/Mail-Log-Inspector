@@ -12,7 +12,8 @@ public sealed class ReportSyncCoordinatorTests
         TestContext context = CreateContext();
         var direct = new FakeSource(ReportImportSource.SmtpDirect, Success(ReportImportSource.SmtpDirect));
         var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
-        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, context.UtcNow);
+        var api = new FakeSource(ReportImportSource.SmtpApi, Success(ReportImportSource.SmtpApi));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
 
         ReportSyncSourceResult result = await coordinator.RunAsync(
             ReportSyncMode.GmailOnly,
@@ -31,7 +32,8 @@ public sealed class ReportSyncCoordinatorTests
         TestContext context = CreateContext();
         var direct = new FakeSource(ReportImportSource.SmtpDirect, Success(ReportImportSource.SmtpDirect));
         var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
-        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, context.UtcNow);
+        var api = new FakeSource(ReportImportSource.SmtpApi, Success(ReportImportSource.SmtpApi));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
 
         ReportSyncSourceResult result = await coordinator.RunAsync(
             ReportSyncMode.DirectOnly,
@@ -51,7 +53,8 @@ public sealed class ReportSyncCoordinatorTests
         TestContext context = CreateContext();
         var direct = new FakeSource(ReportImportSource.SmtpDirect, new InvalidOperationException("portal failed"));
         var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
-        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, context.UtcNow);
+        var api = new FakeSource(ReportImportSource.SmtpApi, Success(ReportImportSource.SmtpApi));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
 
         ReportSyncSourceResult result = await coordinator.RunAsync(
             ReportSyncMode.DirectWithGmailFallback,
@@ -80,7 +83,8 @@ public sealed class ReportSyncCoordinatorTests
                 null,
                 "Geen Ready-rapport."));
         var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
-        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, context.UtcNow);
+        var api = new FakeSource(ReportImportSource.SmtpApi, Success(ReportImportSource.SmtpApi));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
 
         ReportSyncSourceResult result = await coordinator.RunAsync(
             ReportSyncMode.DirectWithGmailFallback,
@@ -90,6 +94,56 @@ public sealed class ReportSyncCoordinatorTests
 
         Assert.Equal(1, gmail.CallCount);
         Assert.Equal(ReportImportSource.Gmail, result.Source);
+    }
+
+    [Fact]
+    public async Task ApiOnlyCallsOnlyApi()
+    {
+        TestContext context = CreateContext();
+        var direct = new FakeSource(ReportImportSource.SmtpDirect, Success(ReportImportSource.SmtpDirect));
+        var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
+        var api = new FakeSource(ReportImportSource.SmtpApi, Success(ReportImportSource.SmtpApi));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
+
+        ReportSyncSourceResult result = await coordinator.RunAsync(
+            ReportSyncMode.ApiOnly,
+            latestOnly: false,
+            minimumReportDayExclusive: null,
+            CancellationToken.None);
+
+        Assert.Equal(1, api.CallCount);
+        Assert.Equal(0, direct.CallCount);
+        Assert.Equal(0, gmail.CallCount);
+        Assert.Equal(ReportImportSource.SmtpApi, result.Source);
+    }
+
+    [Fact]
+    public async Task ApiFallbackModeCallsGmailAfterApiException()
+    {
+        TestContext context = CreateContext();
+        var direct = new FakeSource(ReportImportSource.SmtpDirect, Success(ReportImportSource.SmtpDirect));
+        var gmail = new FakeSource(ReportImportSource.Gmail, Success(ReportImportSource.Gmail));
+        var api = new FakeSource(ReportImportSource.SmtpApi, new InvalidOperationException("api failed"));
+        var coordinator = new ReportSyncCoordinator(context.Store, direct, gmail, api, context.UtcNow);
+
+        ReportSyncSourceResult result = await coordinator.RunAsync(
+            ReportSyncMode.ApiWithImapFallback,
+            latestOnly: false,
+            minimumReportDayExclusive: null,
+            CancellationToken.None);
+
+        Assert.Equal(1, api.CallCount);
+        Assert.Equal(1, gmail.CallCount);
+        Assert.Equal(0, direct.CallCount);
+        Assert.Equal(ReportImportSource.Gmail, result.Source);
+        Assert.Contains("fallback", result.Summary, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void UnknownModeNormalizesToApiOnly()
+    {
+        Assert.Equal(ReportSyncMode.ApiOnly, ReportSyncMode.Normalize("onbekend"));
+        Assert.Equal(ReportSyncMode.ApiOnly, ReportSyncMode.Default);
     }
 
     private static ReportSyncSourceResult Success(string source)

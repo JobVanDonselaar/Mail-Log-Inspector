@@ -33,13 +33,21 @@ public partial class MainWindow
                !string.IsNullOrWhiteSpace(config.EncryptedTotpSecret);
     }
 
+    private bool IsSmtpApiConfigurationReady()
+    {
+        return _smtpApiOperationalStore.LoadConfig().HasApiKey;
+    }
+
     private bool IsReportSyncConfigurationReady(GmailReportConfig gmailConfig)
     {
-        string mode = _reportSyncOperationalStore.LoadConfig().Mode;
+        string mode = ReportSyncMode.Normalize(_reportSyncOperationalStore.LoadConfig().Mode);
         bool gmailReady = IsGmailConfigurationReady(gmailConfig);
         bool directReady = IsSmtpPortalConfigurationReady();
+        bool apiReady = IsSmtpApiConfigurationReady();
         return mode switch
         {
+            ReportSyncMode.ApiOnly => apiReady,
+            ReportSyncMode.ApiWithImapFallback => apiReady || gmailReady,
             ReportSyncMode.DirectOnly => directReady,
             ReportSyncMode.DirectWithGmailFallback => directReady || gmailReady,
             _ => gmailReady

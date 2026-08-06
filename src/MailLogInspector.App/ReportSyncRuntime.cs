@@ -10,13 +10,17 @@ internal sealed class ReportSyncRuntime : IDisposable
 
     private ReportSyncRuntime(
         HttpClient httpClient,
-        ReportSyncCoordinator coordinator)
+        ReportSyncCoordinator coordinator,
+        SmtpApiReportSyncSource apiSource)
     {
         _httpClient = httpClient;
         Coordinator = coordinator;
+        ApiSource = apiSource;
     }
 
     public ReportSyncCoordinator Coordinator { get; }
+
+    public SmtpApiReportSyncSource ApiSource { get; }
 
     public static ReportSyncRuntime Create(
         MailLogInspectorWorkspacePaths workspace,
@@ -24,7 +28,8 @@ internal sealed class ReportSyncRuntime : IDisposable
         MailLogInspectorImportService importService,
         GmailReportOperationalStore gmailStore,
         SmtpPortalOperationalStore portalStore,
-        ReportSyncOperationalStore syncStore)
+        ReportSyncOperationalStore syncStore,
+        SmtpApiOperationalStore apiStore)
     {
         var httpClient = new HttpClient();
         var importRunner = new GmailZipImportRunner(importService);
@@ -43,9 +48,17 @@ internal sealed class ReportSyncRuntime : IDisposable
             importRunner,
             new SmtpPortalBrowserFactory(),
             workspace);
+        var apiSource = new SmtpApiReportSyncSource(
+            apiStore,
+            syncStore,
+            mailStore,
+            importRunner,
+            new SmtpApiClient(httpClient),
+            workspace);
         return new ReportSyncRuntime(
             httpClient,
-            new ReportSyncCoordinator(syncStore, directSource, gmailSource));
+            new ReportSyncCoordinator(syncStore, directSource, gmailSource, apiSource),
+            apiSource);
     }
 
     public void Dispose()

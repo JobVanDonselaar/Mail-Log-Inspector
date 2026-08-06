@@ -221,6 +221,22 @@ public sealed class AdminStartupTests
         Assert.Contains("GotKeyboardFocus=\"AdminSmtpPortalSecretBox_GotKeyboardFocus\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"RunSmtpPortalProbeButton\"", xaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"RunVisibleSmtpPortalProbeButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiKeyBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiKeySavedTextBlock\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiChannelComboBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiSyntax1TextBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiSyntax2TextBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiSyntax3TextBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"LoadSmtpApiChannelsButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"LoadSmtpApiReportsButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"ImportSelectedSmtpApiReportsButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AdminSmtpApiReportsListBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"TestSmtpApiConnectionButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Tag=\"api-only\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Tag=\"api-with-imap-fallback\"", xaml, StringComparison.Ordinal);
+        Assert.True(
+            xaml.IndexOf("Header=\"SMTP.com API\"", StringComparison.Ordinal) <
+            xaml.IndexOf("Header=\"SMTP.com direct\"", StringComparison.Ordinal));
         Assert.True(
             xaml.IndexOf("Name=\"AdminAutoSyncCheckBox\"", StringComparison.Ordinal) <
             xaml.IndexOf("Text=\"SMTP.com direct downloaden\"", StringComparison.Ordinal));

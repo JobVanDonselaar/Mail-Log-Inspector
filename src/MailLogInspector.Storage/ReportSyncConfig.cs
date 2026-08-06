@@ -9,5 +9,5 @@ public sealed record ReportSyncConfig(
     bool PortalSyncVisible = false)
 {
     public static ReportSyncConfig Default { get; } =
-        new(ReportSyncMode.GmailOnly, null, null, false, false, false);
+        new(ReportSyncMode.Default, null, null, false, false, false);
 }
