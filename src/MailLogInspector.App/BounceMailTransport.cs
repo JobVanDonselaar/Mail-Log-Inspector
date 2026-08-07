@@ -30,18 +30,53 @@ public interface IBounceMailTransport
 public static class BounceNotificationMimeBuilder
 {
     /// <summary>
+    /// Leest het afzenderadres uit wat de gebruiker heeft ingevuld. Zowel een kaal adres,
+    /// een adres met spaties eromheen als de vorm "Naam &lt;adres&gt;" levert hetzelfde
+    /// resultaat op; zonder deze stap loopt het verzenden vast op een onbegrijpelijke
+    /// parseerfout uit de mailbibliotheek.
+    /// </summary>
+    public static bool TryReadSenderAddress(string? fromAddress, out string address, out string? displayName)
+    {
+        address = string.Empty;
+        displayName = null;
+
+        if (string.IsNullOrWhiteSpace(fromAddress))
+        {
+            return false;
+        }
+
+        if (!MailboxAddress.TryParse(fromAddress.Trim(), out MailboxAddress? mailbox) ||
+            string.IsNullOrWhiteSpace(mailbox.Address))
+        {
+            return false;
+        }
+
+        // MimeKit accepteert ook een adres zonder domein. Dat komt nooit aan, dus hier weigeren
+        // levert een begrijpelijke melding in plaats van een mislukte verzending.
+        int separator = mailbox.Address.LastIndexOf('@');
+        if (separator <= 0 || separator == mailbox.Address.Length - 1)
+        {
+            return false;
+        }
+
+        address = mailbox.Address;
+        displayName = string.IsNullOrWhiteSpace(mailbox.Name) ? null : mailbox.Name;
+        return true;
+    }
+
+    /// <summary>
     /// Haalt het domein uit een afzenderadres. Dat domein hoort in de Message-Id en in de
     /// HELO-naam; zonder dat vult MimeKit de Windows-machinenaam in, wat spamfilters als een
     /// niet-bestaand domein zien en zwaar laten meewegen.
     /// </summary>
     public static string ResolveSendingDomain(string? fromAddress)
     {
-        if (!string.IsNullOrWhiteSpace(fromAddress))
+        if (TryReadSenderAddress(fromAddress, out string address, out _))
         {
-            int separator = fromAddress.LastIndexOf('@');
-            if (separator >= 0 && separator < fromAddress.Length - 1)
+            int separator = address.LastIndexOf('@');
+            if (separator >= 0 && separator < address.Length - 1)
             {
-                string domain = fromAddress[(separator + 1)..].Trim().Trim('>').Trim();
+                string domain = address[(separator + 1)..];
                 if (domain.Length > 0 && domain.Contains('.'))
                 {
                     return domain;
@@ -52,22 +87,46 @@ public static class BounceNotificationMimeBuilder
         return "localhost.localdomain";
     }
 
+    /// <summary>
+    /// Zet de afmeldheader. Zonder een geldig afzenderadres blijft die weg: een afmeldroute
+    /// beloven die nergens aankomt, telt bij ontvangende filters juist als negatief signaal.
+    /// Alleen de mailto-variant, want One-Click afmelden vereist volgens RFC 8058 een
+    /// https-adres dat de afmelding zelf verwerkt en dat is er niet.
+    /// </summary>
+    private static void AddUnsubscribeHeader(MimeMessage mime, string address)
+    {
+        mime.Headers.Add(HeaderId.ListUnsubscribe, $"<mailto:{address}?subject=Afmelden>");
+    }
+
     public static MimeMessage Build(
         BounceNotificationMessage message,
         string fromAddress,
         string? fromDisplayName)
     {
+        if (!TryReadSenderAddress(fromAddress, out string senderAddress, out string? addressDisplayName))
+        {
+            throw new InvalidOperationException(
+                $"Het afzenderadres '{fromAddress}' is geen geldig e-mailadres. Pas dit aan bij de e-mailinstellingen.");
+        }
+
+        string name = fromDisplayName?.Trim() is { Length: > 0 } configured
+            ? configured
+            : addressDisplayName ?? "Mail Log Inspector";
+
         var mime = new MimeMessage();
-        mime.From.Add(new MailboxAddress(
-            string.IsNullOrWhiteSpace(fromDisplayName) ? "Mail Log Inspector" : fromDisplayName.Trim(),
-            fromAddress));
+        mime.From.Add(new MailboxAddress(name, senderAddress));
         mime.To.Add(MailboxAddress.Parse(message.ToAddress));
         mime.Subject = message.Subject;
-        mime.MessageId = MimeUtils.GenerateMessageId(ResolveSendingDomain(fromAddress));
+        mime.MessageId = MimeUtils.GenerateMessageId(ResolveSendingDomain(senderAddress));
 
         // Meldt dat dit een automatisch rapport is: dat onderdrukt afwezigheidsantwoorden en
         // voorkomt dat filters het als ongevraagde handmatige post beoordelen.
         mime.Headers.Add(HeaderId.AutoSubmitted, "auto-generated");
+
+        // Een zichtbare afmeldroute laat ontvangende filters minder streng oordelen. Gmail toont
+        // hierdoor een afmeldknop naast de afzender. De mailto wijst naar het afzenderadres zelf,
+        // dat ook in de afsluitende tekst als afmeldadres wordt genoemd.
+        AddUnsubscribeHeader(mime, senderAddress);
 
         var builder = new BodyBuilder();
 
