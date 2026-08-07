@@ -94,7 +94,7 @@ Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de 
 - De melding gaat standaard naar het afzenderadres zelf. Bij `noreply@`, `no-reply@`, `donotreply@` en vergelijkbare adressen wordt `info@` op hetzelfde domein voorgesteld. Elk ontvangeradres is per regel aanpasbaar.
 - Onder `Mailinhoud` bepaalt de gebruiker wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit; staat alles uit, dan blijven de kerncijfers gegarandeerd staan.
 - De bodyvorm is `HTML met tekstalternatief`, `alleen HTML` of `alleen platte tekst`.
-- Een eigen inleidende en afsluitende tekst is mogelijk. Daarin werken dezelfde placeholders als in het onderwerp: `{sender}`, `{domain}`, `{count}` en `{date}`.
+- Inleiding en afsluiting hebben allebei een standaardtekst: de inleiding legt uit waar het overzicht vandaan komt en wat een bounce is, de afsluiting noemt de afmeldroute. Beide zijn vrij aan te passen; met **Standaardteksten terugzetten** komt de oorspronkelijke tekst terug. Maakt u een veld leeg, dan blijft het leeg. Daarin werken dezelfde placeholders als in het onderwerp: `{sender}`, `{domain}`, `{count}` en `{date}`.
 - Het maximum aantal detailregels in de mail is instelbaar tot 1000. Staat de Excel-bijlage aan, dan bevat die altijd de volledige lijst en vermeldt de mail de inkorting.
 - De kolom `Verstuurd` toont per afzender of die voor de gekozen periode al bericht heeft gehad. Zijn er al meldingen verstuurd, dan waarschuwt de bevestiging daarvoor.
 - Onderaan staat de verzendgeschiedenis met alle pogingen, inclusief de mislukte en de bijbehorende foutmelding.

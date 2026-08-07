@@ -349,6 +349,81 @@ public sealed class EmailTabTests
         Assert.Contains("CalendarOpened=\"DatePicker_CalendarOpened\"", picker, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------- inleiding en afsluiting
+
+    /// <summary>
+    /// De rij met instellingen bestond al voordat de tekstkolommen werden toegevoegd. Zonder
+    /// terugval bleven inleiding en afsluiting daardoor voorgoed leeg in bestaande installaties.
+    /// </summary>
+    [Fact]
+    public void LoadSettings_FallsBackToTheDefaultTextsWhenTheyWereNeverSet()
+    {
+        BounceNotificationOperationalStore store = CreateNotificationStore();
+        store.SaveSettings(BounceNotificationSettings.Default with
+        {
+            Content = BounceNotificationSettings.Default.ResolveContent() with
+            {
+                IntroText = null,
+                FooterText = null
+            }
+        });
+
+        BounceNotificationContentOptions content = store.LoadSettings().ResolveContent();
+
+        Assert.Equal(BounceNotificationContentOptions.DefaultIntroText, content.IntroText);
+        Assert.Equal(BounceNotificationContentOptions.DefaultFooterText, content.FooterText);
+    }
+
+    /// <summary>
+    /// Wie de tekst bewust weghaalt moet hem weg kunnen houden; anders keert de standaardtekst
+    /// bij elke herstart terug.
+    /// </summary>
+    [Fact]
+    public void LoadSettings_KeepsTextsEmptyWhenTheUserClearedThemOnPurpose()
+    {
+        BounceNotificationOperationalStore store = CreateNotificationStore();
+        store.SaveSettings(BounceNotificationSettings.Default with
+        {
+            Content = BounceNotificationSettings.Default.ResolveContent() with
+            {
+                IntroText = string.Empty,
+                FooterText = string.Empty
+            }
+        });
+
+        BounceNotificationContentOptions content = store.LoadSettings().ResolveContent();
+
+        Assert.Equal(string.Empty, content.IntroText);
+        Assert.Equal(string.Empty, content.FooterText);
+    }
+
+    [Fact]
+    public void DefaultIntroText_ExplainsTheReportAndUsesTheSupportedPlaceholders()
+    {
+        string intro = BounceNotificationContentOptions.DefaultIntroText;
+
+        Assert.Contains("bounce", intro, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("{sender}", intro, StringComparison.Ordinal);
+        Assert.Contains("{count}", intro, StringComparison.Ordinal);
+        Assert.Contains("{date}", intro, StringComparison.Ordinal);
+        Assert.DoesNotContain("{domain}", intro, StringComparison.Ordinal);
+    }
+
+    /// <summary>De knop is de enige weg terug nadat een tekst is weggehaald.</summary>
+    [Fact]
+    public void TheEmailTabOffersAButtonToRestoreTheDefaultTexts()
+    {
+        string xaml = File.ReadAllText(Path.Combine(
+            SolutionRoot(), "src", "MailLogInspector.App", "MainWindow.xaml"));
+        string code = File.ReadAllText(Path.Combine(
+            SolutionRoot(), "src", "MailLogInspector.App", "MainWindow.BounceNotifications.cs"));
+
+        Assert.Contains("Name=\"EmailResetTextsButton\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Click=\"EmailResetTextsButton_Click\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("BounceNotificationContentOptions.DefaultIntroText", code, StringComparison.Ordinal);
+        Assert.Contains("BounceNotificationContentOptions.DefaultFooterText", code, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ImportStillHandsOverToTheEmailTab()
     {

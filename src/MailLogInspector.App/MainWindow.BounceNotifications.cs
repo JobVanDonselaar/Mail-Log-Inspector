@@ -462,6 +462,13 @@ public partial class MainWindow
         UpdateEmailContentControlState();
     }
 
+    private void EmailResetTextsButton_Click(object sender, RoutedEventArgs e)
+    {
+        EmailIntroTextBox.Text = BounceNotificationContentOptions.DefaultIntroText;
+        EmailFooterTextBox.Text = BounceNotificationContentOptions.DefaultFooterText;
+        EmailStatusTextBlock.Text = "Standaardteksten teruggezet. Druk op Opslaan om ze te bewaren.";
+    }
+
     private void EmailTransportComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || _emailSuppressEvents)

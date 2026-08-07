@@ -183,8 +183,8 @@ public sealed class BounceNotificationOperationalStore
                     ? BounceNotificationContentOptions.DefaultMaxDetailRows
                     : (int)reader.GetInt64(16),
                 BodyFormat: BounceNotificationBodyFormat.Normalize(ReadNullableString(reader, 17)),
-                IntroText: ReadNullableString(reader, 18),
-                FooterText: ReadNullableString(reader, 19)));
+                IntroText: ReadNullableString(reader, 18) ?? BounceNotificationContentOptions.DefaultIntroText,
+                FooterText: ReadNullableString(reader, 19) ?? BounceNotificationContentOptions.DefaultFooterText));
     }
 
     public void SaveSettings(BounceNotificationSettings settings)
@@ -262,8 +262,8 @@ public sealed class BounceNotificationOperationalStore
         command.Parameters.AddWithValue("$includeSource", content.IncludeSourceFileName ? 1 : 0);
         command.Parameters.AddWithValue("$maxDetailRows", content.ResolveMaxDetailRows());
         command.Parameters.AddWithValue("$bodyFormat", content.ResolveBodyFormat());
-        command.Parameters.AddWithValue("$introText", ToDbValue(content.IntroText));
-        command.Parameters.AddWithValue("$footerText", ToDbValue(content.FooterText));
+        command.Parameters.AddWithValue("$introText", ToBodyTextDbValue(content.IntroText));
+        command.Parameters.AddWithValue("$footerText", ToBodyTextDbValue(content.FooterText));
         command.ExecuteNonQuery();
     }
 
@@ -572,6 +572,16 @@ public sealed class BounceNotificationOperationalStore
     private static object ToDbValue(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
+    }
+
+    /// <summary>
+    /// Inleiding en afsluiting kennen een standaardtekst. Daarom moet "nooit ingesteld" te
+    /// onderscheiden blijven van "bewust leeggemaakt": het eerste wordt NULL en valt terug op de
+    /// standaard, het tweede wordt een lege tekst en blijft leeg.
+    /// </summary>
+    private static object ToBodyTextDbValue(string? value)
+    {
+        return value is null ? DBNull.Value : value.Trim();
     }
 
     private static object ToDbValue(DateTime? value)
