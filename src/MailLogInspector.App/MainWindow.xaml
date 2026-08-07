@@ -1681,14 +1681,25 @@
                       </StackPanel>
                     </Grid>
 
-                    <TextBlock Text="Inleidende tekst (optioneel)" Style="{StaticResource LabelTextStyle}" />
+                    <Grid Margin="0,0,0,4">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Inleidende tekst (optioneel)" Style="{StaticResource LabelTextStyle}" VerticalAlignment="Center" />
+                      <Button Grid.Column="1" Name="EmailResetTextsButton" Style="{StaticResource SecondaryButtonStyle}"
+                              Padding="8,3" Click="EmailResetTextsButton_Click"
+                              ToolTip="Zet de inleidende en afsluitende tekst terug op de standaardtekst van de app.">
+                        <TextBlock Text="Standaardteksten terugzetten" FontSize="11" />
+                      </Button>
+                    </Grid>
                     <TextBox Name="EmailIntroTextBox" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
                              VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="6,4" Margin="0,0,0,10" />
                     <TextBlock Text="Afsluitende tekst (optioneel)" Style="{StaticResource LabelTextStyle}" />
                     <TextBox Name="EmailFooterTextBox" Height="60" AcceptsReturn="True" TextWrapping="Wrap"
                              VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="6,4" />
-                    <TextBlock Text="In beide teksten werken {sender}, {domain}, {count} en {date}."
-                               Style="{StaticResource MutedTextStyle}" Margin="0,5,0,0" />
+                    <TextBlock Text="In beide teksten werken {sender}, {domain}, {count} en {date}. Beide beginnen met een standaardtekst; met Standaardteksten terugzetten haalt u die weer op."
+                               Style="{StaticResource MutedTextStyle}" Margin="0,5,0,0" TextWrapping="Wrap" />
                   </StackPanel>
                 </Expander>
               </Border>

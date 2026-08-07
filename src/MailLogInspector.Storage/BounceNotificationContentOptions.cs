@@ -56,6 +56,17 @@ public sealed record BounceNotificationContentOptions(
 
     public const int DefaultMaxDetailRows = 100;
 
+    public const string DefaultIntroText =
+        """
+        Beste praktijk,
+
+        Vanuit Exquise Next Generation verstuurt u e-mail aan uw patiënten, zoals afspraakbevestigingen en herinneringen. Dankzij een nieuwe koppeling met ons verzendplatform kunnen wij nu voor het eerst terugkoppelen hoe die berichten het doen. Indien gewenst ontvangt u daarom dit overzicht.
+
+        Hieronder ziet u wat er rond {date} is verstuurd vanaf {sender} en welke berichten niet zijn aangekomen. Zo'n bericht heet een "bounce": de mailserver van de ontvanger heeft het geweigerd, meestal door een typefout in het adres of een opgeheven mailbox. Bij deze {count} adressen is uw bericht dus niet gelezen.
+
+        Het loont om die adressen in uw praktijksysteem te controleren en te corrigeren.
+        """;
+
     public const string DefaultFooterText =
         "Dit overzicht wordt automatisch opgesteld. Wilt u het niet meer ontvangen, antwoord dan met " +
         "\"Afmelden\" in het onderwerp. Voor vragen over de inhoud kunt u gewoon op dit bericht reageren.";
@@ -69,7 +80,7 @@ public sealed record BounceNotificationContentOptions(
         IncludeSourceFileName: true,
         MaxDetailRows: DefaultMaxDetailRows,
         BodyFormat: BounceNotificationBodyFormat.Default,
-        IntroText: null,
+        IntroText: DefaultIntroText,
         FooterText: DefaultFooterText);
 
     /// <summary>Alleen de kerncijfers, zonder bijlage en zonder detailregels.</summary>
