@@ -709,6 +709,7 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="104" />
                   <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Margin="0,0,12,0">
                   <TextBlock Text="Top" Style="{StaticResource LabelTextStyle}" />
@@ -725,6 +726,12 @@
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
                     <TextBlock Text="Analyse uitvoeren" Foreground="White" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+                <Button Name="AnalysisExportButton" Grid.Column="2" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="10,0,0,0" Click="AnalysisExportButton_Click" IsEnabled="False">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                    <TextBlock Text="Excel export" FontWeight="SemiBold" />
                   </StackPanel>
                 </Button>
               </Grid>
@@ -1793,7 +1800,8 @@
                 <TextBlock Text="&#x2022; Kies een periode en eventueel een afzender- of ontvangerfilter. Top bepaalt hoeveel domeinen in de ranglijsten worden getoond." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De KPI's tonen geaccepteerd, afgeleverd, afleverratio, onderweg en bounced." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De ranglijsten tonen de belangrijkste afzender- en ontvangerdomeinen. SMTP-responsen toont Code, Aantal en een korte Omschrijving." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Dubbelklik op een domein om dit als filter in Zoeken te openen. De applicatie schakelt daarbij direct naar de tab Zoeken." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Dubbelklik op een domein om dit als filter in Zoeken te openen. De applicatie schakelt daarbij direct naar de tab Zoeken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Excel export maakt een werkmap met twee zakelijke werkbladen: Afzenders en Ontvangers. Elk blad herhaalt de kerncijfers, toont twee staafgrafieken en daaronder de ranglijsten; het blad Ontvangers bevat ook de SMTP-responsen en de bounce-oorzaken. De knop wordt actief zodra een analyse is uitgevoerd." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 
