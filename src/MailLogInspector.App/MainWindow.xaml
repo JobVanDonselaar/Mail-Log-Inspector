@@ -1577,7 +1577,7 @@
                   <StackPanel Margin="0,10,0,0">
                     <TextBlock Text="Verzendkanaal" Style="{StaticResource LabelTextStyle}" />
                     <ComboBox Name="EmailTransportComboBox" Height="30" Margin="0,0,0,10" SelectionChanged="EmailTransportComboBox_SelectionChanged">
-                      <ComboBoxItem Content="Gmail (bestaande OAuth-gegevens)" Tag="gmail" />
+                      <ComboBoxItem Content="Gmail (bestaande IMAP-gegevens)" Tag="gmail" />
                       <ComboBoxItem Content="SMTP-relay (SMTP.com)" Tag="smtp-relay" />
                       <ComboBoxItem Content="Microsoft 365 / Exchange Online" Tag="microsoft365" />
                     </ComboBox>
@@ -1844,7 +1844,7 @@
                 <TextBlock Text="&#x2022; Het maximum aantal detailregels in de mail is instelbaar. Staat de Excel-bijlage aan, dan bevat die altijd de volledige lijst." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De kolom Verstuurd toont per afzender of die voor de gekozen periode al bericht heeft gehad. Onderaan staat de verzendgeschiedenis met alle pogingen, ook de mislukte." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Voorbeeld toont de mail zoals die eruit komt te zien. Verzenden gebeurt pas na bevestiging, tenzij Automatisch versturen na import aanstaat." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Verzenden kan via de bestaande Gmail-gegevens, een SMTP-relay of Microsoft 365. Relay-wachtwoorden worden versleuteld voor de huidige Windows-gebruiker opgeslagen." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Verzenden kan via de bestaande Gmail-koppeling, een SMTP-relay of Microsoft 365. Gmail gebruikt dezelfde aanmeldmethode als de IMAP-koppeling: een app-wachtwoord of Google OAuth. Relay-wachtwoorden worden versleuteld voor de huidige Windows-gebruiker opgeslagen." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 
