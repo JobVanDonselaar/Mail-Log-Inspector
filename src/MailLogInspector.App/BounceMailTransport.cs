@@ -73,8 +73,62 @@ public static class BounceNotificationMimeBuilder
 }
 
 /// <summary>
-/// Proof of concept-transport: verstuurt via smtp.gmail.com met de OAuth-gegevens die al voor
-/// de rapportsynchronisatie zijn ingesteld.
+/// Bepaalt hoe er bij Gmail wordt aangemeld: met het app-wachtwoord of via OAuth. De keuze volgt
+/// de aanmeldmethode van de IMAP-koppeling, zodat verzenden werkt zodra die koppeling werkt.
+/// </summary>
+public static class GmailBounceAuthenticationPlan
+{
+    public enum Method
+    {
+        AppPassword,
+        OAuth
+    }
+
+    /// <summary>
+    /// Controleert de configuratie en meldt welke aanmeldmethode bruikbaar is. Bij een onbruikbare
+    /// configuratie volgt een uitleg die verwijst naar het scherm waar het opgelost wordt.
+    /// </summary>
+    public static Method Resolve(GmailReportConfig config)
+    {
+        if (string.IsNullOrWhiteSpace(config.AccountEmailAddress))
+        {
+            throw new InvalidOperationException(
+                "Er is geen Gmail-account ingesteld. Configureer dit eerst bij de IMAP-instellingen.");
+        }
+
+        if (!string.Equals(ImapProvider.Normalize(config.ImapProvider), ImapProvider.Gmail, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "De IMAP-koppeling staat niet op Gmail. Kies bij Verzendinstellingen het transport dat bij die mailbox hoort.");
+        }
+
+        if (string.Equals(config.AuthenticationMode, GmailAuthenticationMode.AppPassword, StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(config.EncryptedAppPassword))
+            {
+                throw new InvalidOperationException(
+                    "Het Gmail app-wachtwoord ontbreekt. Vul dit eerst in bij de IMAP-instellingen.");
+            }
+
+            return Method.AppPassword;
+        }
+
+        if (string.IsNullOrWhiteSpace(config.ClientId) ||
+            string.IsNullOrWhiteSpace(config.ClientSecret) ||
+            string.IsNullOrWhiteSpace(config.EncryptedRefreshToken))
+        {
+            throw new InvalidOperationException(
+                "De Gmail OAuth-gegevens zijn onvolledig. Voltooi eerst de autorisatie bij de IMAP-instellingen.");
+        }
+
+        return Method.OAuth;
+    }
+}
+
+/// <summary>
+/// Verstuurt via smtp.gmail.com met de gegevens die al voor de rapportsynchronisatie zijn
+/// ingesteld. Zowel een Gmail app-wachtwoord als Google OAuth werkt; welke van de twee wordt
+/// gebruikt volgt de aanmeldmethode van de IMAP-koppeling.
 /// </summary>
 public sealed class GmailBounceMailTransport : IBounceMailTransport
 {
@@ -95,44 +149,35 @@ public sealed class GmailBounceMailTransport : IBounceMailTransport
         _settings = settings;
     }
 
-    public string Name => "Gmail (OAuth)";
+    public string Name => "Gmail";
 
     public async Task SendAsync(BounceNotificationMessage message, CancellationToken cancellationToken)
     {
         GmailReportConfig config = _gmailStore.LoadConfig();
-        if (string.IsNullOrWhiteSpace(config.AccountEmailAddress))
-        {
-            throw new InvalidOperationException(
-                "Er is geen Gmail-account ingesteld. Configureer dit eerst bij de IMAP-instellingen.");
-        }
+        GmailBounceAuthenticationPlan.Method method = GmailBounceAuthenticationPlan.Resolve(config);
 
-        if (string.IsNullOrWhiteSpace(config.ClientId) ||
-            string.IsNullOrWhiteSpace(config.ClientSecret) ||
-            string.IsNullOrWhiteSpace(config.EncryptedRefreshToken))
-        {
-            throw new InvalidOperationException(
-                "De Gmail OAuth-gegevens zijn onvolledig. Voltooi eerst de autorisatie bij de IMAP-instellingen.");
-        }
+        MimeMessage mime = BounceNotificationMimeBuilder.Build(
+            message,
+            string.IsNullOrWhiteSpace(_settings.FromAddress) ? config.AccountEmailAddress! : _settings.FromAddress!,
+            _settings.FromDisplayName);
 
-        var oauthConfig = new GmailOAuthConfig(
-            config.AccountEmailAddress,
-            config.ClientId,
-            GmailOAuthService.UnprotectClientSecret(config.ClientSecret),
-            GmailOAuthService.UnprotectRefreshToken(config.EncryptedRefreshToken));
-
-        string accessToken = await _tokenProvider.GetAccessTokenAsync(oauthConfig, cancellationToken);
-
-        string fromAddress = string.IsNullOrWhiteSpace(_settings.FromAddress)
-            ? config.AccountEmailAddress
-            : _settings.FromAddress!;
-
-        MimeMessage mime = BounceNotificationMimeBuilder.Build(message, fromAddress, _settings.FromDisplayName);
+        SaslMechanism authentication = method == GmailBounceAuthenticationPlan.Method.AppPassword
+            ? new SaslMechanismLogin(
+                config.AccountEmailAddress!,
+                GmailOAuthService.UnprotectSecret(config.EncryptedAppPassword!))
+            : new SaslMechanismOAuth2(
+                config.AccountEmailAddress!,
+                await _tokenProvider.GetAccessTokenAsync(
+                    new GmailOAuthConfig(
+                        config.AccountEmailAddress!,
+                        config.ClientId!,
+                        GmailOAuthService.UnprotectClientSecret(config.ClientSecret!),
+                        GmailOAuthService.UnprotectRefreshToken(config.EncryptedRefreshToken!)),
+                    cancellationToken));
 
         using var client = new SmtpClient();
         await client.ConnectAsync(SmtpHost, SmtpPort, SecureSocketOptions.StartTls, cancellationToken);
-        await client.AuthenticateAsync(
-            new SaslMechanismOAuth2(config.AccountEmailAddress, accessToken),
-            cancellationToken);
+        await client.AuthenticateAsync(authentication, cancellationToken);
         await client.SendAsync(mime, cancellationToken);
         await client.DisconnectAsync(true, cancellationToken);
     }

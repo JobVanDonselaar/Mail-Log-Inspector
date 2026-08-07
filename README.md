@@ -99,7 +99,7 @@ Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de 
 - De kolom `Verstuurd` toont per afzender of die voor de gekozen periode al bericht heeft gehad. Zijn er al meldingen verstuurd, dan waarschuwt de bevestiging daarvoor.
 - Onderaan staat de verzendgeschiedenis met alle pogingen, inclusief de mislukte en de bijbehorende foutmelding.
 - `Voorbeeld` opent de opgemaakte mail zonder te verzenden. Verzenden gebeurt pas na bevestiging, tenzij `Automatisch versturen na import` aanstaat.
-- Verzenden kan via de bestaande Gmail OAuth-gegevens, een SMTP-relay (SMTP.com) of Microsoft 365. Relay-wachtwoorden worden Windows-gebruikergebonden versleuteld opgeslagen.
+- Verzenden kan via de bestaande Gmail-koppeling, een SMTP-relay (SMTP.com) of Microsoft 365. Gmail gebruikt dezelfde aanmeldmethode als de IMAP-rapportkoppeling: een app-wachtwoord of Google OAuth. Werkt de IMAP-verbindingstest, dan werkt verzenden ook. Relay-wachtwoorden worden Windows-gebruikergebonden versleuteld opgeslagen.
 
 Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`. Elke verzendpoging wordt vastgelegd in `bounce_notification_log`.
 
