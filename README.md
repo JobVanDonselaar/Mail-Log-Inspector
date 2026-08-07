@@ -100,6 +100,7 @@ Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de 
 - Onderaan staat de verzendgeschiedenis met alle pogingen, inclusief de mislukte en de bijbehorende foutmelding.
 - `Voorbeeld` opent de opgemaakte mail zonder te verzenden. Verzenden gebeurt pas na bevestiging, tenzij `Automatisch versturen na import` aanstaat.
 - Verzenden kan via de bestaande Gmail-koppeling, een SMTP-relay (SMTP.com) of Microsoft 365. Gmail gebruikt dezelfde aanmeldmethode als de IMAP-rapportkoppeling: een app-wachtwoord of Google OAuth. Werkt de IMAP-verbindingstest, dan werkt verzenden ook. Relay-wachtwoorden worden Windows-gebruikergebonden versleuteld opgeslagen.
+- De melding krijgt een `Message-Id` en een HELO-naam op het domein van het afzenderadres, plus de header `Auto-Submitted: auto-generated`. Zonder die drie vult de mailbibliotheek de naam van de Windows-machine in, wat ontvangende spamfilters als een niet-bestaand domein beoordelen. Landt de mail toch in spam, verstuur dan via SMTP.com vanaf een eigen domein met SPF, DKIM en DMARC: een gedeeld `@gmail.com`-adres heeft geen eigen verzendreputatie.
 
 Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`. Elke verzendpoging wordt vastgelegd in `bounce_notification_log`.
 

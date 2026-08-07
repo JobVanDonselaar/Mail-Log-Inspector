@@ -5,6 +5,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MailLogInspector.Storage;
 using MimeKit;
+using MimeKit.Utils;
 
 namespace MailLogInspector.App;
 
@@ -28,6 +29,29 @@ public interface IBounceMailTransport
 /// <summary>Bouwt het MIME-bericht dat elk transport verstuurt.</summary>
 public static class BounceNotificationMimeBuilder
 {
+    /// <summary>
+    /// Haalt het domein uit een afzenderadres. Dat domein hoort in de Message-Id en in de
+    /// HELO-naam; zonder dat vult MimeKit de Windows-machinenaam in, wat spamfilters als een
+    /// niet-bestaand domein zien en zwaar laten meewegen.
+    /// </summary>
+    public static string ResolveSendingDomain(string? fromAddress)
+    {
+        if (!string.IsNullOrWhiteSpace(fromAddress))
+        {
+            int separator = fromAddress.LastIndexOf('@');
+            if (separator >= 0 && separator < fromAddress.Length - 1)
+            {
+                string domain = fromAddress[(separator + 1)..].Trim().Trim('>').Trim();
+                if (domain.Length > 0 && domain.Contains('.'))
+                {
+                    return domain;
+                }
+            }
+        }
+
+        return "localhost.localdomain";
+    }
+
     public static MimeMessage Build(
         BounceNotificationMessage message,
         string fromAddress,
@@ -39,6 +63,11 @@ public static class BounceNotificationMimeBuilder
             fromAddress));
         mime.To.Add(MailboxAddress.Parse(message.ToAddress));
         mime.Subject = message.Subject;
+        mime.MessageId = MimeUtils.GenerateMessageId(ResolveSendingDomain(fromAddress));
+
+        // Meldt dat dit een automatisch rapport is: dat onderdrukt afwezigheidsantwoorden en
+        // voorkomt dat filters het als ongevraagde handmatige post beoordelen.
+        mime.Headers.Add(HeaderId.AutoSubmitted, "auto-generated");
 
         var builder = new BodyBuilder();
 
@@ -175,7 +204,10 @@ public sealed class GmailBounceMailTransport : IBounceMailTransport
                         GmailOAuthService.UnprotectRefreshToken(config.EncryptedRefreshToken!)),
                     cancellationToken));
 
-        using var client = new SmtpClient();
+        using var client = new SmtpClient
+        {
+            LocalDomain = BounceNotificationMimeBuilder.ResolveSendingDomain(mime.From.Mailboxes.First().Address)
+        };
         await client.ConnectAsync(SmtpHost, SmtpPort, SecureSocketOptions.StartTls, cancellationToken);
         await client.AuthenticateAsync(authentication, cancellationToken);
         await client.SendAsync(mime, cancellationToken);
@@ -217,7 +249,10 @@ public sealed class SmtpRelayBounceMailTransport : IBounceMailTransport
             _settings.FromAddress!,
             _settings.FromDisplayName);
 
-        using var client = new SmtpClient();
+        using var client = new SmtpClient
+        {
+            LocalDomain = BounceNotificationMimeBuilder.ResolveSendingDomain(_settings.FromAddress)
+        };
         await client.ConnectAsync(
             _settings.RelayHost,
             _settings.RelayPort <= 0 ? 587 : _settings.RelayPort,
