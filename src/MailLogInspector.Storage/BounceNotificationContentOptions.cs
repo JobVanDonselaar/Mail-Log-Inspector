@@ -57,7 +57,8 @@ public sealed record BounceNotificationContentOptions(
     public const int DefaultMaxDetailRows = 100;
 
     public const string DefaultFooterText =
-        "Automatisch verstuurd door Mail Log Inspector. Antwoorden op dit bericht worden niet gelezen.";
+        "Dit overzicht wordt automatisch opgesteld. Wilt u het niet meer ontvangen, antwoord dan met " +
+        "\"Afmelden\" in het onderwerp. Voor vragen over de inhoud kunt u gewoon op dit bericht reageren.";
 
     public static BounceNotificationContentOptions Default { get; } = new(
         IncludeExcelAttachment: true,
