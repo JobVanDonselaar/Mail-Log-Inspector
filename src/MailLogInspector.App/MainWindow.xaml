@@ -810,7 +810,7 @@
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <DataGrid Name="SenderVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
+                    <DataGrid Name="SenderProblemVolumeGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
                       <DataGrid.Columns>
                         <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
                         <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
@@ -818,7 +818,7 @@
                         <DataGridTextColumn Header="% probleem" Width="92" Binding="{Binding ProblemRateDisplay}" />
                       </DataGrid.Columns>
                     </DataGrid>
-                    <DataGrid Grid.Column="1" Name="SenderSuccessGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
+                    <DataGrid Grid.Column="1" Name="SenderProblemRateGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" MouseDoubleClick="AnalysisSenderGrid_MouseDoubleClick">
                       <DataGrid.Columns>
                         <DataGridTextColumn Header="Domein" Width="*" Binding="{Binding Key}" />
                         <DataGridTextColumn Header="Totaal" Width="84" Binding="{Binding Total}" />
@@ -1799,9 +1799,9 @@
                 <TextBlock Text="Analyse" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; Kies een periode en eventueel een afzender- of ontvangerfilter. Top bepaalt hoeveel domeinen in de ranglijsten worden getoond." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De KPI's tonen geaccepteerd, afgeleverd, afleverratio, onderweg en bounced." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; De ranglijsten tonen de belangrijkste afzender- en ontvangerdomeinen. SMTP-responsen toont Code, Aantal en een korte Omschrijving." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De ranglijsten tonen bij afzenders en ontvangers dezelfde verdeling: links de domeinen met de meeste problemen, rechts de domeinen met het hoogste probleempercentage. SMTP-responsen toont Code, Aantal en een korte Omschrijving." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Dubbelklik op een domein om dit als filter in Zoeken te openen. De applicatie schakelt daarbij direct naar de tab Zoeken." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Excel export maakt een werkmap met twee zakelijke werkbladen: Afzenders en Ontvangers. Elk blad herhaalt de kerncijfers, toont twee staafgrafieken en daaronder de ranglijsten; het blad Ontvangers bevat ook de SMTP-responsen en de bounce-oorzaken. De knop wordt actief zodra een analyse is uitgevoerd." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Excel export maakt een werkmap met twee zakelijke werkbladen: Afzenders en Ontvangers. Beide bladen zijn identiek opgebouwd en volgen de app: kerncijfers, twee staafgrafieken en daaronder dezelfde ranglijsten met de kolommen Domein, Totaal, Problemen en % probleem, gevolgd door de detailkolommen. Het blad Ontvangers bevat ook de SMTP-responsen en de bounce-oorzaken. De knop wordt actief zodra een analyse is uitgevoerd." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 

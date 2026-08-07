@@ -61,22 +61,25 @@ public sealed class AnalysisExcelExporterTests
         WorksheetPart senders = WorksheetPart(export.Document, "Afzenders");
 
         Assert.Equal("Beeld van de verzendende domeinen", CellText(senders, "A9"));
-        Assert.Equal("Afzenderdomeinen op volume", CellText(senders, "A29"));
+        Assert.Equal("Afzenderdomeinen met de meeste problemen", CellText(senders, "A29"));
         Assert.Equal("Domein", CellText(senders, "A30"));
+        Assert.Equal("Totaal", CellText(senders, "B30"));
+        Assert.Equal("Problemen", CellText(senders, "C30"));
+        Assert.Equal("% probleem", CellText(senders, "D30"));
         Assert.Equal("% afgeleverd", CellText(senders, "H30"));
 
         Assert.Equal("praktijk-a.nl", CellText(senders, "A31"));
         AssertNumericCell(senders, "B31", 120);
-        AssertNumericCell(senders, "C31", 100);
-        AssertNumericCell(senders, "D31", 8);
-        AssertNumericCell(senders, "E31", 12);
-        AssertNumericCell(senders, "F31", 20);
-        AssertNumericCell(senders, "G31", 20d / 120d);
+        AssertNumericCell(senders, "C31", 20);
+        AssertNumericCell(senders, "D31", 20d / 120d);
+        AssertNumericCell(senders, "E31", 100);
+        AssertNumericCell(senders, "F31", 8);
+        AssertNumericCell(senders, "G31", 12);
         AssertNumericCell(senders, "H31", 100d / 120d);
         Assert.Equal("praktijk-b.nl", CellText(senders, "A32"));
 
         // Twee datarijen, dan een lege rij, dan de tweede ranglijst.
-        Assert.Equal("Afzenderdomeinen met het laagste afleverpercentage", CellText(senders, "A34"));
+        Assert.Equal("Afzenderdomeinen met het hoogste probleempercentage", CellText(senders, "A34"));
         Assert.Equal("Domein", CellText(senders, "A35"));
         Assert.Equal("praktijk-b.nl", CellText(senders, "A36"));
 
@@ -132,16 +135,16 @@ public sealed class AnalysisExcelExporterTests
 
         string[] senderFormulas = ChartFormulas(senderDrawings);
         Assert.Contains("'Afzenders'!$A$31:$A$32", senderFormulas);
-        Assert.Contains("'Afzenders'!$B$31:$B$32", senderFormulas);
+        Assert.Contains("'Afzenders'!$C$31:$C$32", senderFormulas);
         Assert.Contains("'Afzenders'!$A$36:$A$37", senderFormulas);
-        Assert.Contains("'Afzenders'!$H$36:$H$37", senderFormulas);
+        Assert.Contains("'Afzenders'!$D$36:$D$37", senderFormulas);
 
         WorksheetPart recipients = WorksheetPart(export.Document, "Ontvangers");
         DrawingsPart recipientDrawings = Assert.IsType<DrawingsPart>(recipients.DrawingsPart);
         Assert.Equal(2, recipientDrawings.ChartParts.Count());
         string[] recipientFormulas = ChartFormulas(recipientDrawings);
-        Assert.Contains("'Ontvangers'!$F$31:$F$32", recipientFormulas);
-        Assert.Contains("'Ontvangers'!$G$36:$G$37", recipientFormulas);
+        Assert.Contains("'Ontvangers'!$C$31:$C$32", recipientFormulas);
+        Assert.Contains("'Ontvangers'!$D$36:$D$37", recipientFormulas);
     }
 
     [Fact]

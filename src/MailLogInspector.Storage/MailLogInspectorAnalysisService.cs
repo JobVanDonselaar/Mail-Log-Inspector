@@ -35,9 +35,9 @@ public sealed class MailLogInspectorAnalysisService
 		cancellationToken.ThrowIfCancellationRequested();
 		(int totalCount, int deliveredCount, int underwayCount, int bounceCount) = ReadTotals(connection, criteria, scope, cancellationToken);
 		cancellationToken.ThrowIfCancellationRequested();
-		IReadOnlyList<MailLogInspectorBreakdownRow> senderVolumeRows = ReadBreakdownRows(connection, criteria, scope, sender: true, BreakdownOrder.TotalVolume, limit, cancellationToken);
+		IReadOnlyList<MailLogInspectorBreakdownRow> senderProblemVolumeRows = ReadBreakdownRows(connection, criteria, scope, sender: true, BreakdownOrder.HighestProblemCount, limit, cancellationToken);
 		cancellationToken.ThrowIfCancellationRequested();
-		IReadOnlyList<MailLogInspectorBreakdownRow> senderLowestSuccessRows = ReadBreakdownRows(connection, criteria, scope, sender: true, BreakdownOrder.LowestSuccessRate, limit, cancellationToken);
+		IReadOnlyList<MailLogInspectorBreakdownRow> senderHighestProblemRateRows = ReadBreakdownRows(connection, criteria, scope, sender: true, BreakdownOrder.HighestProblemRate, limit, cancellationToken);
 		cancellationToken.ThrowIfCancellationRequested();
 		IReadOnlyList<MailLogInspectorBreakdownRow> recipientProblemVolumeRows = ReadBreakdownRows(connection, criteria, scope, sender: false, BreakdownOrder.HighestProblemCount, limit, cancellationToken);
 		cancellationToken.ThrowIfCancellationRequested();
@@ -51,8 +51,8 @@ public sealed class MailLogInspectorAnalysisService
 			deliveredCount,
 			underwayCount,
 			bounceCount,
-			senderVolumeRows,
-			senderLowestSuccessRows,
+			senderProblemVolumeRows,
+			senderHighestProblemRateRows,
 			recipientProblemVolumeRows,
 			recipientHighestProblemRateRows,
 			topBounceCauses,
