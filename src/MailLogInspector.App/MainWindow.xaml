@@ -1801,7 +1801,7 @@
                 <TextBlock Text="&#x2022; De KPI's tonen geaccepteerd, afgeleverd, afleverratio, onderweg en bounced." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De ranglijsten tonen bij afzenders en ontvangers dezelfde verdeling: links de domeinen met de meeste problemen, rechts de domeinen met het hoogste probleempercentage. SMTP-responsen toont Code, Aantal en een korte Omschrijving." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Dubbelklik op een domein om dit als filter in Zoeken te openen. De applicatie schakelt daarbij direct naar de tab Zoeken." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Excel export maakt een werkmap met twee zakelijke werkbladen: Afzenders en Ontvangers. Beide bladen zijn identiek opgebouwd en volgen de app: kerncijfers, twee staafgrafieken en daaronder dezelfde ranglijsten met de kolommen Domein, Totaal, Problemen en % probleem, gevolgd door de detailkolommen. Het blad Ontvangers bevat ook de SMTP-responsen en de bounce-oorzaken. De knop wordt actief zodra een analyse is uitgevoerd." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Excel export maakt een werkmap met twee zakelijke werkbladen: Afzenders en Ontvangers. Beide bladen zijn identiek opgebouwd en volgen dit scherm: kerncijfers, twee staafgrafieken en daaronder de twee ranglijsten naast elkaar met dezelfde kolommen Domein, Totaal, Problemen en % probleem. Het blad Ontvangers bevat ook de SMTP-responsen en de bounce-oorzaken. De knop wordt actief zodra een analyse is uitgevoerd." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 
