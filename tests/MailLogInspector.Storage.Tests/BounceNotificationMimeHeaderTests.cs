@@ -52,6 +52,63 @@ public sealed class BounceNotificationMimeHeaderTests
     }
 
     [Fact]
+    public void Build_OffersAnUnsubscribeRouteToTheSenderAddress()
+    {
+        MimeMessage mime = Build("meldingen@example.com");
+
+        Assert.Equal("<mailto:meldingen@example.com?subject=Afmelden>", mime.Headers[HeaderId.ListUnsubscribe]);
+    }
+
+    [Fact]
+    public void Build_UnsubscribeRouteTrimsSurroundingWhitespaceFromTheAddress()
+    {
+        MimeMessage mime = Build("  meldingen@example.com  ");
+
+        Assert.Equal("<mailto:meldingen@example.com?subject=Afmelden>", mime.Headers[HeaderId.ListUnsubscribe]);
+        Assert.Equal("meldingen@example.com", mime.From.Mailboxes.Single().Address);
+    }
+
+    [Fact]
+    public void Build_AcceptsAnAddressThatAlreadyCarriesItsOwnDisplayName()
+    {
+        MimeMessage mime = Build("Praktijk Meldingen <meldingen@example.com>", displayName: null);
+
+        Assert.Equal("meldingen@example.com", mime.From.Mailboxes.Single().Address);
+        Assert.Equal("Praktijk Meldingen", mime.From.Mailboxes.Single().Name);
+        Assert.Equal("<mailto:meldingen@example.com?subject=Afmelden>", mime.Headers[HeaderId.ListUnsubscribe]);
+    }
+
+    [Fact]
+    public void Build_LetsTheConfiguredDisplayNameWinOverTheOneInTheAddress()
+    {
+        Assert.Equal("Nieuw", Build("Oud <meldingen@example.com>", displayName: "Nieuw").From.Mailboxes.Single().Name);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("geen-apenstaartje")]
+    public void Build_RefusesAnUnusableSenderAddressWithAReadableExplanation(string? address)
+    {
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => Build(address!));
+
+        Assert.Contains("geen geldig e-mailadres", error.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// One-Click afmelden vraagt volgens RFC 8058 om een https-adres dat de afmelding verwerkt.
+    /// Dat is er niet, dus de header hoort weg te blijven.
+    /// </summary>
+    [Fact]
+    public void Build_DoesNotClaimOneClickUnsubscribeSupport()
+    {
+        MimeMessage mime = Build("meldingen@example.com");
+
+        Assert.Null(mime.Headers["List-Unsubscribe-Post"]);
+    }
+
+    [Fact]
     public void Build_KeepsSubjectSenderAndRecipientIntact()
     {
         MimeMessage mime = Build("meldingen@example.com", displayName: "Praktijk Meldingen");
