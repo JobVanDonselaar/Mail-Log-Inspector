@@ -59,6 +59,23 @@ public sealed class BounceNotificationMimeHeaderTests
         Assert.Equal("<mailto:meldingen@example.com?subject=Afmelden>", mime.Headers[HeaderId.ListUnsubscribe]);
     }
 
+    /// <summary>
+    /// De header laat afmelden via een antwoord lopen. Een standaardtekst die zegt dat antwoorden
+    /// niet gelezen worden spreekt dat tegen, dus die twee moeten dezelfde route noemen.
+    /// </summary>
+    [Fact]
+    public void DefaultFooterText_MatchesTheUnsubscribeRouteInTheHeader()
+    {
+        string? unsubscribe = Build("meldingen@example.com").Headers[HeaderId.ListUnsubscribe];
+        Assert.Contains("subject=Afmelden", unsubscribe ?? string.Empty, StringComparison.Ordinal);
+
+        Assert.Contains("Afmelden", BounceNotificationContentOptions.DefaultFooterText, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "worden niet gelezen",
+            BounceNotificationContentOptions.DefaultFooterText,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void Build_UnsubscribeRouteTrimsSurroundingWhitespaceFromTheAddress()
     {
