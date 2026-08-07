@@ -10,10 +10,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>MailLogInspector</AssemblyName>
     <ApplicationIcon>Assets\MailLogInspector.ico</ApplicationIcon>
-    <Version>0.217.0</Version>
-    <AssemblyVersion>0.217.0.0</AssemblyVersion>
-    <FileVersion>0.217.0.0</FileVersion>
-    <InformationalVersion>0.217</InformationalVersion>
+    <Version>0.218.0</Version>
+    <AssemblyVersion>0.218.0.0</AssemblyVersion>
+    <FileVersion>0.218.0.0</FileVersion>
+    <InformationalVersion>0.218</InformationalVersion>
   </PropertyGroup>
 
   <ItemGroup>

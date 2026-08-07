@@ -195,6 +195,27 @@ public sealed class BounceNotificationTests
         Assert.Contains("Vragen? bedrijf.nl", html, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Zonder eigen linkopmaak kleurt de mailclient het adres in de donkere kopbalk blauw,
+    /// waardoor het onleesbaar wordt op de blauwe achtergrond.
+    /// </summary>
+    [Fact]
+    public void SenderAddressInTheHeaderStaysReadableOnTheDarkBar()
+    {
+        string html = BounceNotificationContentBuilder.BuildHtmlBody(
+            BuildReport(),
+            new DateTime(2026, 2, 17, 0, 0, 0, DateTimeKind.Utc),
+            sourceFileName: null,
+            hasAttachment: false,
+            BounceNotificationContentOptions.Default);
+
+        int headerEnd = html.IndexOf("Bounce-oorzaken", StringComparison.Ordinal);
+        string header = headerEnd > 0 ? html[..headerEnd] : html;
+
+        Assert.Contains("mailto:verzender%40bedrijf.nl", header, StringComparison.Ordinal);
+        Assert.Contains("color:#ffffff;text-decoration:none;", header, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void DetailRowLimitTruncatesTheMailBody()
     {

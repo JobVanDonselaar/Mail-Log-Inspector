@@ -60,7 +60,9 @@ public static class BounceNotificationContentBuilder
 
         html.Append("<div style=\"background:#1f5d8c;color:#ffffff;padding:18px 22px;border-radius:6px 6px 0 0;\">");
         html.Append("<div style=\"font-size:19px;font-weight:600;\">Bounce-overzicht</div>");
-        html.Append($"<div style=\"font-size:13px;opacity:0.9;margin-top:4px;\">{Encode(report.SenderAddress)} &middot; {Encode(reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture))}</div>");
+        html.Append("<div style=\"font-size:13px;opacity:0.9;margin-top:4px;\">");
+        html.Append(RenderSenderAddress(report.SenderAddress));
+        html.Append($" &middot; {Encode(reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture))}</div>");
         html.Append("</div>");
 
         html.Append("<div style=\"background:#ffffff;border:1px solid #d8e0ea;border-top:none;padding:22px;border-radius:0 0 6px 6px;\">");
@@ -370,6 +372,19 @@ public static class BounceNotificationContentBuilder
         }
 
         html.Append("</tbody></table>");
+    }
+
+    /// <summary>
+    /// Mailclients maken van een los e-mailadres zelf een link in hun eigen blauw. Op de donkere
+    /// kopbalk levert dat blauw op blauw op. Door het adres zelf als link mee te geven wint de
+    /// eigen opmaak en blijft het leesbaar.
+    /// </summary>
+    private static string RenderSenderAddress(string address)
+    {
+        string encoded = Encode(address);
+        return $"<a href=\"mailto:{Encode(Uri.EscapeDataString(address))}\" " +
+               "style=\"color:#ffffff;text-decoration:none;\">" +
+               $"<span style=\"color:#ffffff;\">{encoded}</span></a>";
     }
 
     private static string Encode(string value) => WebUtility.HtmlEncode(value);
