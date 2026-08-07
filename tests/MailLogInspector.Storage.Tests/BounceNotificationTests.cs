@@ -1,0 +1,276 @@
+using MailLogInspector.App;
+using MailLogInspector.Core;
+using MailLogInspector.Storage;
+using Xunit;
+
+namespace MailLogInspector.Storage.Tests;
+
+public sealed class BounceNotificationTests
+{
+    private static MailLogInspectorSenderBounceReport BuildReport(int bounceCount = 3)
+    {
+        List<MailLogInspectorBounceRow> bounces = [];
+        for (int index = 0; index < bounceCount; index++)
+        {
+            bounces.Add(new MailLogInspectorBounceRow(
+                new DateTime(2026, 2, 17, 9, 30, 0, DateTimeKind.Utc).AddMinutes(index),
+                $"ontvanger{index}@voorbeeld.nl",
+                MailLogInspectorReasonCode.InvalidRecipient,
+                550,
+                "User unknown"));
+        }
+
+        return new MailLogInspectorSenderBounceReport(
+            "verzender@bedrijf.nl",
+            TotalCount: 100,
+            DeliveredCount: 90,
+            UnderwayCount: 7,
+            BounceCount: bounceCount,
+            Bounces: bounces);
+    }
+
+    private static BounceNotificationOperationalStore CreateStore()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "mail-log-inspector-bounce-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+
+        var store = new BounceNotificationOperationalStore(Path.Combine(root, "operational.sqlite"));
+        store.Initialize();
+        return store;
+    }
+
+    [Theory]
+    [InlineData("noreply@bedrijf.nl")]
+    [InlineData("no-reply@bedrijf.nl")]
+    [InlineData("no_reply@bedrijf.nl")]
+    [InlineData("donotreply@bedrijf.nl")]
+    [InlineData("do-not-reply@bedrijf.nl")]
+    [InlineData("NoReply@Bedrijf.NL")]
+    public void UnattendedSendersFallBackToInfoAddress(string sender)
+    {
+        Assert.True(MailLogInspectorNotificationAddressPolicy.IsUnattendedSender(sender));
+        Assert.Equal("info@bedrijf.nl", MailLogInspectorNotificationAddressPolicy.SuggestRecipient(sender));
+    }
+
+    [Fact]
+    public void NormalSenderKeepsOwnAddress()
+    {
+        Assert.False(MailLogInspectorNotificationAddressPolicy.IsUnattendedSender("marketing@bedrijf.nl"));
+        Assert.Equal(
+            "marketing@bedrijf.nl",
+            MailLogInspectorNotificationAddressPolicy.SuggestRecipient("Marketing@Bedrijf.nl"));
+    }
+
+    [Theory]
+    [InlineData("info@bedrijf.nl", true)]
+    [InlineData("info@bedrijf", false)]
+    [InlineData("info bedrijf.nl", false)]
+    [InlineData("a@@b.nl", false)]
+    [InlineData("", false)]
+    public void PlausibilityCheckRejectsBrokenAddresses(string address, bool expected)
+    {
+        Assert.Equal(expected, MailLogInspectorNotificationAddressPolicy.IsPlausibleAddress(address));
+    }
+
+    [Fact]
+    public void SubjectTemplateReplacesPlaceholders()
+    {
+        string subject = BounceNotificationContentBuilder.BuildSubject(
+            "{count} bounces voor {sender} ({domain}) op {date}",
+            BuildReport(),
+            new DateTime(2026, 2, 17, 0, 0, 0, DateTimeKind.Utc));
+
+        Assert.Equal("3 bounces voor verzender@bedrijf.nl (bedrijf.nl) op 17-02-2026", subject);
+    }
+
+    [Fact]
+    public void NewSendersAreStoredDisabled()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+        store.EnsureSendersExist(["verzender@bedrijf.nl", "tweede@bedrijf.nl"]);
+
+        IReadOnlyList<BounceNotificationSender> senders = store.LoadSenders();
+        Assert.Equal(2, senders.Count);
+        Assert.All(senders, sender => Assert.False(sender.Enabled));
+    }
+
+    [Fact]
+    public void EnableAllSwitchesEverySender()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+        store.EnsureSendersExist(["een@bedrijf.nl", "twee@bedrijf.nl"]);
+
+        store.SetAllSendersEnabled(true);
+        Assert.All(store.LoadSenders(), sender => Assert.True(sender.Enabled));
+
+        store.SetAllSendersEnabled(false);
+        Assert.All(store.LoadSenders(), sender => Assert.False(sender.Enabled));
+    }
+
+    [Fact]
+    public void ContentOptionsRoundTripThroughStore()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+
+        var content = new BounceNotificationContentOptions(
+            IncludeExcelAttachment: false,
+            IncludeKpiSummary: true,
+            IncludeReasonBreakdown: false,
+            IncludeRecipientDomainBreakdown: false,
+            IncludeDetailTable: true,
+            IncludeSourceFileName: false,
+            MaxDetailRows: 25,
+            BodyFormat: BounceNotificationBodyFormat.TextOnly,
+            IntroText: "Hallo {sender},",
+            FooterText: "Groet");
+
+        store.SaveSettings(BounceNotificationSettings.Default with
+        {
+            Transport = BounceNotificationTransport.SmtpRelay,
+            FromAddress = "meldingen@bedrijf.nl",
+            Content = content
+        });
+
+        BounceNotificationSettings loaded = store.LoadSettings();
+        Assert.Equal(BounceNotificationTransport.SmtpRelay, loaded.Transport);
+        Assert.Equal(content, loaded.Content);
+    }
+
+    [Fact]
+    public void StoreWithoutSavedSettingsUsesFullContentDefaults()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+        BounceNotificationContentOptions content = store.LoadSettings().ResolveContent();
+
+        Assert.True(content.IncludeExcelAttachment);
+        Assert.True(content.IncludeKpiSummary);
+        Assert.True(content.IncludeDetailTable);
+        Assert.Equal(BounceNotificationBodyFormat.Both, content.ResolveBodyFormat());
+    }
+
+    [Fact]
+    public void DisabledBlocksAreLeftOutOfTheHtmlBody()
+    {
+        var content = BounceNotificationContentOptions.Default with
+        {
+            IncludeReasonBreakdown = false,
+            IncludeRecipientDomainBreakdown = false,
+            IncludeDetailTable = false,
+            IncludeExcelAttachment = false
+        };
+
+        string html = BounceNotificationContentBuilder.BuildHtmlBody(
+            BuildReport(),
+            new DateTime(2026, 2, 17, 0, 0, 0, DateTimeKind.Utc),
+            "rapport.zip",
+            hasAttachment: false,
+            content);
+
+        Assert.Contains("Verzonden", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bounce-oorzaken", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Ontvangende domeinen", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Gebouncede berichten", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Excel-bijlage", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FreeTextBlocksSupportPlaceholdersAndAreEncoded()
+    {
+        var content = BounceNotificationContentOptions.Default with
+        {
+            IntroText = "Beste {sender} <team>",
+            FooterText = "Vragen? {domain}"
+        };
+
+        string html = BounceNotificationContentBuilder.BuildHtmlBody(
+            BuildReport(),
+            new DateTime(2026, 2, 17, 0, 0, 0, DateTimeKind.Utc),
+            sourceFileName: null,
+            hasAttachment: false,
+            content);
+
+        Assert.Contains("Beste verzender@bedrijf.nl &lt;team&gt;", html, StringComparison.Ordinal);
+        Assert.Contains("Vragen? bedrijf.nl", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DetailRowLimitTruncatesTheMailBody()
+    {
+        var content = BounceNotificationContentOptions.Default with
+        {
+            MaxDetailRows = 2,
+            IncludeExcelAttachment = false
+        };
+
+        string text = BounceNotificationContentBuilder.BuildPlainTextBody(
+            BuildReport(bounceCount: 5),
+            new DateTime(2026, 2, 17, 0, 0, 0, DateTimeKind.Utc),
+            sourceFileName: null,
+            hasAttachment: false,
+            content);
+
+        Assert.Contains("ontvanger0@voorbeeld.nl", text, StringComparison.Ordinal);
+        Assert.Contains("ontvanger1@voorbeeld.nl", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("ontvanger2@voorbeeld.nl", text, StringComparison.Ordinal);
+        Assert.Contains("eerste 2 van 5 bounces", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void BodyFormatControlsWhichBodiesAreWanted()
+    {
+        var htmlOnly = BounceNotificationContentOptions.Default with
+        {
+            BodyFormat = BounceNotificationBodyFormat.HtmlOnly
+        };
+        Assert.True(htmlOnly.WantsHtml());
+        Assert.False(htmlOnly.WantsPlainText());
+
+        var textOnly = BounceNotificationContentOptions.Default with
+        {
+            BodyFormat = BounceNotificationBodyFormat.TextOnly
+        };
+        Assert.False(textOnly.WantsHtml());
+        Assert.True(textOnly.WantsPlainText());
+
+        Assert.True(BounceNotificationContentOptions.Default.WantsHtml());
+        Assert.True(BounceNotificationContentOptions.Default.WantsPlainText());
+    }
+
+    [Fact]
+    public void EmptyContentSelectionFallsBackToSummary()
+    {
+        var empty = new BounceNotificationContentOptions(
+            IncludeExcelAttachment: false,
+            IncludeKpiSummary: false,
+            IncludeReasonBreakdown: false,
+            IncludeRecipientDomainBreakdown: false,
+            IncludeDetailTable: false,
+            IncludeSourceFileName: false,
+            MaxDetailRows: 0,
+            BodyFormat: "onzin",
+            IntroText: null,
+            FooterText: null);
+
+        BounceNotificationContentOptions resolved = empty.EnsureNotEmpty();
+        Assert.True(resolved.IncludeKpiSummary);
+        Assert.Equal(BounceNotificationBodyFormat.Both, resolved.ResolveBodyFormat());
+        Assert.Equal(
+            BounceNotificationContentOptions.DefaultMaxDetailRows,
+            resolved.ResolveMaxDetailRows());
+    }
+
+    [Fact]
+    public void DetailRowLimitIsCapped()
+    {
+        BounceNotificationContentOptions options = BounceNotificationContentOptions.Default with
+        {
+            MaxDetailRows = 99_999
+        };
+
+        Assert.Equal(
+            BounceNotificationContentOptions.MaxDetailRowsLimit,
+            options.ResolveMaxDetailRows());
+    }
+}

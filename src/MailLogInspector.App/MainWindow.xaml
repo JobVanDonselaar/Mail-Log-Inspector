@@ -324,7 +324,7 @@
     </Grid.RowDefinitions>
 
     <TabControl Name="MainTabControl" Grid.Row="0" Margin="18,0,18,18" SelectionChanged="MainTabControl_SelectionChanged">
-      <TabItem>
+      <TabItem Name="SearchTab">
         <TabItem.Header>
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="&#xE721;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
@@ -660,7 +660,7 @@
         </Grid>
       </TabItem>
 
-      <TabItem>
+      <TabItem Name="AnalysisTab">
         <TabItem.Header>
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="&#xE9D2;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
@@ -1029,7 +1029,7 @@
         </Grid>
       </TabItem>
 
-      <TabItem>
+      <TabItem Name="ManageTab">
         <TabItem.Header>
           <StackPanel Orientation="Horizontal">
             <TextBlock Text="&#xE713;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
@@ -1293,7 +1293,7 @@
                       <TextBlock Text="Dropzone: .csv en .zip" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0" />
                     </StackPanel>
                   </Border>
-                  <UniformGrid Grid.Row="2" Name="ManageActionsButtonGrid" Columns="4">
+                  <UniformGrid Grid.Row="2" Name="ManageActionsButtonGrid" Columns="5">
                     <Button Name="ImportFilesButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="ImportButton_Click">
                       <TextBlock Text="Importeren" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
                     </Button>
@@ -1302,6 +1302,9 @@
                     </Button>
                     <Button Name="OpenWorkspaceFolderButton" Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="OpenWorkspaceFolderButton_Click">
                       <TextBlock Text="Open map" HorizontalAlignment="Center" />
+                    </Button>
+                    <Button Name="BounceNotificationsButton" Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="BounceNotificationsButton_Click">
+                      <TextBlock Text="Bouncemeldingen" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <Button Name="SyncGmailReportsButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0" Click="SyncGmailReportsButton_Click">
                       <TextBlock Text="Sync nu" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
@@ -1472,6 +1475,20 @@
                 <TextBlock Text="&#x2022; De actieve database bevat standaard de laatste 90 dagen. Oudere gegevens worden door de applicatie naar Maandarchieven verplaatst." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Open een maandarchief vanuit Dashboard om binnen die maand te zoeken en analyseren. Sluit het archief of kies terug om de actieve database opnieuw te gebruiken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De applicatie maakt een lege database automatisch aan en beheert schemawijzigingen, retentie en rebuilds zelf." TextWrapping="Wrap" Margin="0,0,0,6" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
+              <StackPanel>
+                <TextBlock Text="Bouncemeldingen naar afzenders" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
+                <TextBlock Text="&#x2022; Na elke import opent het overzicht Bouncemeldingen met alle afzender-e-mailadressen die bounces in dat log hebben. Openen kan ook zelf via de knop Bouncemeldingen in Beheer." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Nieuwe afzenders staan altijd uit. Zet per afzender aan wie een melding krijgt, of gebruik Alles aanzetten. De keuze wordt onthouden voor volgende imports." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De melding gaat standaard naar het afzenderadres zelf. Bij noreply-achtige adressen wordt info@ op hetzelfde domein voorgesteld; elk ontvangeradres is aanpasbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Onder Mailinhoud bepaalt u wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De bodyvorm is HTML met tekstalternatief, alleen HTML of alleen platte tekst. Een eigen inleidende en afsluitende tekst is mogelijk; daarin werken {sender}, {domain}, {count} en {date}." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Het maximum aantal detailregels in de mail is instelbaar. Staat de Excel-bijlage aan, dan bevat die altijd de volledige lijst." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Voorbeeld toont de mail zoals die eruit komt te zien. Verzenden gebeurt pas na bevestiging, tenzij Automatisch versturen na import aanstaat." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Verzenden kan via de bestaande Gmail-gegevens, een SMTP-relay of Microsoft 365. Relay-wachtwoorden worden versleuteld voor de huidige Windows-gebruiker opgeslagen." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 

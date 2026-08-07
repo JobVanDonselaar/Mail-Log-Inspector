@@ -43,6 +43,8 @@ public partial class MainWindow : Window
 
 	private readonly SmtpApiOperationalStore _smtpApiOperationalStore;
 
+	private readonly BounceNotificationOperationalStore _bounceNotificationStore;
+
 	private readonly ReportSyncRuntime _reportSyncRuntime;
 
 	private readonly ReportSyncCoordinator _reportSyncCoordinator;
@@ -117,6 +119,8 @@ public partial class MainWindow : Window
 		_reportSyncOperationalStore.Initialize();
 		_smtpApiOperationalStore = new SmtpApiOperationalStore(_workspace.GmailOperationalDatabasePath);
 		_smtpApiOperationalStore.Initialize();
+		_bounceNotificationStore = new BounceNotificationOperationalStore(_workspace.GmailOperationalDatabasePath);
+		_bounceNotificationStore.Initialize();
 		_smtpApiStatsService = new SmtpApiStatsService(new System.Net.Http.HttpClient());
 		_reportSyncRuntime = ReportSyncRuntime.Create(
 			_workspace,
@@ -435,6 +439,8 @@ public partial class MainWindow : Window
 			StatusTextBlock.Text = "Geen CSV- of ZIP-bestanden geselecteerd.";
 			return;
 		}
+		long lastImportId = 0L;
+		string? lastImportFileName = null;
 		try
 		{
 			SetImportBusy(busy: true, $"Importeren: {importableFiles.Count} bestand(en)...");
@@ -455,6 +461,8 @@ public partial class MainWindow : Window
 				MailLogInspectorImportResult mailLogInspectorImportResult = ((!Path.GetExtension(file).Equals(".zip", StringComparison.OrdinalIgnoreCase)) ? (await _importService.ImportCsvAsync(file, CancellationToken.None, progress, finalizeBatch: false)) : (await _importService.ImportZipAsync(file, CancellationToken.None, progress, finalizeBatch: false)));
 				if (!mailLogInspectorImportResult.AlreadyImported && mailLogInspectorImportResult.ImportId > 0)
 				{
+					lastImportId = mailLogInspectorImportResult.ImportId;
+					lastImportFileName = Path.GetFileName(file);
 					_reportSyncOperationalStore.RecordImportSource(new ReportImportSourceRow(
 						sourceHash,
 						ReportImportSource.Manual,
@@ -489,6 +497,10 @@ public partial class MainWindow : Window
 			SetImportBusy(busy: false, StatusTextBlock.Text);
 		}
 		await RefreshDashboardAsync();
+		if (lastImportId > 0)
+		{
+			await RunBounceNotificationsAfterImportAsync(lastImportId, lastImportFileName);
+		}
 	}
 
 	private static string CalculateSourceHash(string path)
@@ -1240,11 +1252,11 @@ public partial class MainWindow : Window
 			return;
 		}
 
-		int index = MainTabControl.SelectedIndex;
-		SearchTopStatusPanel.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
-		AnalysisTopStatusPanel.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
-		ManageTopStatusPanel.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
-		HelpTopStatusPanel.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+		string? tabName = (MainTabControl.SelectedItem as System.Windows.Controls.TabItem)?.Name;
+		SearchTopStatusPanel.Visibility = tabName == "SearchTab" ? Visibility.Visible : Visibility.Collapsed;
+		AnalysisTopStatusPanel.Visibility = tabName == "AnalysisTab" ? Visibility.Visible : Visibility.Collapsed;
+		ManageTopStatusPanel.Visibility = tabName == "ManageTab" ? Visibility.Visible : Visibility.Collapsed;
+		HelpTopStatusPanel.Visibility = tabName == "HelpTab" ? Visibility.Visible : Visibility.Collapsed;
 	}
 
 	private void RebindSearchResultsFromCache(string? preferredSelectionKey = null, bool expandSingleSenderGroup = false)
