@@ -82,6 +82,9 @@ public partial class MainWindow : Window
 	private CancellationTokenSource? _analysisRefreshCancellation;
 	private CancellationTokenSource? _syncCancellation;
 
+	private MailLogInspectorAnalysisSummary? _lastAnalysisSummary;
+	private AnalysisReportContext? _lastAnalysisContext;
+
 	private const int UnlimitedSearchLimit = 100000;
 
 	private const int FixedGmailAutoSyncIntervalMinutes = 15;
@@ -389,6 +392,51 @@ public partial class MainWindow : Window
 		await RefreshAnalysisAsync();
 	}
 
+	private void AnalysisExportButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (_lastAnalysisSummary is null || _lastAnalysisContext is null)
+		{
+			AnalysisRunStateTextBlock.Text = "Voer eerst een analyse uit voordat u exporteert.";
+			return;
+		}
+
+		Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog
+		{
+			Filter = "Excel workbook (*.xlsx)|*.xlsx",
+			FileName = BuildAnalysisExportFileName(_lastAnalysisContext),
+			DefaultExt = ".xlsx",
+			AddExtension = true
+		};
+
+		if (saveFileDialog.ShowDialog(this) != true)
+		{
+			return;
+		}
+
+		try
+		{
+			AnalysisExcelExporter.Export(saveFileDialog.FileName, _lastAnalysisSummary, _lastAnalysisContext);
+			AnalysisRunStateTextBlock.Text = "Excel export gereed: " + Path.GetFileName(saveFileDialog.FileName);
+			OpenExportedWorkbook(saveFileDialog.FileName);
+		}
+		catch (Exception ex)
+		{
+			AnalysisRunStateTextBlock.Text = "Excel export mislukt: " + ex.Message;
+		}
+	}
+
+	private static string BuildAnalysisExportFileName(AnalysisReportContext context)
+	{
+		List<string> parts = ["mail-log-inspector", "analyse"];
+		AddExportFilterPart(parts, "afzender", context.SenderFilter);
+		AddExportFilterPart(parts, "ontvanger", context.RecipientFilter);
+		parts.Add("van");
+		parts.Add(context.FromDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture));
+		parts.Add("tot");
+		parts.Add(context.ThroughDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture));
+		return string.Join('-', parts) + ".xlsx";
+	}
+
 	private void SearchResultsStatusHeaderComboBox_Loaded(object sender, RoutedEventArgs e)
 	{
 		if (sender is System.Windows.Controls.ComboBox searchResultsStatusHeaderComboBox)
@@ -681,6 +729,13 @@ public partial class MainWindow : Window
 			cancellationToken.ThrowIfCancellationRequested();
 			TimeSpan elapsed = DateTime.UtcNow - startedAt;
 			ApplyAnalysisSummary(summary, elapsed);
+			_lastAnalysisSummary = summary;
+			_lastAnalysisContext = new AnalysisReportContext(
+				criteria!.FromInclusive,
+				criteria.ThroughInclusive,
+				AnalysisSenderTextBox.Text,
+				AnalysisRecipientTextBox.Text,
+				limit);
 			AnalysisRunStateTextBlock.Text = summary.TotalCount == 0 ? "Geen analysegegevens voor dit tijdvak." : "Analyse gereed.";
 			AnalysisRunDurationTextBlock.Text = $"Analyse gereed in {elapsed.TotalSeconds:0.0}s";
 		}
@@ -1267,6 +1322,7 @@ public partial class MainWindow : Window
 
 		bool isReady = TryBuildAnalysisCriteria(out _, out string? validationMessage);
 		AnalysisRunButton.IsEnabled = !isRunning && isReady;
+		AnalysisExportButton.IsEnabled = !isRunning && _lastAnalysisSummary != null && _lastAnalysisContext != null;
 		AnalysisRunProgressBar.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
 		AnalysisRunProgressBar.IsIndeterminate = isRunning;
 		if (!isRunning)
@@ -1282,11 +1338,17 @@ public partial class MainWindow : Window
 
 	private bool AreAnalysisControlsReady()
 	{
-		return AnalysisFromDatePicker != null && AnalysisThroughDatePicker != null && AnalysisSenderTextBox != null && AnalysisRecipientTextBox != null && AnalysisTopDomainLimitComboBox != null && AnalysisRunButton != null && AnalysisRunStateTextBlock != null && AnalysisRunProgressBar != null;
+		return AnalysisFromDatePicker != null && AnalysisThroughDatePicker != null && AnalysisSenderTextBox != null && AnalysisRecipientTextBox != null && AnalysisTopDomainLimitComboBox != null && AnalysisRunButton != null && AnalysisExportButton != null && AnalysisRunStateTextBlock != null && AnalysisRunProgressBar != null;
 	}
 
 	private void ResetAnalysisResults()
 	{
+		_lastAnalysisSummary = null;
+		_lastAnalysisContext = null;
+		if (AnalysisExportButton != null)
+		{
+			AnalysisExportButton.IsEnabled = false;
+		}
 		AnalysisTotalCountTextBlock.Text = "0";
 		DeliveredCountTextBlock.Text = "0";
 		AnalysisDeliveredPercentTextBlock.Text = "0%";
