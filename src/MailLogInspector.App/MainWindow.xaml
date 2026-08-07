@@ -281,7 +281,7 @@
     </Style>
 
     <Style TargetType="{x:Type TabItem}">
-      <Setter Property="MinWidth" Value="190" />
+      <Setter Property="MinWidth" Value="165" />
       <Setter Property="Height" Value="48" />
       <Setter Property="Margin" Value="0,0,4,0" />
       <Setter Property="Padding" Value="18,0" />
@@ -323,7 +323,7 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <TabControl Name="MainTabControl" Grid.Row="0" Margin="18,0,18,18" SelectionChanged="MainTabControl_SelectionChanged">
+    <TabControl Name="MainTabControl" Grid.Row="0" Margin="18,0,18,18" SelectionChanged="MainTabControl_SelectionChanged" SizeChanged="MainTabControl_SizeChanged">
       <TabItem Name="SearchTab">
         <TabItem.Header>
           <StackPanel Orientation="Horizontal">
@@ -1303,7 +1303,7 @@
                       <TextBlock Text="Dropzone: .csv en .zip" Style="{StaticResource MutedTextStyle}" Margin="0,4,0,0" />
                     </StackPanel>
                   </Border>
-                  <UniformGrid Grid.Row="2" Name="ManageActionsButtonGrid" Columns="5">
+                  <UniformGrid Grid.Row="2" Name="ManageActionsButtonGrid" Columns="4">
                     <Button Name="ImportFilesButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="ImportButton_Click">
                       <TextBlock Text="Importeren" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
                     </Button>
@@ -1312,9 +1312,6 @@
                     </Button>
                     <Button Name="OpenWorkspaceFolderButton" Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="OpenWorkspaceFolderButton_Click">
                       <TextBlock Text="Open map" HorizontalAlignment="Center" />
-                    </Button>
-                    <Button Name="BounceNotificationsButton" Style="{StaticResource SecondaryButtonStyle}" Padding="8,7" Margin="0,0,6,0" Click="BounceNotificationsButton_Click">
-                      <TextBlock Text="Bouncemeldingen" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" />
                     </Button>
                     <Button Name="SyncGmailReportsButton" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Margin="0" Click="SyncGmailReportsButton_Click">
                       <TextBlock Text="Sync nu" Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center" />
@@ -1391,6 +1388,353 @@
             </Grid>
           </Grid>
         </ScrollViewer>
+      </TabItem>
+
+      <TabItem Name="EmailTab">
+        <TabItem.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE715;" Style="{StaticResource IconTextStyle}" Margin="0,0,10,0" />
+            <TextBlock Text="E-mail" FontSize="14" VerticalAlignment="Center" />
+          </StackPanel>
+        </TabItem.Header>
+        <Grid Background="{StaticResource PanelFillBrush}" Margin="18,12,18,12">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="620" />
+            <ColumnDefinition Width="12" />
+            <ColumnDefinition Width="540" />
+          </Grid.ColumnDefinitions>
+
+          <!-- Periodekeuze -->
+          <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource PanelBorderStyle}" Padding="14,12" Margin="0,0,0,12">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+
+              <StackPanel Grid.Row="0" Grid.Column="0">
+                <TextBlock Text="Waarover melden" Style="{StaticResource LabelTextStyle}" />
+                <ComboBox Name="EmailScopeComboBox" Height="30" SelectionChanged="EmailScopeComboBox_SelectionChanged">
+                  <ComboBoxItem Content="Laatste import" Tag="latest" />
+                  <ComboBoxItem Content="Eerdere import kiezen" Tag="import" />
+                  <ComboBoxItem Content="Gisteren" Tag="yesterday" />
+                  <ComboBoxItem Content="Afgelopen 7 dagen" Tag="last7" />
+                  <ComboBoxItem Content="Deze maand" Tag="thismonth" />
+                  <ComboBoxItem Content="Zelf kiezen" Tag="custom" />
+                </ComboBox>
+              </StackPanel>
+
+              <StackPanel Name="EmailImportPickerPanel" Grid.Row="0" Grid.Column="2" Visibility="Collapsed" MinWidth="420">
+                <TextBlock Text="Import" Style="{StaticResource LabelTextStyle}" />
+                <ComboBox Name="EmailImportComboBox" Height="30" DisplayMemberPath="Display" SelectionChanged="EmailImportComboBox_SelectionChanged" />
+              </StackPanel>
+
+              <StackPanel Name="EmailFromDatePanel" Grid.Row="0" Grid.Column="2" Visibility="Collapsed">
+                <TextBlock Text="Vanaf" Style="{StaticResource LabelTextStyle}" />
+                <DatePicker Name="EmailFromDatePicker" Width="150"
+                            SelectedDateChanged="DatePicker_SelectedDateChanged"
+                            PreviewMouseDown="DatePicker_PreviewMouseDown"
+                            PreviewMouseUp="DatePicker_PreviewMouseUp"
+                            PreviewKeyDown="DatePicker_PreviewKeyDown"
+                            CalendarOpened="DatePicker_CalendarOpened" />
+              </StackPanel>
+
+              <StackPanel Name="EmailThroughDatePanel" Grid.Row="0" Grid.Column="4" Visibility="Collapsed">
+                <TextBlock Text="Tot en met" Style="{StaticResource LabelTextStyle}" />
+                <DatePicker Name="EmailThroughDatePicker" Width="150"
+                            SelectedDateChanged="DatePicker_SelectedDateChanged"
+                            PreviewMouseDown="DatePicker_PreviewMouseDown"
+                            PreviewMouseUp="DatePicker_PreviewMouseUp"
+                            PreviewKeyDown="DatePicker_PreviewKeyDown"
+                            CalendarOpened="DatePicker_CalendarOpened" />
+              </StackPanel>
+
+              <StackPanel Grid.Row="0" Grid.Column="7" Orientation="Horizontal" VerticalAlignment="Bottom">
+                <Button Name="EmailLoadButton" Style="{StaticResource PrimaryButtonStyle}" Padding="16,7" Click="EmailLoadButton_Click">
+                  <TextBlock Text="Overzicht ophalen" />
+                </Button>
+              </StackPanel>
+
+              <TextBlock Name="EmailScopeSummaryTextBlock"
+                         Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="8"
+                         Style="{StaticResource MutedTextStyle}"
+                         TextWrapping="Wrap"
+                         Margin="0,9,0,0"
+                         Text="Kies waarover u wilt melden en haal het overzicht op." />
+            </Grid>
+          </Border>
+
+          <!-- Afzenders -->
+          <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource PanelBorderStyle}" Padding="0">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <Grid Margin="14,12,14,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock Text="Afzenders met bounces" Style="{StaticResource SectionTitleStyle}" />
+                  <TextBlock Name="EmailSendersHintTextBlock"
+                             Style="{StaticResource MutedTextStyle}"
+                             Text="Nieuwe afzenders staan standaard uit. Zet aan wie een melding krijgt."
+                             Margin="0,2,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Button Name="EmailEnableAllButton" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Margin="0,0,6,0" Click="EmailEnableAllButton_Click">
+                    <TextBlock Text="Alles aan" />
+                  </Button>
+                  <Button Name="EmailDisableAllButton" Style="{StaticResource SecondaryButtonStyle}" Padding="10,6" Click="EmailDisableAllButton_Click">
+                    <TextBlock Text="Alles uit" />
+                  </Button>
+                </StackPanel>
+              </Grid>
+
+              <DataGrid Name="EmailSendersGrid"
+                        Grid.Row="1"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        HeadersVisibility="Column"
+                        GridLinesVisibility="None"
+                        BorderThickness="0"
+                        RowHeight="28"
+                        FontSize="12"
+                        SelectionMode="Single"
+                        VerticalScrollBarVisibility="Auto"
+                        HorizontalScrollBarVisibility="Auto"
+                        CellEditEnding="EmailSendersGrid_CellEditEnding">
+                <DataGrid.Columns>
+                  <DataGridCheckBoxColumn Header="Aan" Width="44" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" />
+                  <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
+                  <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="Verzonden" Width="80" Binding="{Binding TotalCount}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="% Bounce" Width="80" Binding="{Binding BouncePercentDisplay}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="Belangrijkste oorzaak" Width="*" Binding="{Binding TopReason}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="Deze periode" Width="120" Binding="{Binding PeriodStateDisplay}" IsReadOnly="True" />
+                  <DataGridTemplateColumn Header="" Width="84">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <Button Content="Voorbeeld" Click="EmailPreviewButton_Click" Padding="6,1" Margin="2" MinHeight="22" FontSize="11" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+
+              <Grid Grid.Row="2" Margin="14,8,14,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                  <ProgressBar Name="EmailProgressBar" Height="4" IsIndeterminate="True" Visibility="Collapsed" Margin="0,0,0,6" />
+                  <TextBlock Name="EmailStatusTextBlock" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                  <Button Name="EmailSaveButton" Style="{StaticResource SecondaryButtonStyle}" Padding="12,7" Margin="0,0,6,0" Click="EmailSaveButton_Click">
+                    <TextBlock Text="Instellingen opslaan" />
+                  </Button>
+                  <Button Name="EmailSendButton" Style="{StaticResource PrimaryButtonStyle}" Padding="16,7" Click="EmailSendButton_Click">
+                    <TextBlock Text="Meldingen versturen" />
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Grid>
+          </Border>
+
+          <!-- Instellingen en geschiedenis -->
+          <ScrollViewer Grid.Row="1" Grid.Column="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
+
+              <Border Style="{StaticResource PanelBorderStyle}" Padding="0" Margin="0,0,0,12">
+                <Expander Name="EmailTransportExpander" IsExpanded="True" Padding="14,10,14,14">
+                  <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Verzendinstellingen" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
+                      <TextBlock Name="EmailTransportSummaryTextBlock" Style="{StaticResource MutedTextStyle}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Expander.Header>
+                  <StackPanel Margin="0,10,0,0">
+                    <TextBlock Text="Verzendkanaal" Style="{StaticResource LabelTextStyle}" />
+                    <ComboBox Name="EmailTransportComboBox" Height="30" Margin="0,0,0,10" SelectionChanged="EmailTransportComboBox_SelectionChanged">
+                      <ComboBoxItem Content="Gmail (bestaande OAuth-gegevens)" Tag="gmail" />
+                      <ComboBoxItem Content="SMTP-relay (SMTP.com)" Tag="smtp-relay" />
+                      <ComboBoxItem Content="Microsoft 365 / Exchange Online" Tag="microsoft365" />
+                    </ComboBox>
+
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="Afzenderadres van de melding" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailFromAddressTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="Weergavenaam" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailFromNameTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" />
+                      </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Onderwerp (gebruik {sender}, {domain}, {count} en {date})" Style="{StaticResource LabelTextStyle}" />
+                    <TextBox Name="EmailSubjectTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" Margin="0,0,0,10" />
+
+                    <Grid Name="EmailRelayPanel" Visibility="Collapsed" Margin="0,0,0,10">
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
+                      </Grid.RowDefinitions>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="90" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="SMTP-server" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailRelayHostTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="Poort" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailRelayPortTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" Text="587" />
+                      </StackPanel>
+                      <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="Gebruikersnaam" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailRelayUsernameTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" />
+                      </StackPanel>
+                      <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="Wachtwoord" Style="{StaticResource LabelTextStyle}" />
+                        <PasswordBox Name="EmailRelayPasswordBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" />
+                      </StackPanel>
+                    </Grid>
+
+                    <CheckBox Name="EmailAutoSendCheckBox" Content="Automatisch versturen na elke import" Margin="0,2,0,0" />
+                    <TextBlock Text="Staat dit uit, dan opent de app na een import deze tab met het overzicht klaar."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,5,0,0" />
+                  </StackPanel>
+                </Expander>
+              </Border>
+
+              <Border Style="{StaticResource PanelBorderStyle}" Padding="0" Margin="0,0,0,12">
+                <Expander Name="EmailContentExpander" IsExpanded="False" Padding="14,10,14,14">
+                  <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="Mailinhoud" Style="{StaticResource SectionTitleStyle}" VerticalAlignment="Center" />
+                      <TextBlock Name="EmailContentSummaryTextBlock" Style="{StaticResource MutedTextStyle}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Expander.Header>
+                  <StackPanel Margin="0,10,0,0">
+                    <TextBlock Text="Wat gaat er mee?" Style="{StaticResource LabelTextStyle}" />
+                    <CheckBox Name="EmailIncludeKpiCheckBox" Content="Kerncijfers (verzonden, afgeleverd, bounces)" Margin="0,0,0,5" Click="EmailContentOption_Changed" />
+                    <CheckBox Name="EmailIncludeReasonsCheckBox" Content="Overzicht van bounce-oorzaken" Margin="0,0,0,5" Click="EmailContentOption_Changed" />
+                    <CheckBox Name="EmailIncludeDomainsCheckBox" Content="Overzicht van ontvangende domeinen" Margin="0,0,0,5" Click="EmailContentOption_Changed" />
+                    <CheckBox Name="EmailIncludeDetailsCheckBox" Content="Detailtabel met gebouncede berichten" Margin="0,0,0,5" Click="EmailIncludeDetailsCheckBox_Changed" />
+                    <CheckBox Name="EmailIncludeSourceCheckBox" Content="Bronbestandsnaam vermelden" Margin="0,0,0,5" Click="EmailContentOption_Changed" />
+                    <CheckBox Name="EmailIncludeAttachmentCheckBox" Content="Excel-bijlage met alle bounces" Margin="0,0,0,10" Click="EmailContentOption_Changed" />
+
+                    <Grid Margin="0,0,0,10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="110" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel>
+                        <TextBlock Text="Bodyvorm" Style="{StaticResource LabelTextStyle}" />
+                        <ComboBox Name="EmailBodyFormatComboBox" Height="30" SelectionChanged="EmailBodyFormatComboBox_SelectionChanged">
+                          <ComboBoxItem Content="HTML met tekstalternatief" Tag="both" />
+                          <ComboBoxItem Content="Alleen HTML" Tag="html" />
+                          <ComboBoxItem Content="Alleen platte tekst" Tag="text" />
+                        </ComboBox>
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Name="EmailMaxRowsLabel" Text="Max. regels" Style="{StaticResource LabelTextStyle}" />
+                        <TextBox Name="EmailMaxRowsTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" Text="100" />
+                      </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Inleidende tekst (optioneel)" Style="{StaticResource LabelTextStyle}" />
+                    <TextBox Name="EmailIntroTextBox" Height="80" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="6,4" Margin="0,0,0,10" />
+                    <TextBlock Text="Afsluitende tekst (optioneel)" Style="{StaticResource LabelTextStyle}" />
+                    <TextBox Name="EmailFooterTextBox" Height="60" AcceptsReturn="True" TextWrapping="Wrap"
+                             VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" Padding="6,4" />
+                    <TextBlock Text="In beide teksten werken {sender}, {domain}, {count} en {date}."
+                               Style="{StaticResource MutedTextStyle}" Margin="0,5,0,0" />
+                  </StackPanel>
+                </Expander>
+              </Border>
+
+              <Border Style="{StaticResource PanelBorderStyle}" Padding="0">
+                <Grid>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <Grid Margin="14,12,14,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel VerticalAlignment="Center">
+                      <TextBlock Text="Verzendgeschiedenis" Style="{StaticResource SectionTitleStyle}" />
+                      <TextBlock Name="EmailHistoryHintTextBlock" Style="{StaticResource MutedTextStyle}"
+                                 Text="Wat er eerder is verstuurd, nieuwste eerst." Margin="0,2,0,0" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Name="EmailHistoryRefreshButton" Style="{StaticResource SecondaryButtonStyle}"
+                            Padding="10,6" Click="EmailHistoryRefreshButton_Click" VerticalAlignment="Center">
+                      <TextBlock Text="Vernieuwen" />
+                    </Button>
+                  </Grid>
+                  <DataGrid Name="EmailHistoryGrid"
+                            Grid.Row="1"
+                            MaxHeight="300"
+                            AutoGenerateColumns="False"
+                            CanUserAddRows="False"
+                            IsReadOnly="True"
+                            HeadersVisibility="Column"
+                            GridLinesVisibility="None"
+                            BorderThickness="0"
+                            RowHeight="26"
+                            FontSize="12"
+                            VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Auto">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="Verstuurd" Width="120" Binding="{Binding SentAtDisplay}" />
+                      <DataGridTextColumn Header="Afzender" Width="*" Binding="{Binding SenderAddress}" />
+                      <DataGridTextColumn Header="Ontvanger" Width="*" Binding="{Binding Recipient}" />
+                      <DataGridTextColumn Header="Periode" Width="150" Binding="{Binding PeriodDisplay}" />
+                      <DataGridTextColumn Header="Bounces" Width="70" Binding="{Binding BounceCount}" />
+                      <DataGridTextColumn Header="Resultaat" Width="140" Binding="{Binding ResultDisplay}" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </Grid>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
       </TabItem>
 
       <TabItem Name="HelpTab">
@@ -1491,12 +1835,14 @@
             <Border Style="{StaticResource PanelBorderStyle}" Padding="22" Margin="0,0,0,14">
               <StackPanel>
                 <TextBlock Text="Bouncemeldingen naar afzenders" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
-                <TextBlock Text="&#x2022; Na elke import opent het overzicht Bouncemeldingen met alle afzender-e-mailadressen die bounces in dat log hebben. Openen kan ook zelf via de knop Bouncemeldingen in Beheer." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Alles rond bouncemeldingen staat op het tabblad E-mail: de afzenderlijst, de mailinhoud, de verzendinstellingen en de verzendgeschiedenis. Na een import springt de applicatie er vanzelf naartoe." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Bovenaan kiest u de periode: de laatste import, alleen gisteren, de laatste zeven dagen, deze maand of een eigen datumbereik. Zo is een overgeslagen dag of week alsnog te melden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Nieuwe afzenders staan altijd uit. Zet per afzender aan wie een melding krijgt, of gebruik Alles aanzetten. De keuze wordt onthouden voor volgende imports." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De melding gaat standaard naar het afzenderadres zelf. Bij noreply-achtige adressen wordt info@ op hetzelfde domein voorgesteld; elk ontvangeradres is aanpasbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Onder Mailinhoud bepaalt u wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De bodyvorm is HTML met tekstalternatief, alleen HTML of alleen platte tekst. Een eigen inleidende en afsluitende tekst is mogelijk; daarin werken {sender}, {domain}, {count} en {date}." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Het maximum aantal detailregels in de mail is instelbaar. Staat de Excel-bijlage aan, dan bevat die altijd de volledige lijst." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De kolom Verstuurd toont per afzender of die voor de gekozen periode al bericht heeft gehad. Onderaan staat de verzendgeschiedenis met alle pogingen, ook de mislukte." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Voorbeeld toont de mail zoals die eruit komt te zien. Verzenden gebeurt pas na bevestiging, tenzij Automatisch versturen na import aanstaat." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Verzenden kan via de bestaande Gmail-gegevens, een SMTP-relay of Microsoft 365. Relay-wachtwoorden worden versleuteld voor de huidige Windows-gebruiker opgeslagen." TextWrapping="Wrap" />
               </StackPanel>
@@ -1600,7 +1946,8 @@
       </Border>
     </Popup>
 
-    <Border Panel.ZIndex="5"
+    <Border Name="TopStatusBorder"
+            Panel.ZIndex="5"
             VerticalAlignment="Top"
             Height="48"
             Margin="775,0,18,0"
@@ -1676,6 +2023,17 @@
                   Click="SyncCancelButton_Click">
             <TextBlock Text="Stop" Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" />
           </Button>
+        </Grid>
+
+        <Grid Name="EmailTopStatusPanel" Visibility="Collapsed">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="&#xE715;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+            <TextBlock Name="EmailTopStatusTextBlock" Text="Bouncemeldingen naar afzenders." VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
         </Grid>
 
         <Grid Name="HelpTopStatusPanel" Visibility="Collapsed">

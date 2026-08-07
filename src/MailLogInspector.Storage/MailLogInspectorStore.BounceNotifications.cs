@@ -16,19 +16,29 @@ public sealed partial class MailLogInspectorStore
     /// </summary>
     public IReadOnlyList<MailLogInspectorSenderBounceReport> ReadSenderBounceReports(long importId)
     {
-        using SqliteConnection connection = OpenConnection();
-        return ReadSenderBounceReports(connection, importId);
+        return ReadSenderBounceReports(BounceReportScope.ForImport(importId));
     }
 
-    private static IReadOnlyList<MailLogInspectorSenderBounceReport> ReadSenderBounceReports(
-        SqliteConnection connection,
-        long importId)
+    /// <summary>
+    /// Groepeert de bounces binnen een datumbereik per afzender-e-mailadres. Hiermee kan een
+    /// overgeslagen dag of week alsnog gemeld worden, los van welke import de regels bracht.
+    /// </summary>
+    public IReadOnlyList<MailLogInspectorSenderBounceReport> ReadSenderBounceReports(
+        DateTime fromInclusive,
+        DateTime throughInclusive)
     {
+        return ReadSenderBounceReports(BounceReportScope.ForPeriod(fromInclusive, throughInclusive));
+    }
+
+    private IReadOnlyList<MailLogInspectorSenderBounceReport> ReadSenderBounceReports(BounceReportScope scope)
+    {
+        using SqliteConnection connection = OpenConnection();
+
         Dictionary<string, (int Total, int Delivered, int Underway, int Bounce)> totals =
-            ReadSenderTotals(connection, importId);
+            ReadSenderTotals(connection, scope);
 
         Dictionary<string, List<MailLogInspectorBounceRow>> bouncesBySender =
-            ReadBounceRows(connection, importId);
+            ReadBounceRows(connection, scope);
 
         List<MailLogInspectorSenderBounceReport> reports = [];
         foreach ((string sender, List<MailLogInspectorBounceRow> bounces) in bouncesBySender)
@@ -51,10 +61,10 @@ public sealed partial class MailLogInspectorStore
 
     private static Dictionary<string, (int Total, int Delivered, int Underway, int Bounce)> ReadSenderTotals(
         SqliteConnection connection,
-        long importId)
+        BounceReportScope scope)
     {
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
+        command.CommandText = $"""
             SELECT LOWER(sender.local_part || '@' || COALESCE(sender_domain.domain_name, '')),
                    COUNT(*),
                    SUM(CASE WHEN item.status = $delivered THEN 1 ELSE 0 END),
@@ -63,10 +73,10 @@ public sealed partial class MailLogInspectorStore
             FROM mail_items AS item
             JOIN mail_addresses AS sender ON sender.address_id = item.sender_address_id
             LEFT JOIN mail_domains AS sender_domain ON sender_domain.domain_id = item.sender_domain_id
-            WHERE item.last_import_id = $importId
+            WHERE {scope.WhereClause}
             GROUP BY 1;
             """;
-        command.Parameters.AddWithValue("$importId", importId);
+        scope.AddParameters(command);
         command.Parameters.AddWithValue("$delivered", DeliveredStatusCode);
         command.Parameters.AddWithValue("$underway", UnderwayStatusCode);
         command.Parameters.AddWithValue("$bounce", BounceStatusCode);
@@ -88,10 +98,10 @@ public sealed partial class MailLogInspectorStore
 
     private static Dictionary<string, List<MailLogInspectorBounceRow>> ReadBounceRows(
         SqliteConnection connection,
-        long importId)
+        BounceReportScope scope)
     {
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = """
+        command.CommandText = $"""
             SELECT LOWER(sender.local_part || '@' || COALESCE(sender_domain.domain_name, '')),
                    item.accepted_at,
                    recipient.local_part || '@' || COALESCE(recipient_domain.domain_name, ''),
@@ -103,11 +113,11 @@ public sealed partial class MailLogInspectorStore
             LEFT JOIN mail_domains AS sender_domain ON sender_domain.domain_id = item.sender_domain_id
             JOIN mail_addresses AS recipient ON recipient.address_id = item.recipient_address_id
             LEFT JOIN mail_domains AS recipient_domain ON recipient_domain.domain_id = item.recipient_domain_id
-            WHERE item.last_import_id = $importId
+            WHERE {scope.WhereClause}
               AND item.status = $bounce
             ORDER BY 1, item.accepted_at DESC;
             """;
-        command.Parameters.AddWithValue("$importId", importId);
+        scope.AddParameters(command);
         command.Parameters.AddWithValue("$bounce", BounceStatusCode);
 
         Dictionary<string, List<MailLogInspectorBounceRow>> grouped = new(StringComparer.OrdinalIgnoreCase);
@@ -118,7 +128,7 @@ public sealed partial class MailLogInspectorStore
             var reasonCode = (MailLogInspectorReasonCode)(reader.IsDBNull(3) ? 0 : reader.GetInt64(3));
 
             var row = new MailLogInspectorBounceRow(
-                reader.IsDBNull(1) ? null : FromUnixSeconds(reader.GetInt64(1)),
+                reader.IsDBNull(1) ? null : FromStoredTicks(reader.GetInt64(1)),
                 reader.GetString(2),
                 reasonCode,
                 reader.IsDBNull(4) ? null : (int)reader.GetInt64(4),
@@ -146,8 +156,52 @@ public sealed partial class MailLogInspectorStore
         return result is null || result is DBNull ? null : Convert.ToInt64(result, CultureInfo.InvariantCulture);
     }
 
-    private static DateTime FromUnixSeconds(long seconds)
+    /// <summary>
+    /// Bepaalt over welke regels een bouncerapport gaat: één import of een datumbereik.
+    /// Beide varianten delen dezelfde queries zodat de cijfers gelijk blijven.
+    /// </summary>
+    private sealed class BounceReportScope
     {
-        return DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime.ToLocalTime();
+        private readonly long? _importId;
+        private readonly DateTime? _fromInclusive;
+        private readonly DateTime? _throughInclusive;
+
+        private BounceReportScope(long? importId, DateTime? fromInclusive, DateTime? throughInclusive)
+        {
+            _importId = importId;
+            _fromInclusive = fromInclusive;
+            _throughInclusive = throughInclusive;
+        }
+
+        public static BounceReportScope ForImport(long importId) => new(importId, null, null);
+
+        public static BounceReportScope ForPeriod(DateTime fromInclusive, DateTime throughInclusive)
+        {
+            DateTime start = fromInclusive.Date;
+            DateTime end = throughInclusive.Date.AddDays(1).AddTicks(-1);
+
+            if (end < start)
+            {
+                (start, end) = (end.Date, start.Date.AddDays(1).AddTicks(-1));
+            }
+
+            return new BounceReportScope(null, start, end);
+        }
+
+        public string WhereClause => _importId.HasValue
+            ? "item.last_import_id = $importId"
+            : "item.accepted_at >= $fromInclusive AND item.accepted_at <= $throughInclusive";
+
+        public void AddParameters(SqliteCommand command)
+        {
+            if (_importId.HasValue)
+            {
+                command.Parameters.AddWithValue("$importId", _importId.Value);
+                return;
+            }
+
+            command.Parameters.AddWithValue("$fromInclusive", ToStoredTicks(_fromInclusive!.Value));
+            command.Parameters.AddWithValue("$throughInclusive", ToStoredTicks(_throughInclusive!.Value));
+        }
     }
 }

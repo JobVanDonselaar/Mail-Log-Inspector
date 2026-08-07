@@ -49,6 +49,27 @@ public sealed class BounceNotificationOperationalStore
                 last_notified_bounce_count INTEGER NOT NULL DEFAULT 0
             );
 
+            CREATE TABLE IF NOT EXISTS bounce_notification_log (
+                log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sent_at_utc TEXT NOT NULL,
+                sender_address TEXT NOT NULL,
+                recipient TEXT NOT NULL,
+                bounce_count INTEGER NOT NULL DEFAULT 0,
+                scope TEXT NOT NULL DEFAULT 'import',
+                import_id INTEGER NULL,
+                period_start TEXT NULL,
+                period_end TEXT NULL,
+                source_file TEXT NULL,
+                success INTEGER NOT NULL DEFAULT 1,
+                error_message TEXT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ix_bounce_notification_log_sent
+                ON bounce_notification_log (sent_at_utc DESC);
+
+            CREATE INDEX IF NOT EXISTS ix_bounce_notification_log_sender
+                ON bounce_notification_log (sender_address, period_start, period_end);
+
             INSERT OR IGNORE INTO bounce_notification_settings (settings_id) VALUES (1);
             """;
         command.ExecuteNonQuery();
@@ -378,6 +399,115 @@ public sealed class BounceNotificationOperationalStore
         command.ExecuteNonQuery();
     }
 
+    /// <summary>Legt één verzendpoging vast, geslaagd of mislukt, zodat terug te zien is wat al gemaild is.</summary>
+    public long AppendLogEntry(
+        string senderAddress,
+        string recipient,
+        int bounceCount,
+        BounceNotificationPeriod period,
+        bool success,
+        string? errorMessage,
+        DateTime? sentAtUtc = null)
+    {
+        using SqliteConnection connection = OpenConnection();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO bounce_notification_log (
+                sent_at_utc, sender_address, recipient, bounce_count,
+                scope, import_id, period_start, period_end, source_file, success, error_message)
+            VALUES ($sentAtUtc, $senderAddress, $recipient, $bounceCount,
+                $scope, $importId, $periodStart, $periodEnd, $sourceFile, $success, $errorMessage);
+            SELECT last_insert_rowid();
+            """;
+        command.Parameters.AddWithValue(
+            "$sentAtUtc",
+            NormalizeUtc(sentAtUtc ?? DateTime.UtcNow).ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("$senderAddress", NormalizeAddress(senderAddress));
+        command.Parameters.AddWithValue("$recipient", NormalizeAddress(recipient));
+        command.Parameters.AddWithValue("$bounceCount", bounceCount);
+        command.Parameters.AddWithValue("$scope", BounceNotificationScope.Normalize(period.Scope));
+        command.Parameters.AddWithValue("$importId", period.ImportId.HasValue ? period.ImportId.Value : DBNull.Value);
+        command.Parameters.AddWithValue("$periodStart", ToDateDbValue(period.FromInclusive));
+        command.Parameters.AddWithValue("$periodEnd", ToDateDbValue(period.ThroughInclusive));
+        command.Parameters.AddWithValue("$sourceFile", ToDbValue(period.SourceFileName));
+        command.Parameters.AddWithValue("$success", success ? 1 : 0);
+        command.Parameters.AddWithValue("$errorMessage", ToDbValue(errorMessage));
+
+        object? result = command.ExecuteScalar();
+        return result is null or DBNull ? 0L : Convert.ToInt64(result, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>De meest recente verzendpogingen, nieuwste eerst.</summary>
+    public IReadOnlyList<BounceNotificationLogEntry> ReadLogEntries(int maxRows = 250)
+    {
+        using SqliteConnection connection = OpenConnection();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT log_id, sent_at_utc, sender_address, recipient, bounce_count,
+                   scope, import_id, period_start, period_end, source_file, success, error_message
+            FROM bounce_notification_log
+            ORDER BY sent_at_utc DESC, log_id DESC
+            LIMIT $maxRows;
+            """;
+        command.Parameters.AddWithValue("$maxRows", maxRows <= 0 ? 250 : maxRows);
+
+        List<BounceNotificationLogEntry> entries = [];
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            entries.Add(new BounceNotificationLogEntry(
+                reader.GetInt64(0),
+                ReadNullableDateTime(reader, 1) ?? DateTime.UtcNow,
+                reader.GetString(2),
+                reader.GetString(3),
+                (int)reader.GetInt64(4),
+                BounceNotificationScope.Normalize(ReadNullableString(reader, 5)),
+                reader.IsDBNull(6) ? null : reader.GetInt64(6),
+                ReadNullableDateTime(reader, 7),
+                ReadNullableDateTime(reader, 8),
+                ReadNullableString(reader, 9),
+                ReadBoolean(reader, 10, defaultValue: true),
+                ReadNullableString(reader, 11)));
+        }
+
+        return entries;
+    }
+
+    /// <summary>
+    /// Wanneer een afzender voor het laatst een geslaagde melding over deze periode kreeg.
+    /// Hiermee is te zien of een periode al gemaild is voordat er opnieuw verstuurd wordt.
+    /// </summary>
+    public IReadOnlyDictionary<string, DateTime> ReadSuccessfulSendsForPeriod(
+        DateTime fromInclusive,
+        DateTime throughInclusive)
+    {
+        using SqliteConnection connection = OpenConnection();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT sender_address, MAX(sent_at_utc)
+            FROM bounce_notification_log
+            WHERE success = 1
+              AND period_start = $periodStart
+              AND period_end = $periodEnd
+            GROUP BY sender_address;
+            """;
+        command.Parameters.AddWithValue("$periodStart", ToDateDbValue(fromInclusive));
+        command.Parameters.AddWithValue("$periodEnd", ToDateDbValue(throughInclusive));
+
+        Dictionary<string, DateTime> sends = new(StringComparer.OrdinalIgnoreCase);
+        using SqliteDataReader reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            DateTime? sentAt = ReadNullableDateTime(reader, 1);
+            if (sentAt.HasValue)
+            {
+                sends[reader.GetString(0)] = sentAt.Value;
+            }
+        }
+
+        return sends;
+    }
+
     private static void SaveSender(
         SqliteConnection connection,
         BounceNotificationSender sender,
@@ -448,6 +578,14 @@ public sealed class BounceNotificationOperationalStore
     {
         return value.HasValue
             ? NormalizeUtc(value.Value).ToString("O", CultureInfo.InvariantCulture)
+            : DBNull.Value;
+    }
+
+    /// <summary>Periodegrenzen worden als kale datum opgeslagen zodat ze exact vergelijkbaar blijven.</summary>
+    private static object ToDateDbValue(DateTime? value)
+    {
+        return value.HasValue
+            ? value.Value.Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
             : DBNull.Value;
     }
 

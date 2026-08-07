@@ -87,18 +87,21 @@ Zie [docs/smtp-report-download-flow.md](docs/smtp-report-download-flow.md) voor 
 
 ## Bouncemeldingen naar afzenders
 
-Na elke import bepaalt de app per afzender-e-mailadres welke berichten zijn gebounced en biedt aan die afzender een overzicht te mailen. Het venster opent automatisch na een import en is daarnaast bereikbaar via `Bouncemeldingen` in Beheer.
+Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de mailinhoud, de verzendinstellingen en de verzendgeschiedenis. Na elke import springt de app naar dit tabblad met het overzicht van de zojuist geïmporteerde periode klaar.
 
+- Bovenaan staat de periodekeuze: `laatste import`, `de import die net binnenkwam`, `gisteren`, `laatste 7 dagen`, `deze maand` of een eigen datumbereik. Zo is een overgeslagen dag of week alsnog te melden.
 - Nieuwe afzenders staan altijd uit. Per afzender is een aan/uit-vinkje beschikbaar, plus `Alles aanzetten` en `Alles uitzetten`. De keuze wordt onthouden voor volgende imports.
 - De melding gaat standaard naar het afzenderadres zelf. Bij `noreply@`, `no-reply@`, `donotreply@` en vergelijkbare adressen wordt `info@` op hetzelfde domein voorgesteld. Elk ontvangeradres is per regel aanpasbaar.
 - Onder `Mailinhoud` bepaalt de gebruiker wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit; staat alles uit, dan blijven de kerncijfers gegarandeerd staan.
 - De bodyvorm is `HTML met tekstalternatief`, `alleen HTML` of `alleen platte tekst`.
 - Een eigen inleidende en afsluitende tekst is mogelijk. Daarin werken dezelfde placeholders als in het onderwerp: `{sender}`, `{domain}`, `{count}` en `{date}`.
 - Het maximum aantal detailregels in de mail is instelbaar tot 1000. Staat de Excel-bijlage aan, dan bevat die altijd de volledige lijst en vermeldt de mail de inkorting.
+- De kolom `Verstuurd` toont per afzender of die voor de gekozen periode al bericht heeft gehad. Zijn er al meldingen verstuurd, dan waarschuwt de bevestiging daarvoor.
+- Onderaan staat de verzendgeschiedenis met alle pogingen, inclusief de mislukte en de bijbehorende foutmelding.
 - `Voorbeeld` opent de opgemaakte mail zonder te verzenden. Verzenden gebeurt pas na bevestiging, tenzij `Automatisch versturen na import` aanstaat.
 - Verzenden kan via de bestaande Gmail OAuth-gegevens, een SMTP-relay (SMTP.com) of Microsoft 365. Relay-wachtwoorden worden Windows-gebruikergebonden versleuteld opgeslagen.
 
-Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`.
+Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`. Elke verzendpoging wordt vastgelegd in `bounce_notification_log`.
 
 ## Build en test
 

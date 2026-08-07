@@ -60,7 +60,27 @@ public sealed class BounceNotificationService
     /// </summary>
     public IReadOnlyList<BounceNotificationPlanItem> BuildPlan(long importId)
     {
-        IReadOnlyList<MailLogInspectorSenderBounceReport> reports = _store.ReadSenderBounceReports(importId);
+        return BuildPlan(_store.ReadSenderBounceReports(importId));
+    }
+
+    /// <summary>
+    /// Bouwt het overzicht over een zelfgekozen periode, zodat een overgeslagen dag of week
+    /// alsnog gemeld kan worden zonder opnieuw te importeren.
+    /// </summary>
+    public IReadOnlyList<BounceNotificationPlanItem> BuildPlan(BounceNotificationPeriod period)
+    {
+        IReadOnlyList<MailLogInspectorSenderBounceReport> reports =
+            BounceNotificationScope.Normalize(period.Scope) == BounceNotificationScope.Range ||
+            period.ImportId is null
+                ? _store.ReadSenderBounceReports(period.FromInclusive, period.ThroughInclusive)
+                : _store.ReadSenderBounceReports(period.ImportId.Value);
+
+        return BuildPlan(reports);
+    }
+
+    private IReadOnlyList<BounceNotificationPlanItem> BuildPlan(
+        IReadOnlyList<MailLogInspectorSenderBounceReport> reports)
+    {
         if (reports.Count == 0)
         {
             return [];
@@ -89,15 +109,16 @@ public sealed class BounceNotificationService
         return items;
     }
 
-    /// <summary>Verstuurt de meldingen voor de opgegeven afzenders.</summary>
+    /// <summary>Verstuurt de meldingen voor de opgegeven afzenders en legt elke poging vast in het logboek.</summary>
     public async Task<IReadOnlyList<BounceNotificationSendResult>> SendAsync(
         IReadOnlyList<BounceNotificationPlanItem> items,
-        DateTime reportDate,
-        string? sourceFileName,
+        BounceNotificationPeriod period,
         CancellationToken cancellationToken)
     {
         BounceNotificationSettings settings = _notificationStore.LoadSettings();
         IBounceMailTransport transport = _transportFactory(settings);
+        DateTime reportDate = period.ReportDate;
+        string? sourceFileName = period.SourceFileName;
 
         List<BounceNotificationSendResult> results = [];
         foreach (BounceNotificationPlanItem item in items)
@@ -156,6 +177,14 @@ public sealed class BounceNotificationService
                     DateTime.UtcNow,
                     item.Report.BounceCount);
 
+                _notificationStore.AppendLogEntry(
+                    item.Report.SenderAddress,
+                    item.EffectiveRecipient,
+                    item.Report.BounceCount,
+                    period,
+                    success: true,
+                    errorMessage: null);
+
                 results.Add(new BounceNotificationSendResult(
                     item.Report.SenderAddress,
                     item.EffectiveRecipient,
@@ -168,6 +197,14 @@ public sealed class BounceNotificationService
             }
             catch (Exception ex)
             {
+                _notificationStore.AppendLogEntry(
+                    item.Report.SenderAddress,
+                    item.EffectiveRecipient,
+                    item.Report.BounceCount,
+                    period,
+                    success: false,
+                    errorMessage: ex.Message);
+
                 results.Add(new BounceNotificationSendResult(
                     item.Report.SenderAddress,
                     item.EffectiveRecipient,

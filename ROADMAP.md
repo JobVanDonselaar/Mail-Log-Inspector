@@ -30,7 +30,7 @@ Klaar:
 - transactionele retentie en analyse-aggregaten
 - begrensde ZIP-, CSV- en downloadverwerking
 - live API-tab met SMTP.com statistieken en instelbare automatische verversing
-- bouncemeldingen per afzender-e-mailadres na elke import, met instelbare mailinhoud, ontvangervoorstel voor noreply-adressen en optionele Excel-bijlage
+- eigen tabblad `E-mail` met bouncemeldingen per afzender-e-mailadres, vrije periodekeuze (import, gisteren, laatste 7 dagen, deze maand of eigen datumbereik), instelbare mailinhoud, ontvangervoorstel voor noreply-adressen, optionele Excel-bijlage en een verzendgeschiedenis van alle pogingen
 
 Bewust uitgangspunt:
 

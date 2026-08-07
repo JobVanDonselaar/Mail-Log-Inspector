@@ -328,11 +328,60 @@ public partial class MainWindow : Window
 		}
 
 		UpdateTopStatusPanelVisibility();
+		UpdateTopStatusBorderPlacement();
 
 		if (MainTabControl.SelectedItem is System.Windows.Controls.TabItem { Name: "LiveApiTabItem" })
 		{
 			LiveApiTab_SelectionChanged();
 		}
+
+		if (MainTabControl.SelectedItem is System.Windows.Controls.TabItem { Name: "EmailTab" })
+		{
+			EmailTab_SelectionChanged();
+		}
+	}
+
+	private void MainTabControl_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		UpdateTopStatusBorderPlacement();
+	}
+
+	/// <summary>
+	/// Schuift het statuspaneel tot achter de laatste tab. Zonder deze meting dekt het paneel
+	/// tabbladen af zodra er een tab bijkomt.
+	/// </summary>
+	private void UpdateTopStatusBorderPlacement()
+	{
+		if (TopStatusBorder == null || MainTabControl == null)
+		{
+			return;
+		}
+
+		double tabStripWidth = 0;
+		foreach (System.Windows.Controls.TabItem tab in MainTabControl.Items.OfType<System.Windows.Controls.TabItem>())
+		{
+			if (tab.Visibility != Visibility.Visible || tab.ActualWidth <= 0)
+			{
+				continue;
+			}
+
+			tabStripWidth += tab.ActualWidth + tab.Margin.Left + tab.Margin.Right;
+		}
+
+		double? left = MainWindowTabStripLayout.CalculateStatusLeftMargin(
+			tabStripWidth,
+			ActualWidth,
+			MainTabControl.Margin.Left,
+			MainTabControl.Margin.Right);
+
+		if (left is null)
+		{
+			TopStatusBorder.Visibility = Visibility.Collapsed;
+			return;
+		}
+
+		TopStatusBorder.Visibility = Visibility.Visible;
+		TopStatusBorder.Margin = new Thickness(left.Value, 0, MainTabControl.Margin.Right, 0);
 	}
 
 	private async void AnalysisRefreshButton_Click(object sender, RoutedEventArgs e)
@@ -1324,6 +1373,11 @@ public partial class MainWindow : Window
 		AnalysisTopStatusPanel.Visibility = tabName == "AnalysisTab" ? Visibility.Visible : Visibility.Collapsed;
 		ManageTopStatusPanel.Visibility = tabName == "ManageTab" ? Visibility.Visible : Visibility.Collapsed;
 		HelpTopStatusPanel.Visibility = tabName == "HelpTab" ? Visibility.Visible : Visibility.Collapsed;
+
+		if (EmailTopStatusPanel != null)
+		{
+			EmailTopStatusPanel.Visibility = tabName == "EmailTab" ? Visibility.Visible : Visibility.Collapsed;
+		}
 	}
 
 	private void RebindSearchResultsFromCache(string? preferredSelectionKey = null, bool expandSingleSenderGroup = false)
