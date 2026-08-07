@@ -89,7 +89,7 @@ Zie [docs/smtp-report-download-flow.md](docs/smtp-report-download-flow.md) voor 
 
 Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de mailinhoud, de verzendinstellingen en de verzendgeschiedenis. Na elke import springt de app naar dit tabblad met het overzicht van de zojuist geïmporteerde periode klaar.
 
-- Bovenaan staat de periodekeuze: `laatste import`, `de import die net binnenkwam`, `gisteren`, `laatste 7 dagen`, `deze maand` of een eigen datumbereik. Zo is een overgeslagen dag of week alsnog te melden.
+- Bovenaan staat de periodekeuze: `laatste import`, `de import die net binnenkwam`, `gisteren`, `laatste 7 dagen`, `deze maand` of een eigen datumbereik. De tab opent op `gisteren`, de eerste volledig geïmporteerde dag. Zo is een overgeslagen dag of week alsnog te melden.
 - Nieuwe afzenders staan altijd uit. Per afzender is een aan/uit-vinkje beschikbaar, plus `Alles aanzetten` en `Alles uitzetten`. De keuze wordt onthouden voor volgende imports.
 - De melding gaat standaard naar het afzenderadres zelf. Bij `noreply@`, `no-reply@`, `donotreply@` en vergelijkbare adressen wordt `info@` op hetzelfde domein voorgesteld. Elk ontvangeradres is per regel aanpasbaar.
 - Onder `Mailinhoud` bepaalt de gebruiker wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit; staat alles uit, dan blijven de kerncijfers gegarandeerd staan.
