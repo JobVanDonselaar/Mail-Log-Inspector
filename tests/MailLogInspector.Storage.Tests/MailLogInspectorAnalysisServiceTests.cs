@@ -81,27 +81,27 @@ public sealed class MailLogInspectorAnalysisServiceTests
         Assert.Equal(2, summary.UnderwayCount);
         Assert.Equal(1, summary.BounceCount);
 
-        Assert.Collection(summary.SenderVolumeRows,
+        Assert.Collection(summary.SenderProblemVolumeRows,
             first =>
             {
-                Assert.Equal("sender-a.nl", first.Key);
-                Assert.Equal(3, first.Total);
-                Assert.Equal(2, first.Delivered);
-                Assert.Equal(0, first.Underway);
-                Assert.Equal(1, first.Bounce);
-                Assert.Equal(1, first.ProblemCount);
+                Assert.Equal("sender-b.nl", first.Key);
+                Assert.Equal(2, first.Total);
+                Assert.Equal(0, first.Delivered);
+                Assert.Equal(2, first.Underway);
+                Assert.Equal(0, first.Bounce);
+                Assert.Equal(2, first.ProblemCount);
             },
             second =>
             {
-                Assert.Equal("sender-b.nl", second.Key);
-                Assert.Equal(2, second.Total);
-                Assert.Equal(0, second.Delivered);
-                Assert.Equal(2, second.Underway);
-                Assert.Equal(0, second.Bounce);
-                Assert.Equal(2, second.ProblemCount);
+                Assert.Equal("sender-a.nl", second.Key);
+                Assert.Equal(3, second.Total);
+                Assert.Equal(2, second.Delivered);
+                Assert.Equal(0, second.Underway);
+                Assert.Equal(1, second.Bounce);
+                Assert.Equal(1, second.ProblemCount);
             });
 
-        Assert.Equal("sender-b.nl", summary.SenderLowestSuccessRows[0].Key);
+        Assert.Equal("sender-b.nl", summary.SenderHighestProblemRateRows[0].Key);
         Assert.Equal("yahoo.com", summary.RecipientProblemVolumeRows[0].Key);
         Assert.Equal("yahoo.com", summary.RecipientHighestProblemRateRows[0].Key);
 

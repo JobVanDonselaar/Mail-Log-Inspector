@@ -1354,8 +1354,8 @@ public partial class MainWindow : Window
 		AnalysisDeliveredPercentTextBlock.Text = "0%";
 		UnderwayCountTextBlock.Text = "0";
 		BounceCountTextBlock.Text = "0";
-		SenderVolumeGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
-		SenderSuccessGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
+		SenderProblemVolumeGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
+		SenderProblemRateGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
 		RecipientProblemVolumeGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
 		RecipientProblemRateGrid.ItemsSource = Array.Empty<MailLogInspectorBreakdownRow>();
 		ResponseCodesLeftGrid.ItemsSource = Array.Empty<MailLogInspectorValueMeaningCount>();
@@ -1369,8 +1369,8 @@ public partial class MainWindow : Window
 		AnalysisDeliveredPercentTextBlock.Text = FormatDeliveredPercent(summary.DeliveredCount, summary.TotalCount);
 		UnderwayCountTextBlock.Text = summary.UnderwayCount.ToString();
 		BounceCountTextBlock.Text = summary.BounceCount.ToString();
-		SenderVolumeGrid.ItemsSource = summary.SenderVolumeRows;
-		SenderSuccessGrid.ItemsSource = summary.SenderLowestSuccessRows;
+		SenderProblemVolumeGrid.ItemsSource = summary.SenderProblemVolumeRows;
+		SenderProblemRateGrid.ItemsSource = summary.SenderHighestProblemRateRows;
 		RecipientProblemVolumeGrid.ItemsSource = summary.RecipientProblemVolumeRows;
 		RecipientProblemRateGrid.ItemsSource = summary.RecipientHighestProblemRateRows;
 		(IReadOnlyList<MailLogInspectorValueMeaningCount> left, IReadOnlyList<MailLogInspectorValueMeaningCount> right) = SplitResponseCodeRows(summary.TopResponseCodes);

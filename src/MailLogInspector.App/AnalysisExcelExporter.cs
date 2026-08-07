@@ -111,17 +111,17 @@ public static class AnalysisExcelExporter
             sheetData,
             merges,
             ref row,
-            "Afzenderdomeinen op volume",
+            "Afzenderdomeinen met de meeste problemen",
             "Domein",
-            summary.SenderVolumeRows);
+            summary.SenderProblemVolumeRows);
 
-        TableBlock lowest = WriteBreakdownTable(
+        TableBlock rate = WriteBreakdownTable(
             sheetData,
             merges,
             ref row,
-            "Afzenderdomeinen met het laagste afleverpercentage",
+            "Afzenderdomeinen met het hoogste probleempercentage",
             "Domein",
-            summary.SenderLowestSuccessRows);
+            summary.SenderHighestProblemRateRows);
 
         FinishSheet(worksheetPart, merges, volume);
 
@@ -129,13 +129,15 @@ public static class AnalysisExcelExporter
             worksheetPart,
             sheetName,
             volume,
-            lowest,
-            volumeTitle: "Verzonden volume per afzenderdomein",
-            rateTitle: "Laagste afleverpercentage per afzenderdomein",
-            rateSelector: row => row.SuccessRate,
-            rateColumn: "H",
-            rateColor: ChartGreen,
-            volumeColor: ChartBlue);
+            rate,
+            volumeTitle: "Problemen per afzenderdomein",
+            rateTitle: "Hoogste probleempercentage per afzenderdomein",
+            rateSelector: row => row.ProblemRate,
+            rateColumn: "D",
+            rateColor: ChartRed,
+            volumeColor: ChartOrange,
+            volumeSelector: row => row.ProblemCount,
+            volumeColumn: "C");
     }
 
     // ----------------------------------------------------------------- ontvangers
@@ -207,11 +209,11 @@ public static class AnalysisExcelExporter
             volumeTitle: "Problemen per ontvangerdomein",
             rateTitle: "Hoogste probleempercentage per ontvangerdomein",
             rateSelector: row => row.ProblemRate,
-            rateColumn: "G",
+            rateColumn: "D",
             rateColor: ChartRed,
             volumeColor: ChartOrange,
             volumeSelector: row => row.ProblemCount,
-            volumeColumn: "F");
+            volumeColumn: "C");
     }
 
     // ------------------------------------------------------------ gedeelde opbouw
@@ -318,7 +320,7 @@ public static class AnalysisExcelExporter
 
         uint headerRow = row;
         sheetData.Append(CreateStyledStringRow(row, StyleTableHeader,
-            keyHeader, "Totaal", "Afgeleverd", "Onderweg", "Bounce", "Problemen", "% probleem", "% afgeleverd"));
+            keyHeader, "Totaal", "Problemen", "% probleem", "Afgeleverd", "Onderweg", "Bounce", "% afgeleverd"));
         row++;
 
         uint firstDataRow = row;
@@ -329,11 +331,11 @@ public static class AnalysisExcelExporter
             sheetData.Append(CreateSparseRow(row,
                 StringCell($"A{row}", entry.Key, bodyStyle),
                 NumberCell($"B{row}", entry.Total, numberStyle),
-                NumberCell($"C{row}", entry.Delivered, numberStyle),
-                NumberCell($"D{row}", entry.Underway, numberStyle),
-                NumberCell($"E{row}", entry.Bounce, numberStyle),
-                NumberCell($"F{row}", entry.ProblemCount, numberStyle),
-                NumberCell($"G{row}", entry.ProblemRate, StylePercent),
+                NumberCell($"C{row}", entry.ProblemCount, numberStyle),
+                NumberCell($"D{row}", entry.ProblemRate, StylePercent),
+                NumberCell($"E{row}", entry.Delivered, numberStyle),
+                NumberCell($"F{row}", entry.Underway, numberStyle),
+                NumberCell($"G{row}", entry.Bounce, numberStyle),
                 NumberCell($"H{row}", entry.SuccessRate, StylePercent)));
             row++;
         }
