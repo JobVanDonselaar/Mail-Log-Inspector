@@ -16,6 +16,13 @@ namespace MailLogInspector.App;
 /// </summary>
 public partial class MainWindow
 {
+    /// <summary>
+    /// Waar de tab op openstaat. Gisteren is de eerste volledig geïmporteerde dag, zodat het
+    /// overzicht meteen klopt en er niet eerst een import geladen wordt die daarna toch
+    /// omgezet moet worden.
+    /// </summary>
+    private const string DefaultEmailScope = "yesterday";
+
     private readonly ObservableCollection<BounceNotificationRowViewModel> _emailRows = [];
     private IReadOnlyList<EmailImportListItem> _emailImports = [];
     private BounceNotificationPeriod? _emailPeriod;
@@ -97,7 +104,7 @@ public partial class MainWindow
 
     private string ReadSelectedEmailScope()
     {
-        return EmailScopeComboBox.SelectedItem is ComboBoxItem { Tag: string tag } ? tag : "latest";
+        return EmailScopeComboBox.SelectedItem is ComboBoxItem { Tag: string tag } ? tag : DefaultEmailScope;
     }
 
     /// <summary>Vertaalt de keuzes bovenin naar een concrete periode.</summary>
@@ -295,6 +302,11 @@ public partial class MainWindow
             EmailIntroTextBox.Text = content.IntroText ?? string.Empty;
             EmailFooterTextBox.Text = content.FooterText ?? string.Empty;
             SelectComboBoxByTag(EmailBodyFormatComboBox, content.ResolveBodyFormat());
+
+            if (EmailScopeComboBox.SelectedItem is null)
+            {
+                SelectComboBoxByTag(EmailScopeComboBox, DefaultEmailScope);
+            }
         }
         finally
         {

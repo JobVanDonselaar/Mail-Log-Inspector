@@ -424,6 +424,24 @@ public sealed class EmailTabTests
         Assert.Contains("BounceNotificationContentOptions.DefaultFooterText", code, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Stond de tab op de laatste import, dan moest de gebruiker na het laden alsnog omschakelen
+    /// naar een dag en opnieuw ophalen. Gisteren als startpunt scheelt die tweede ronde.
+    /// </summary>
+    [Fact]
+    public void TheEmailTabOpensOnYesterdayInsteadOfTheLatestImport()
+    {
+        string code = File.ReadAllText(Path.Combine(
+            SolutionRoot(), "src", "MailLogInspector.App", "MainWindow.BounceNotifications.cs"));
+
+        Assert.Contains("DefaultEmailScope = \"yesterday\"", code, StringComparison.Ordinal);
+        Assert.Contains(
+            "EmailScopeComboBox.SelectedItem is ComboBoxItem { Tag: string tag } ? tag : DefaultEmailScope",
+            code,
+            StringComparison.Ordinal);
+        Assert.Contains("SelectComboBoxByTag(EmailScopeComboBox, DefaultEmailScope)", code, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void ImportStillHandsOverToTheEmailTab()
     {
