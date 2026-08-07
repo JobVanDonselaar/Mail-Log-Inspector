@@ -60,7 +60,7 @@ public sealed record BounceNotificationContentOptions(
         """
         Beste praktijk,
 
-        Vanuit Exquise Next Generation verstuurt u e-mail aan uw patiënten, zoals afspraakbevestigingen en herinneringen. Dankzij een nieuwe koppeling met ons verzendplatform kunnen wij nu voor het eerst terugkoppelen hoe die berichten het doen. Indien gewenst ontvangt u daarom dit overzicht.
+        Vanuit Exquise Next Generation verstuurt u e-mail aan uw patiënten, zoals afspraakbevestigingen en herinneringen. Dankzij een nieuwe koppeling met ons verzendplatform kunnen wij nu terugkoppelen hoe die berichten het doen. Indien gewenst ontvangt u daarom dit overzicht.
 
         Hieronder ziet u wat er rond {date} is verstuurd vanaf {sender} en welke berichten niet zijn aangekomen. Zo'n bericht heet een "bounce": de mailserver van de ontvanger heeft het geweigerd, meestal door een typefout in het adres of een opgeheven mailbox. Bij deze {count} adressen is uw bericht dus niet gelezen.
 
