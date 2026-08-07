@@ -77,14 +77,26 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Leeg laten betekent "gebruik het voorstel", niet "geen ontvanger". Het veld toont daarom
+    /// het voorgestelde adres weer zodra het wordt leeggemaakt, zodat het scherm hetzelfde zegt
+    /// als wat er bij verzenden gebeurt.
+    /// </summary>
     public string Recipient
     {
         get => _recipient;
         set
         {
-            string normalized = value?.Trim() ?? string.Empty;
+            string entered = value?.Trim() ?? string.Empty;
+            string normalized = entered.Length == 0 ? SuggestedRecipient : entered;
+
             if (string.Equals(_recipient, normalized, StringComparison.Ordinal))
             {
+                if (!string.Equals(entered, normalized, StringComparison.Ordinal))
+                {
+                    OnPropertyChanged();
+                }
+
                 return;
             }
 
@@ -92,6 +104,12 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
+    /// <summary>
+    /// Laat het scherm de bewaarde waarde opnieuw ophalen. Nodig na het bewerken van een cel:
+    /// wie het ontvangerveld leegmaakt krijgt het voorstel terug, en dat moet zichtbaar worden.
+    /// </summary>
+    public void RefreshRecipientDisplay() => OnPropertyChanged(nameof(Recipient));
 
     public BounceNotificationSender ToSetting()
     {

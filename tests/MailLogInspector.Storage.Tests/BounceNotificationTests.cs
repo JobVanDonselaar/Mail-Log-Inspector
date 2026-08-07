@@ -216,6 +216,60 @@ public sealed class BounceNotificationTests
         Assert.Contains("color:#ffffff;text-decoration:none;", header, StringComparison.Ordinal);
     }
 
+    // ------------------------------------------------- ontvanger in het raster
+
+    /// <summary>
+    /// Leeg laten betekent "gebruik het voorstel", niet "geen ontvanger". Bleef het veld leeg
+    /// staan, dan leek de melding nergens heen te gaan terwijl er wel verstuurd werd.
+    /// </summary>
+    [Fact]
+    public void ClearingTheRecipientRestoresTheSuggestedAddress()
+    {
+        var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
+            BuildReport(),
+            BounceNotificationSender.CreateDisabled("verzender@bedrijf.nl"),
+            "verzender@bedrijf.nl"));
+
+        row.Recipient = "   ";
+
+        Assert.Equal("verzender@bedrijf.nl", row.Recipient);
+        Assert.Null(row.ToSetting().RecipientOverride);
+    }
+
+    /// <summary>
+    /// Zonder melding aan het scherm blijft de cel leeg staan, want de bewaarde waarde is dan
+    /// ongewijzigd gelijk aan het voorstel.
+    /// </summary>
+    [Fact]
+    public void ClearingTheRecipientTellsTheScreenToRedrawTheCell()
+    {
+        var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
+            BuildReport(),
+            BounceNotificationSender.CreateDisabled("verzender@bedrijf.nl"),
+            "verzender@bedrijf.nl"));
+
+        var changed = new List<string?>();
+        row.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+
+        row.Recipient = string.Empty;
+
+        Assert.Contains(nameof(BounceNotificationRowViewModel.Recipient), changed);
+    }
+
+    [Fact]
+    public void AnEnteredRecipientOverridesTheSuggestion()
+    {
+        var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
+            BuildReport(),
+            BounceNotificationSender.CreateDisabled("verzender@bedrijf.nl"),
+            "verzender@bedrijf.nl"));
+
+        row.Recipient = " praktijk@voorbeeld.nl ";
+
+        Assert.Equal("praktijk@voorbeeld.nl", row.Recipient);
+        Assert.Equal("praktijk@voorbeeld.nl", row.ToSetting().RecipientOverride);
+    }
+
     [Fact]
     public void DetailRowLimitTruncatesTheMailBody()
     {
