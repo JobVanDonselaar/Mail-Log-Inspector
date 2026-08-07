@@ -44,11 +44,12 @@ public sealed record AnalysisReportContext(
 /// </summary>
 public static class AnalysisExcelExporter
 {
-    private const int SheetColumnCount = 12;
-    private const int TableColumnCount = 8;
-    private const uint ChartTopRow = 9;
-    private const uint ChartBottomRow = 27;
-    private const uint FirstTableRow = 29;
+    private const int SheetColumnCount = 9;
+    private const int TableColumnCount = 4;
+    private const int RightTableColumn = 6;
+    private const uint ChartTopRow = 11;
+    private const uint ChartBottomRow = 29;
+    private const uint FirstTableRow = 31;
     private const int MaxChartCategories = 12;
 
     public static void Export(
@@ -107,23 +108,17 @@ public static class AnalysisExcelExporter
             "Beeld van de verzendende domeinen", StyleSection, 24));
 
         uint row = FirstTableRow;
-        TableBlock volume = WriteBreakdownTable(
+        (TableBlock volume, TableBlock rate) = WriteBreakdownPair(
             sheetData,
             merges,
             ref row,
             "Afzenderdomeinen met de meeste problemen",
-            "Domein",
-            summary.SenderProblemVolumeRows);
-
-        TableBlock rate = WriteBreakdownTable(
-            sheetData,
-            merges,
-            ref row,
             "Afzenderdomeinen met het hoogste probleempercentage",
             "Domein",
+            summary.SenderProblemVolumeRows,
             summary.SenderHighestProblemRateRows);
 
-        FinishSheet(worksheetPart, merges, volume);
+        FinishSheet(worksheetPart, merges);
 
         AddDomainCharts(
             worksheetPart,
@@ -133,11 +128,9 @@ public static class AnalysisExcelExporter
             volumeTitle: "Problemen per afzenderdomein",
             rateTitle: "Hoogste probleempercentage per afzenderdomein",
             rateSelector: row => row.ProblemRate,
-            rateColumn: "D",
             rateColor: ChartRed,
             volumeColor: ChartOrange,
-            volumeSelector: row => row.ProblemCount,
-            volumeColumn: "C");
+            volumeSelector: row => row.ProblemCount);
     }
 
     // ----------------------------------------------------------------- ontvangers
@@ -167,20 +160,14 @@ public static class AnalysisExcelExporter
             "Beeld van de ontvangende domeinen", StyleSection, 24));
 
         uint row = FirstTableRow;
-        TableBlock volume = WriteBreakdownTable(
+        (TableBlock volume, TableBlock highest) = WriteBreakdownPair(
             sheetData,
             merges,
             ref row,
             "Ontvangerdomeinen met de meeste problemen",
-            "Domein",
-            summary.RecipientProblemVolumeRows);
-
-        TableBlock highest = WriteBreakdownTable(
-            sheetData,
-            merges,
-            ref row,
             "Ontvangerdomeinen met het hoogste probleempercentage",
             "Domein",
+            summary.RecipientProblemVolumeRows,
             summary.RecipientHighestProblemRateRows);
 
         WriteValueMeaningTable(
@@ -199,7 +186,7 @@ public static class AnalysisExcelExporter
             "Oorzaak",
             summary.TopBounceCauses);
 
-        FinishSheet(worksheetPart, merges, volume);
+        FinishSheet(worksheetPart, merges);
 
         AddDomainCharts(
             worksheetPart,
@@ -209,11 +196,9 @@ public static class AnalysisExcelExporter
             volumeTitle: "Problemen per ontvangerdomein",
             rateTitle: "Hoogste probleempercentage per ontvangerdomein",
             rateSelector: row => row.ProblemRate,
-            rateColumn: "D",
             rateColor: ChartRed,
             volumeColor: ChartOrange,
-            volumeSelector: row => row.ProblemCount,
-            volumeColumn: "C");
+            volumeSelector: row => row.ProblemCount);
     }
 
     // ------------------------------------------------------------ gedeelde opbouw
@@ -241,10 +226,9 @@ public static class AnalysisExcelExporter
         return worksheetPart;
     }
 
-    private static void FinishSheet(WorksheetPart worksheetPart, List<string> merges, TableBlock firstTable)
+    private static void FinishSheet(WorksheetPart worksheetPart, List<string> merges)
     {
         worksheetPart.Worksheet.Append(
-            new S.AutoFilter { Reference = $"A{firstTable.HeaderRow}:{ColumnName(TableColumnCount)}{firstTable.LastDataRow}" },
             MergeRanges(merges.ToArray()),
             ReportPageMargins(),
             LandscapePageSetup());
@@ -280,76 +264,127 @@ public static class AnalysisExcelExporter
         merges.Add($"A5:{ColumnName(SheetColumnCount)}5");
         sheetData.Append(StyledSpanRow(5, 1, SheetColumnCount, "Kerncijfers geselecteerde periode", StyleSection, 24));
 
-        foreach (string column in new[] { "A", "C", "E", "G", "I", "K" })
+        foreach (uint kpiRow in new uint[] { 6, 7, 8, 9 })
         {
-            merges.Add($"{column}6:{NextColumn(column)}6");
-            merges.Add($"{column}7:{NextColumn(column)}7");
+            foreach (string column in new[] { "A", "D", "G" })
+            {
+                merges.Add($"{column}{kpiRow}:{ColumnName(column[0] - 'A' + 3)}{kpiRow}");
+            }
         }
 
-        sheetData.Append(KpiRow(6, StyleKpiLabel,
-            ("A", "Geaccepteerd"), ("C", "Afgeleverd"), ("E", "Afleverratio"),
-            ("G", "Onderweg"), ("I", "Bounced"), ("K", "Probleemratio")));
-
         int problems = summary.UnderwayCount + summary.BounceCount;
+
+        sheetData.Append(KpiRow(6, StyleKpiLabel,
+            ("A", "Geaccepteerd"), ("D", "Afgeleverd"), ("G", "Afleverratio")));
         sheetData.Append(CreateSparseRow(7, 32,
             NumberCell("A7", summary.TotalCount, StyleKpiBlue),
-            NumberCell("C7", summary.DeliveredCount, StyleKpiGreen),
-            NumberCell("E7", Ratio(summary.DeliveredCount, summary.TotalCount), StyleKpiPercent),
-            NumberCell("G7", summary.UnderwayCount, StyleKpiOrange),
-            NumberCell("I7", summary.BounceCount, StyleKpiRed),
-            NumberCell("K7", Ratio(problems, summary.TotalCount), StyleKpiPercent)));
+            NumberCell("D7", summary.DeliveredCount, StyleKpiGreen),
+            NumberCell("G7", Ratio(summary.DeliveredCount, summary.TotalCount), StyleKpiPercent)));
 
-        sheetData.Append(CreateSparseRow(8));
+        sheetData.Append(KpiRow(8, StyleKpiLabel,
+            ("A", "Onderweg"), ("D", "Bounced"), ("G", "Probleemratio")));
+        sheetData.Append(CreateSparseRow(9, 32,
+            NumberCell("A9", summary.UnderwayCount, StyleKpiOrange),
+            NumberCell("D9", summary.BounceCount, StyleKpiRed),
+            NumberCell("G9", Ratio(problems, summary.TotalCount), StyleKpiPercent)));
+
+        sheetData.Append(CreateSparseRow(10));
     }
 
     /// <summary>
-    /// Schrijft één ranglijst en schuift <paramref name="row"/> door naar de eerste vrije rij
-    /// eronder, zodat opeenvolgende tabellen elkaar nooit overschrijven.
+    /// Schrijft twee ranglijsten naast elkaar, met dezelfde kolommen als de Analyse-tab in de app.
+    /// Beide tabellen delen hun rijen, zodat ze op één scherm naast elkaar te lezen zijn.
     /// </summary>
-    private static TableBlock WriteBreakdownTable(
+    private static (TableBlock Left, TableBlock Right) WriteBreakdownPair(
         S.SheetData sheetData,
         List<string> merges,
         ref uint row,
-        string title,
+        string leftTitle,
+        string rightTitle,
         string keyHeader,
-        IReadOnlyList<MailLogInspectorBreakdownRow> rows)
+        IReadOnlyList<MailLogInspectorBreakdownRow> leftRows,
+        IReadOnlyList<MailLogInspectorBreakdownRow> rightRows)
     {
-        merges.Add($"A{row}:{ColumnName(SheetColumnCount)}{row}");
-        sheetData.Append(StyledSpanRow(row, 1, SheetColumnCount, title, StyleSection, 22));
+        merges.Add($"A{row}:{ColumnName(TableColumnCount)}{row}");
+        merges.Add($"{ColumnName(RightTableColumn)}{row}:{ColumnName(SheetColumnCount)}{row}");
+        sheetData.Append(CreateSparseRow(row, 22,
+            SpanCells(row, 1, TableColumnCount, leftTitle, StyleSection)
+                .Concat(SpanCells(row, RightTableColumn, SheetColumnCount, rightTitle, StyleSection))
+                .ToArray()));
         row++;
-
         uint headerRow = row;
-        sheetData.Append(CreateStyledStringRow(row, StyleTableHeader,
-            keyHeader, "Totaal", "Problemen", "% probleem", "Afgeleverd", "Onderweg", "Bounce", "% afgeleverd"));
+        string[] headers = [keyHeader, "Totaal", "Problemen", "% probleem"];
+        sheetData.Append(CreateSparseRow(headerRow,
+            headers.Select((header, index) => StringCell($"{ColumnName(index + 1)}{headerRow}", header, StyleTableHeader))
+                .Concat(headers.Select((header, index) =>
+                    StringCell($"{ColumnName(RightTableColumn + index)}{headerRow}", header, StyleTableHeader)))
+                .ToArray()));
         row++;
 
         uint firstDataRow = row;
-        foreach (MailLogInspectorBreakdownRow entry in rows)
+        int dataRowCount = Math.Max(leftRows.Count, rightRows.Count);
+        for (int index = 0; index < dataRowCount; index++)
         {
             uint bodyStyle = row % 2 == 1 ? StyleBodyAlternate : StyleBody;
             uint numberStyle = row % 2 == 1 ? StyleNumberAlternate : StyleNumber;
             sheetData.Append(CreateSparseRow(row,
-                StringCell($"A{row}", entry.Key, bodyStyle),
-                NumberCell($"B{row}", entry.Total, numberStyle),
-                NumberCell($"C{row}", entry.ProblemCount, numberStyle),
-                NumberCell($"D{row}", entry.ProblemRate, StylePercent),
-                NumberCell($"E{row}", entry.Delivered, numberStyle),
-                NumberCell($"F{row}", entry.Underway, numberStyle),
-                NumberCell($"G{row}", entry.Bounce, numberStyle),
-                NumberCell($"H{row}", entry.SuccessRate, StylePercent)));
+                BreakdownCells(row, 1, index < leftRows.Count ? leftRows[index] : null, bodyStyle, numberStyle)
+                    .Concat(BreakdownCells(row, RightTableColumn, index < rightRows.Count ? rightRows[index] : null, bodyStyle, numberStyle))
+                    .ToArray()));
             row++;
         }
 
-        if (rows.Count == 0)
+        if (dataRowCount == 0)
         {
             sheetData.Append(CreateSparseRow(row,
-                StringCell($"A{row}", "Geen resultaten in deze selectie.", StyleBody)));
+                StringCell($"A{row}", "Geen resultaten in deze selectie.", StyleBody),
+                StringCell($"{ColumnName(RightTableColumn)}{row}", "Geen resultaten in deze selectie.", StyleBody)));
             row++;
         }
 
         uint lastDataRow = row - 1;
         row++;
-        return new TableBlock(headerRow, firstDataRow, lastDataRow, rows);
+        return (
+            new TableBlock(headerRow, firstDataRow, lastDataRow, leftRows),
+            new TableBlock(headerRow, firstDataRow, lastDataRow, rightRows));
+    }
+
+    /// <summary>Vier cellen van één ranglijstrij, of lege cellen als de andere lijst langer is.</summary>
+    private static IEnumerable<S.Cell> BreakdownCells(
+        uint row,
+        int firstColumn,
+        MailLogInspectorBreakdownRow? entry,
+        uint bodyStyle,
+        uint numberStyle)
+    {
+        string key = ColumnName(firstColumn);
+        string total = ColumnName(firstColumn + 1);
+        string problems = ColumnName(firstColumn + 2);
+        string rate = ColumnName(firstColumn + 3);
+
+        if (entry is null)
+        {
+            yield return StyledBlank($"{key}{row}", bodyStyle);
+            yield return StyledBlank($"{total}{row}", numberStyle);
+            yield return StyledBlank($"{problems}{row}", numberStyle);
+            yield return StyledBlank($"{rate}{row}", StylePercent);
+            yield break;
+        }
+
+        yield return StringCell($"{key}{row}", entry.Key, bodyStyle);
+        yield return NumberCell($"{total}{row}", entry.Total, numberStyle);
+        yield return NumberCell($"{problems}{row}", entry.ProblemCount, numberStyle);
+        yield return NumberCell($"{rate}{row}", entry.ProblemRate, StylePercent);
+    }
+
+    /// <summary>Een gestileerde titelcel met opvulcellen, zodat de samengevoegde band doorloopt.</summary>
+    private static IEnumerable<S.Cell> SpanCells(uint row, int firstColumn, int lastColumn, string text, uint style)
+    {
+        yield return StringCell($"{ColumnName(firstColumn)}{row}", text, style);
+        for (int column = firstColumn + 1; column <= lastColumn; column++)
+        {
+            yield return StyledBlank($"{ColumnName(column)}{row}", style);
+        }
     }
 
     private static void WriteValueMeaningTable(
@@ -364,7 +399,14 @@ public static class AnalysisExcelExporter
         sheetData.Append(StyledSpanRow(row, 1, SheetColumnCount, title, StyleSection, 22));
         row++;
 
-        sheetData.Append(CreateStyledStringRow(row, StyleTableHeader, valueHeader, "Aantal", "% van totaal", "Omschrijving"));
+        merges.Add($"D{row}:{ColumnName(SheetColumnCount)}{row}");
+        sheetData.Append(CreateSparseRow(row,
+            new[]
+            {
+                StringCell($"A{row}", valueHeader, StyleTableHeader),
+                StringCell($"B{row}", "Aantal", StyleTableHeader),
+                StringCell($"C{row}", "% van totaal", StyleTableHeader)
+            }.Concat(SpanCells(row, 4, SheetColumnCount, "Omschrijving", StyleTableHeader)).ToArray()));
         row++;
 
         int total = rows.Sum(entry => entry.Count);
@@ -372,11 +414,14 @@ public static class AnalysisExcelExporter
         {
             uint bodyStyle = row % 2 == 1 ? StyleBodyAlternate : StyleBody;
             uint numberStyle = row % 2 == 1 ? StyleNumberAlternate : StyleNumber;
+            merges.Add($"D{row}:{ColumnName(SheetColumnCount)}{row}");
             sheetData.Append(CreateSparseRow(row,
-                StringCell($"A{row}", entry.Value, bodyStyle),
-                NumberCell($"B{row}", entry.Count, numberStyle),
-                NumberCell($"C{row}", Ratio(entry.Count, total), StylePercent),
-                StringCell($"D{row}", entry.Meaning, bodyStyle)));
+                new[]
+                {
+                    StringCell($"A{row}", entry.Value, bodyStyle),
+                    NumberCell($"B{row}", entry.Count, numberStyle),
+                    NumberCell($"C{row}", Ratio(entry.Count, total), StylePercent)
+                }.Concat(SpanCells(row, 4, SheetColumnCount, entry.Meaning, bodyStyle)).ToArray()));
             row++;
         }
 
@@ -398,12 +443,14 @@ public static class AnalysisExcelExporter
         string volumeTitle,
         string rateTitle,
         Func<MailLogInspectorBreakdownRow, double> rateSelector,
-        string rateColumn,
         string rateColor,
         string volumeColor,
-        Func<MailLogInspectorBreakdownRow, double>? volumeSelector = null,
-        string volumeColumn = "B")
+        Func<MailLogInspectorBreakdownRow, double>? volumeSelector = null)
     {
+        string volumeKeyColumn = ColumnName(1);
+        string volumeValueColumn = ColumnName(3);
+        string rateKeyColumn = ColumnName(RightTableColumn);
+        string rateValueColumn = ColumnName(RightTableColumn + 3);
         IReadOnlyList<MailLogInspectorBreakdownRow> volumeRows = volumeTable.Rows.Take(MaxChartCategories).ToArray();
         IReadOnlyList<MailLogInspectorBreakdownRow> rateRows = rateTable.Rows.Take(MaxChartCategories).ToArray();
         if (volumeRows.Count == 0 && rateRows.Count == 0)
@@ -428,8 +475,8 @@ public static class AnalysisExcelExporter
                 C.BarDirectionValues.Bar,
                 volumeTitle,
                 volumeColor,
-                $"'{sheetName}'!$A${volumeTable.FirstDataRow}:$A${lastRow}",
-                $"'{sheetName}'!${volumeColumn}${volumeTable.FirstDataRow}:${volumeColumn}${lastRow}",
+                $"'{sheetName}'!${volumeKeyColumn}${volumeTable.FirstDataRow}:${volumeKeyColumn}${lastRow}",
+                $"'{sheetName}'!${volumeValueColumn}${volumeTable.FirstDataRow}:${volumeValueColumn}${lastRow}",
                 volumeRows.Select(row => row.Key).ToArray(),
                 values,
                 categoryAxisId: 111111111,
@@ -442,7 +489,7 @@ public static class AnalysisExcelExporter
                 volumeTitle,
                 fromColumn: 0,
                 fromRow: (int)ChartTopRow,
-                toColumn: 6,
+                toColumn: TableColumnCount,
                 toRow: (int)ChartBottomRow));
         }
 
@@ -455,8 +502,8 @@ public static class AnalysisExcelExporter
                 C.BarDirectionValues.Bar,
                 rateTitle,
                 rateColor,
-                $"'{sheetName}'!$A${rateTable.FirstDataRow}:$A${lastRow}",
-                $"'{sheetName}'!${rateColumn}${rateTable.FirstDataRow}:${rateColumn}${lastRow}",
+                $"'{sheetName}'!${rateKeyColumn}${rateTable.FirstDataRow}:${rateKeyColumn}${lastRow}",
+                $"'{sheetName}'!${rateValueColumn}${rateTable.FirstDataRow}:${rateValueColumn}${lastRow}",
                 rateRows.Select(row => row.Key).ToArray(),
                 values,
                 categoryAxisId: 333333333,
@@ -468,7 +515,7 @@ public static class AnalysisExcelExporter
                 drawingsPart.GetIdOfPart(chartPart),
                 drawingId,
                 rateTitle,
-                fromColumn: 6,
+                fromColumn: RightTableColumn - 1,
                 fromRow: (int)ChartTopRow,
                 toColumn: SheetColumnCount,
                 toRow: (int)ChartBottomRow));
@@ -477,9 +524,8 @@ public static class AnalysisExcelExporter
 
     private static S.Columns ReportColumns() =>
         new(
-            Column(1, 34), Column(2, 12), Column(3, 13), Column(4, 12), Column(5, 12),
-            Column(6, 13), Column(7, 13), Column(8, 14), Column(9, 12), Column(10, 12),
-            Column(11, 13), Column(12, 13));
+            Column(1, 34), Column(2, 12), Column(3, 13), Column(4, 13), Column(5, 4),
+            Column(6, 34), Column(7, 12), Column(8, 13), Column(9, 13));
 
     private static double Ratio(int part, int whole) => whole <= 0 ? 0.0 : part / (double)whole;
 
