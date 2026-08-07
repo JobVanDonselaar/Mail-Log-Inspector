@@ -29,6 +29,8 @@ Klaar:
 - annuleerbare synchronisatie en databasewrites
 - transactionele retentie en analyse-aggregaten
 - begrensde ZIP-, CSV- en downloadverwerking
+- live API-tab met SMTP.com statistieken en instelbare automatische verversing
+- bouncemeldingen per afzender-e-mailadres na elke import, met instelbare mailinhoud, ontvangervoorstel voor noreply-adressen en optionele Excel-bijlage
 
 Bewust uitgangspunt:
 

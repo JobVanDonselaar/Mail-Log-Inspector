@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="MailLogInspector.App.BounceNotificationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Bouncemeldingen naar afzenders"
+        Width="1120"
+        Height="760"
+        MinWidth="900"
+        MinHeight="560"
+        Background="#F3F5F8"
+        FontFamily="Segoe UI"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterOwner">
+  <Window.Resources>
+    <SolidColorBrush x:Key="PanelStroke" Color="#D8E0EA" />
+    <SolidColorBrush x:Key="Muted" Color="#637386" />
+    <SolidColorBrush x:Key="Accent" Color="#1F5D8C" />
+    <SolidColorBrush x:Key="Danger" Color="#C83B2B" />
+    <SolidColorBrush x:Key="Success" Color="#2F855A" />
+
+    <Style TargetType="{x:Type TextBlock}">
+      <Setter Property="Foreground" Value="#1F2937" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style TargetType="{x:Type TextBox}">
+      <Setter Property="Height" Value="28" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Padding" Value="6,0" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStroke}" />
+    </Style>
+    <Style TargetType="{x:Type Button}">
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="14,4" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#B9C5D2" />
+    </Style>
+    <Style x:Key="PrimaryButton" TargetType="{x:Type Button}">
+      <Setter Property="MinHeight" Value="32" />
+      <Setter Property="Padding" Value="16,4" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="{StaticResource Accent}" />
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style TargetType="{x:Type Border}" x:Key="Panel">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelStroke}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="14" />
+    </Style>
+  </Window.Resources>
+
+  <Grid Margin="14">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Kop -->
+    <Border Grid.Row="0" Style="{StaticResource Panel}" Margin="0,0,0,10">
+      <StackPanel>
+        <TextBlock Text="Bouncemeldingen naar afzenders" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock Name="BounceIntroTextBlock"
+                   Foreground="{StaticResource Muted}"
+                   Margin="0,5,0,0"
+                   TextWrapping="Wrap"
+                   Text="Per afzender-e-mailadres uit de laatste import staat hieronder hoeveel bounces er zijn. Nieuwe afzenders staan standaard uit; zet aan wie een melding moet krijgen." />
+      </StackPanel>
+    </Border>
+
+    <!-- Instellingen -->
+    <Border Grid.Row="1" Style="{StaticResource Panel}" Margin="0,0,0,10">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="12" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="10" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Grid.Column="0">
+          <TextBlock Text="Verzendkanaal" FontWeight="SemiBold" Margin="0,0,0,4" />
+          <ComboBox Name="BounceTransportComboBox" Height="28" SelectionChanged="BounceTransportComboBox_SelectionChanged">
+            <ComboBoxItem Content="Gmail (bestaande OAuth-gegevens)" Tag="gmail" />
+            <ComboBoxItem Content="SMTP-relay (SMTP.com)" Tag="smtp-relay" />
+            <ComboBoxItem Content="Microsoft 365 / Exchange Online" Tag="microsoft365" />
+          </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="2">
+          <TextBlock Text="Afzenderadres van de melding" FontWeight="SemiBold" Margin="0,0,0,4" />
+          <TextBox Name="BounceFromAddressTextBox" />
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="4">
+          <TextBlock Text="Weergavenaam" FontWeight="SemiBold" Margin="0,0,0,4" />
+          <TextBox Name="BounceFromNameTextBox" />
+        </StackPanel>
+        <StackPanel Grid.Row="0" Grid.Column="6" VerticalAlignment="Bottom">
+          <CheckBox Name="BounceAutoSendCheckBox"
+                    Content="Automatisch versturen na import"
+                    VerticalAlignment="Center"
+                    Margin="0,0,0,6" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7">
+          <TextBlock Text="Onderwerp (gebruik {sender}, {domain}, {count} en {date})" FontWeight="SemiBold" Margin="0,0,0,4" />
+          <TextBox Name="BounceSubjectTextBox" />
+        </StackPanel>
+
+        <!-- Relay-instellingen, alleen zichtbaar bij SMTP-relay of M365 -->
+        <Grid Name="BounceRelayPanel" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7" Visibility="Collapsed" Margin="0,54,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="90" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0">
+            <TextBlock Text="SMTP-server" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceRelayHostTextBox" />
+          </StackPanel>
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="Poort" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceRelayPortTextBox" Text="587" />
+          </StackPanel>
+          <StackPanel Grid.Column="4">
+            <TextBlock Text="Gebruikersnaam" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceRelayUsernameTextBox" />
+          </StackPanel>
+          <StackPanel Grid.Column="6">
+            <TextBlock Text="Wachtwoord" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <PasswordBox Name="BounceRelayPasswordBox" Height="28" VerticalContentAlignment="Center" Padding="6,0" BorderBrush="{StaticResource PanelStroke}" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </Border>
+
+    <!-- Mailinhoud -->
+    <Border Grid.Row="2" Style="{StaticResource Panel}" Margin="0,0,0,10" Padding="0">
+      <Expander Name="BounceContentExpander" IsExpanded="False" Padding="14,10,14,14">
+        <Expander.Header>
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Text="Mailinhoud" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+            <TextBlock Name="BounceContentSummaryTextBlock"
+                       Foreground="{StaticResource Muted}"
+                       Margin="10,0,0,0"
+                       VerticalAlignment="Center" />
+          </StackPanel>
+        </Expander.Header>
+        <Grid Margin="0,10,0,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="18" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0" MinWidth="280">
+            <TextBlock Text="Wat gaat er mee?" FontWeight="SemiBold" Margin="0,0,0,6" />
+            <CheckBox Name="BounceIncludeKpiCheckBox" Content="Kerncijfers (verzonden, afgeleverd, bounces)" Margin="0,0,0,5" Click="BounceContentOption_Changed" />
+            <CheckBox Name="BounceIncludeReasonsCheckBox" Content="Overzicht van bounce-oorzaken" Margin="0,0,0,5" Click="BounceContentOption_Changed" />
+            <CheckBox Name="BounceIncludeDomainsCheckBox" Content="Overzicht van ontvangende domeinen" Margin="0,0,0,5" Click="BounceContentOption_Changed" />
+            <CheckBox Name="BounceIncludeDetailsCheckBox" Content="Detailtabel met gebouncede berichten" Margin="0,0,0,5" Click="BounceIncludeDetailsCheckBox_Changed" />
+            <CheckBox Name="BounceIncludeSourceCheckBox" Content="Bronbestandsnaam vermelden" Margin="0,0,0,5" Click="BounceContentOption_Changed" />
+            <CheckBox Name="BounceIncludeAttachmentCheckBox" Content="Excel-bijlage met alle bounces" Margin="0,0,0,10" Click="BounceContentOption_Changed" />
+
+            <TextBlock Text="Bodyvorm" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <ComboBox Name="BounceBodyFormatComboBox" Height="28" Margin="0,0,0,10" SelectionChanged="BounceBodyFormatComboBox_SelectionChanged">
+              <ComboBoxItem Content="HTML met tekstalternatief" Tag="both" />
+              <ComboBoxItem Content="Alleen HTML" Tag="html" />
+              <ComboBoxItem Content="Alleen platte tekst" Tag="text" />
+            </ComboBox>
+
+            <TextBlock Name="BounceMaxRowsLabel" Text="Maximum aantal detailregels in de mail" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceMaxRowsTextBox" Width="90" HorizontalAlignment="Left" Text="100" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="Inleidende tekst (optioneel)" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceIntroTextBox"
+                     Height="96"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalContentAlignment="Top"
+                     VerticalScrollBarVisibility="Auto"
+                     Padding="6,4"
+                     Margin="0,0,0,10" />
+            <TextBlock Text="Afsluitende tekst (optioneel)" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBox Name="BounceFooterTextBox"
+                     Height="64"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalContentAlignment="Top"
+                     VerticalScrollBarVisibility="Auto"
+                     Padding="6,4" />
+            <TextBlock Text="In beide teksten werken {sender}, {domain}, {count} en {date}."
+                       Foreground="{StaticResource Muted}"
+                       FontSize="11"
+                       Margin="0,5,0,0" />
+          </StackPanel>
+        </Grid>
+      </Expander>
+    </Border>
+
+    <!-- Afzenderlijst -->
+    <Border Grid.Row="3" Style="{StaticResource Panel}" Padding="0">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid Margin="14,12,14,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Afzenders met bounces in deze import" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <Button Name="BounceEnableAllButton" Content="Alles aanzetten" Click="BounceEnableAllButton_Click" />
+            <Button Name="BounceDisableAllButton" Content="Alles uitzetten" Click="BounceDisableAllButton_Click" Margin="0" />
+          </StackPanel>
+        </Grid>
+        <DataGrid Name="BounceSendersGrid"
+                  Grid.Row="1"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="None"
+                  BorderThickness="0"
+                  RowHeight="30"
+                  FontSize="12"
+                  SelectionMode="Single"
+                  CellEditEnding="BounceSendersGrid_CellEditEnding">
+          <DataGrid.Columns>
+            <DataGridCheckBoxColumn Header="Aan" Width="48" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" />
+            <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
+            <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
+            <DataGridTextColumn Header="Bounces" Width="80" Binding="{Binding BounceCount}" IsReadOnly="True" />
+            <DataGridTextColumn Header="Verzonden" Width="80" Binding="{Binding TotalCount}" IsReadOnly="True" />
+            <DataGridTextColumn Header="% Bounce" Width="84" Binding="{Binding BouncePercentDisplay}" IsReadOnly="True" />
+            <DataGridTextColumn Header="Belangrijkste oorzaak" Width="*" Binding="{Binding TopReason}" IsReadOnly="True" />
+            <DataGridTextColumn Header="Laatst gemeld" Width="130" Binding="{Binding LastNotifiedDisplay}" IsReadOnly="True" />
+            <DataGridTemplateColumn Header="" Width="80">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <Button Content="Voorbeeld"
+                          Click="BouncePreviewButton_Click"
+                          Padding="6,1"
+                          Margin="2"
+                          MinHeight="22"
+                          FontSize="11" />
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Grid>
+    </Border>
+
+    <!-- Status -->
+    <StackPanel Grid.Row="4" Margin="0,10,0,0">
+      <ProgressBar Name="BounceProgressBar" Height="4" IsIndeterminate="True" Visibility="Collapsed" Margin="0,0,0,6" />
+      <TextBlock Name="BounceStatusTextBlock" Foreground="{StaticResource Muted}" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <!-- Knoppen -->
+    <Grid Grid.Row="5" Margin="0,12,0,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <TextBlock Name="BounceSummaryTextBlock" VerticalAlignment="Center" Foreground="{StaticResource Muted}" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal">
+        <Button Name="BounceSaveButton" Content="Instellingen opslaan" Click="BounceSaveButton_Click" />
+        <Button Name="BounceSendButton" Content="Meldingen versturen" Style="{StaticResource PrimaryButton}" Click="BounceSendButton_Click" />
+        <Button Name="BounceCloseButton" Content="Sluiten" Click="BounceCloseButton_Click" Margin="0" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>
