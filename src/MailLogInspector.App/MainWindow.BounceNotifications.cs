@@ -539,7 +539,12 @@ public partial class MainWindow
 
     private void EmailSendersGrid_CellEditEnding(object? sender, DataGridCellEditEndingEventArgs e)
     {
-        Dispatcher.BeginInvoke(new Action(UpdateEmailSummary));
+        var edited = e.Row?.Item as BounceNotificationRowViewModel;
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            edited?.RefreshRecipientDisplay();
+            UpdateEmailSummary();
+        }));
     }
 
     private void EmailEnableAllButton_Click(object sender, RoutedEventArgs e)
