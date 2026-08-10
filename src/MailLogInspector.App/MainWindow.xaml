@@ -15,11 +15,6 @@
         TextOptions.TextRenderingMode="ClearType"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
-    <x:Array x:Key="EmailNotificationModes" Type="{x:Type sys:String}" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-      <sys:String>Uit</sys:String>
-      <sys:String>Aan</sys:String>
-      <sys:String>Nooit</sys:String>
-    </x:Array>
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F5F8" />
     <SolidColorBrush x:Key="PanelFillBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="PanelSubtleFillBrush" Color="#F8FAFC" />
