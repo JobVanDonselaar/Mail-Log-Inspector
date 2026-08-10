@@ -63,10 +63,36 @@ public sealed class MainWindowSenderDomainDashboardTests
         Assert.DoesNotContain("Name=\"SenderDurationWithinOneColumn\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Langer dan 1 min", xaml, StringComparison.Ordinal);
         Assert.Contains("SenderDurationDelayBar", code, StringComparison.Ordinal);
-        Assert.Contains("delayedScaleBase", code, StringComparison.Ordinal);
+        Assert.Contains("FillWidth", code, StringComparison.Ordinal);
         Assert.Contains("FormatDurationDelaySummary", code, StringComparison.Ordinal);
         Assert.Contains("RoundTrendMaximum", code, StringComparison.Ordinal);
         Assert.Contains("DurationDistribution", code, StringComparison.Ordinal);
+        Assert.Contains("ColumnDefinition Width=\"{Binding FillWidth}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ColumnDefinition Width=\"{Binding RestWidth}\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("delayedMaximum", code, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(55, 60, 55.0 / 60.0)]
+    [InlineData(0, 60, 0.0)]
+    [InlineData(1, 1, 1.0)]
+    [InlineData(3, 0, 0.0)]
+    public void DelayBarFillsProportionallyToShareOfDelayedMail(int count, int delayedCount, double expectedShare)
+    {
+        MethodInfo method = typeof(MailLogInspector.App.MainWindow).GetMethod(
+            "BuildDelayBar",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        object bar = method.Invoke(null, ["1–5 min", "samenvatting", count, delayedCount, "#D4A72C"])!;
+        var fill = (System.Windows.GridLength)bar.GetType().GetProperty("FillWidth")!.GetValue(bar)!;
+        var rest = (System.Windows.GridLength)bar.GetType().GetProperty("RestWidth")!.GetValue(bar)!;
+        double minFill = (double)bar.GetType().GetProperty("MinFillWidth")!.GetValue(bar)!;
+
+        Assert.True(fill.IsStar);
+        Assert.True(rest.IsStar);
+        Assert.Equal(expectedShare, fill.Value, 6);
+        Assert.Equal(1 - expectedShare, rest.Value, 6);
+        Assert.Equal(count > 0 && delayedCount > 0 ? 4 : 0, minFill);
     }
     [Theory]
     [InlineData(518, 518)]

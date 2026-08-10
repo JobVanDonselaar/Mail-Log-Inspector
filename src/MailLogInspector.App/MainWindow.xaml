@@ -619,7 +619,13 @@
                           </Grid.ColumnDefinitions>
                           <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                           <Border Grid.Column="1" Background="#E7EDF3" Height="16" VerticalAlignment="Center">
-                            <Border Width="{Binding Width}" Background="{Binding Color}" HorizontalAlignment="Left" />
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding FillWidth}" />
+                                <ColumnDefinition Width="{Binding RestWidth}" />
+                              </Grid.ColumnDefinitions>
+                              <Border Background="{Binding Color}" MinWidth="{Binding MinFillWidth}" />
+                            </Grid>
                           </Border>
                           <TextBlock Grid.Column="2" Text="{Binding Summary}" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </Grid>
@@ -1815,7 +1821,7 @@
                 <TextBlock Text="Domeinanalyse en Excel" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; Domeinanalyse tonen is beschikbaar bij een afzenderdomein zonder ontvangerfilter. Een exact afzenderadres geeft geen domeinanalyse." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afleversnelheid toont maximaal de laatste 30 dagen binnen de gekozen periode, met dagelijks afgeleverd volume, gemiddelde aflevertijd en de 95%-grens." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Afleververtraging verdeelt uitsluitend afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur; bounces en onderweg tellen hier niet mee. De balken zijn geschaald op het totaal afgeleverd, zodat één trage mail geen volle balk oplevert. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleververtraging verdeelt uitsluitend afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur; bounces en onderweg tellen hier niet mee. Elke balk vult het deel van de vertraagde mails dat in die categorie valt, gelijk aan het percentage vertraagd dat ernaast staat. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Excel exporteren neemt de werkelijk geladen en zichtbare detailregels over. Een actieve domeinanalyse voegt een eerste werkblad Domeinanalyse toe met KPI's, brondata en grafieken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een statusfilter, bijvoorbeeld alleen bounce, bepaalt welke detailregels naar Excel gaan. De domeinanalyse blijft een overzicht van de volledige gekozen periode." TextWrapping="Wrap" />
               </StackPanel>
