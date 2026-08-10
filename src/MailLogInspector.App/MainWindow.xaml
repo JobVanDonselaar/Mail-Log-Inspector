@@ -1549,7 +1549,7 @@
                   </Style>
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                  <DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
+<DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
                   <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
@@ -2095,4 +2095,5 @@
     </Border>
   </Grid>
 </Window>
+
 
