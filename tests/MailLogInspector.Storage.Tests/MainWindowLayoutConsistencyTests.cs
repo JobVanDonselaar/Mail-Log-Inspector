@@ -73,11 +73,11 @@ public sealed class MainWindowLayoutConsistencyTests
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
 
-        Assert.Contains("<InformationalVersion>0.222</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.222\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.223</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.223\"", version, StringComparison.Ordinal);
 
-        Assert.Contains("<InformationalVersion>0.222</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.222\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.223</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.223\"", version, StringComparison.Ordinal);
 
     }
 
