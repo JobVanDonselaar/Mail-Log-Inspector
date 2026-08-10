@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
@@ -119,6 +119,15 @@ catch {
     Write-Warning "Kon tijdelijke publish-bron niet volledig opruimen: $($_.Exception.Message)"
 }
 
+$exePath = Join-Path $PublishRoot $ExecutableName
+try {
+    $fileVersion = (Get-Item -LiteralPath $exePath).VersionInfo.FileVersion
+}
+catch {
+    $fileVersion = "(onbekend)"
+}
+
 Write-Host ""
 Write-Host "Publish complete."
-Write-Host "Executable: $(Join-Path $PublishRoot $ExecutableName)"
+Write-Host "Executable: $exePath"
+Write-Host "Versie    : $fileVersion"
