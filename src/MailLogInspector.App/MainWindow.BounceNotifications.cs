@@ -552,6 +552,78 @@ public partial class MainWindow
         }));
     }
 
+    /// <summary>
+    /// Dubbelklikken op een afzender opent Zoeken met dat adres en de gekozen periode. Zo zijn de
+    /// bounces achter het getal meteen te bekijken. Andere kolommen blijven bewerkbaar, dus alleen
+    /// een klik in de afzenderkolom springt weg.
+    /// </summary>
+    private async void EmailSendersGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        System.Windows.Controls.DataGridCell? cell =
+            FindVisualParent<System.Windows.Controls.DataGridCell>(e.OriginalSource as DependencyObject);
+        if (cell is null ||
+            !string.Equals(
+                cell.Column?.SortMemberPath,
+                nameof(BounceNotificationRowViewModel.SenderAddress),
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (cell.DataContext is not BounceNotificationRowViewModel row)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        await OpenSenderInSearchAsync(row.SenderAddress);
+    }
+
+    /// <summary>Vult de zoekfilters met dit afzenderadres en de periode, en zoekt meteen.</summary>
+    private async Task OpenSenderInSearchAsync(string senderAddress)
+    {
+        string address = senderAddress?.Trim() ?? string.Empty;
+        if (address.Length == 0)
+        {
+            return;
+        }
+
+        if (_emailPeriod is not null)
+        {
+            SearchFromDatePicker.SelectedDate = _emailPeriod.FromInclusive.Date;
+            SearchThroughDatePicker.SelectedDate = _emailPeriod.ThroughInclusive.Date;
+        }
+
+        SenderTextBox.Text = address;
+        RecipientTextBox.Text = string.Empty;
+        SelectSearchStatusFilter(null);
+        SearchRunStateTextBlock.Text = "Afzender overgenomen uit de E-mail-tab: " + address;
+        SearchRunDetailTextBlock.Text = "Bezig met zoeken...";
+
+        MainTabControl.SelectedItem = SearchTab;
+
+        await RunSearchAsync(SearchRunReason.FreshSearch);
+    }
+
+    /// <summary>Zoekt het dichtstbijzijnde bovenliggende element van het gevraagde type.</summary>
+    private static T? FindVisualParent<T>(DependencyObject? source)
+        where T : DependencyObject
+    {
+        while (source is not null)
+        {
+            if (source is T match)
+            {
+                return match;
+            }
+
+            source = source is System.Windows.Media.Visual
+                ? System.Windows.Media.VisualTreeHelper.GetParent(source)
+                : LogicalTreeHelper.GetParent(source);
+        }
+
+        return null;
+    }
+
     private void EmailEnableAllButton_Click(object sender, RoutedEventArgs e)
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)

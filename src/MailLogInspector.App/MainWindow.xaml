@@ -1528,6 +1528,7 @@
                         SelectionMode="Single"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
+                        MouseDoubleClick="EmailSendersGrid_MouseDoubleClick"
                         CellEditEnding="EmailSendersGrid_CellEditEnding">
                 <DataGrid.RowStyle>
                   <Style TargetType="{x:Type DataGridRow}">
@@ -1546,7 +1547,7 @@
                 <DataGrid.Columns>
                   <DataGridCheckBoxColumn Header="Nooit" Width="52" Binding="{Binding NeverNotify, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NeverNotify" />
                   <DataGridCheckBoxColumn Header="Aan" Width="44" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" />
-                  <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" SortMemberPath="SenderAddress" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Verzonden" Width="80" Binding="{Binding TotalCount}" IsReadOnly="True" />
@@ -1873,6 +1874,7 @@
                 <TextBlock Text="&#x2022; Bovenaan kiest u de periode: de laatste import, alleen gisteren, de laatste zeven dagen, deze maand of een eigen datumbereik. De tab opent op gisteren, de eerste volledig ge&#x00EF;mporteerde dag. Zo is een overgeslagen dag of week alsnog te melden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Nieuwe afzenders staan altijd uit. Zet per afzender aan wie een melding krijgt, of gebruik Alles aanzetten. De keuze wordt onthouden voor volgende imports." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De eerste kolom Nooit blokkeert een afzender blijvend, bedoeld voor demo-accounts en praktijken die nooit een melding mogen krijgen. Zo'n regel kleurt rood, kan niet aangezet worden en blijft ongemoeid bij Alles aanzetten en Alles uitzetten. Klik op de kolomkop om ze bij elkaar te sorteren." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Dubbelklik op een afzenderadres om naar Zoeken te springen met dat adres als afzenderfilter en de periode van de melding. De zoekactie start meteen, zodat de bounces achter het getal direct zichtbaar zijn." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De melding gaat standaard naar het afzenderadres zelf. Bij noreply-achtige adressen wordt info@ op hetzelfde domein voorgesteld; elk ontvangeradres is aanpasbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Onder Mailinhoud bepaalt u wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De bodyvorm is HTML met tekstalternatief, alleen HTML of alleen platte tekst. Een eigen inleidende en afsluitende tekst is mogelijk; daarin werken {sender}, {domain}, {count} en {date}." TextWrapping="Wrap" Margin="0,0,0,6" />

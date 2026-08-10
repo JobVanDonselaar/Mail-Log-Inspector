@@ -66,14 +66,38 @@ public sealed class MainWindowLayoutConsistencyTests
     }
 
     [Fact]
+    public void EmailSenderDoubleClickOpensSearch()
+    {
+        string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        string xaml = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MainWindow.xaml"));
+        string code = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MainWindow.BounceNotifications.cs"));
+
+        Assert.Contains("MouseDoubleClick=\"EmailSendersGrid_MouseDoubleClick\"", xaml, StringComparison.Ordinal);
+        Assert.Contains(
+            "<DataGridTextColumn Header=\"Afzender\" Width=\"2*\" Binding=\"{Binding SenderAddress}\" SortMemberPath=\"SenderAddress\"",
+            xaml,
+            StringComparison.Ordinal);
+
+        int methodStart = code.IndexOf("private async Task OpenSenderInSearchAsync", StringComparison.Ordinal);
+        Assert.True(methodStart > 0);
+        int methodEnd = code.IndexOf("private static T? FindVisualParent", methodStart, StringComparison.Ordinal);
+        string method = code[methodStart..methodEnd];
+
+        Assert.Contains("SenderTextBox.Text = address;", method, StringComparison.Ordinal);
+        Assert.Contains("RecipientTextBox.Text = string.Empty;", method, StringComparison.Ordinal);
+        Assert.Contains("MainTabControl.SelectedItem = SearchTab;", method, StringComparison.Ordinal);
+        Assert.Contains("RunSearchAsync(SearchRunReason.FreshSearch)", method, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BusinessHelpVersionMatchesProjectVersion()
     {
         string root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
         string project = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspector.App.csproj"));
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
-        Assert.Contains("<InformationalVersion>0.225</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.225\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.226</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.226\"", version, StringComparison.Ordinal);
     }
 
     [Fact]
