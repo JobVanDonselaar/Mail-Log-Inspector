@@ -28,13 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\MailLogInspector.ico" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>MailLogInspector.Storage.Tests</_Parameter1>
-    </AssemblyAttribute>
+    <Compile Remove="AdminSettings\**" />
+    <EmbeddedResource Remove="AdminSettings\**" />
+    <None Remove="AdminSettings\**" />
+    <Page Remove="AdminSettings\**" />
   </ItemGroup>
 
 </Project>
