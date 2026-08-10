@@ -1544,7 +1544,26 @@
                   </Style>
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
-<DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
+                  <DataGridTemplateColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SortMemberPath="NotificationModeSortOrder">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <ComboBox SelectedItem="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" FontSize="12" IsEditable="False">
+                          <ComboBoxItem Content="Uit" />
+                          <ComboBoxItem Content="Aan" />
+                          <ComboBoxItem Content="Nooit" />
+                        </ComboBox>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox SelectedItem="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" Padding="4,2" FontSize="12" IsEditable="False">
+                          <ComboBoxItem Content="Uit" />
+                          <ComboBoxItem Content="Aan" />
+                          <ComboBoxItem Content="Nooit" />
+                        </ComboBox>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                  </DataGridTemplateColumn>
                   <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />

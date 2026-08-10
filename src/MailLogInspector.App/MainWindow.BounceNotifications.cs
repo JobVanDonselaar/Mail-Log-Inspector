@@ -56,7 +56,6 @@ public partial class MainWindow
         try
         {
             EmailSendersGrid.ItemsSource = _emailRows;
-            EmailNotificationModeColumn.ItemsSource = EmailNotificationModes;
             LoadEmailSettingsIntoForm();
             ReloadEmailImportChoices();
             RefreshEmailHistory();
