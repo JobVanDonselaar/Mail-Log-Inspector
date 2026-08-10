@@ -110,6 +110,42 @@ public sealed class BounceNotificationTests
     }
 
     [Fact]
+    public void SetAllSendersEnabledLeavesNeverNotifyUntouched()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+        store.SaveSenders(
+        [
+            new BounceNotificationSender("een@bedrijf.nl", true, false, null, null, 0),
+            new BounceNotificationSender("twee@bedrijf.nl", false, true, null, null, 0)
+        ]);
+
+        store.SetAllSendersEnabled(false);
+
+        IReadOnlyList<BounceNotificationSender> senders = store.LoadSenders();
+        Assert.False(senders.Single(sender => sender.SenderAddress == "een@bedrijf.nl").Enabled);
+        BounceNotificationSender never = senders.Single(sender => sender.SenderAddress == "twee@bedrijf.nl");
+        Assert.True(never.NeverNotify);
+        Assert.False(never.Enabled);
+    }
+
+    [Fact]
+    public void NotificationModeNooitTurnsTheRowIntoNeverNotify()
+    {
+        var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
+            BuildReport(),
+            new BounceNotificationSender("verzender@bedrijf.nl", true, false, null, null, 0),
+            "verzender@bedrijf.nl"));
+
+        row.NotificationMode = "Nooit";
+
+        Assert.True(row.NeverNotify);
+        Assert.False(row.Enabled);
+        Assert.True(row.IsNeverNotify);
+        Assert.Equal(2, row.NotificationModeSortOrder);
+        Assert.Equal("Nooit", row.NotificationMode);
+    }
+
+    [Fact]
     public void ContentOptionsRoundTripThroughStore()
     {
         BounceNotificationOperationalStore store = CreateStore();

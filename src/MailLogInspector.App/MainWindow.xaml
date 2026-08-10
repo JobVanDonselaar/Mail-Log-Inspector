@@ -15,6 +15,11 @@
         TextOptions.TextRenderingMode="ClearType"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
+    <x:Array x:Key="EmailNotificationModes" Type="{x:Type sys:String}" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+      <sys:String>Uit</sys:String>
+      <sys:String>Aan</sys:String>
+      <sys:String>Nooit</sys:String>
+    </x:Array>
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F5F8" />
     <SolidColorBrush x:Key="PanelFillBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="PanelSubtleFillBrush" Color="#F8FAFC" />
@@ -1529,8 +1534,22 @@
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
                         CellEditEnding="EmailSendersGrid_CellEditEnding">
+                <DataGrid.RowStyle>
+                  <Style TargetType="{x:Type DataGridRow}">
+                    <Setter Property="Height" Value="28" />
+                    <Setter Property="MinHeight" Value="0" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="SnapsToDevicePixels" Value="True" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsNeverNotify}" Value="True">
+                        <Setter Property="Background" Value="#FDECE9" />
+                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                  <DataGridCheckBoxColumn Header="Aan" Width="44" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" />
+                  <DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" ItemsSource="{StaticResource EmailNotificationModes}" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
                   <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
