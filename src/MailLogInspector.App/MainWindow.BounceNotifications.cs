@@ -503,6 +503,7 @@ public partial class MainWindow
     private void UpdateEmailSummary()
     {
         int enabled = _emailRows.Count(row => row.Enabled);
+        int never = _emailRows.Count(row => row.NeverNotify);
         int bounces = _emailRows.Where(row => row.Enabled).Sum(row => row.BounceCount);
         int alreadySent = _emailRows.Count(row => row.Enabled && row.AlreadySentAtUtc.HasValue);
 
@@ -510,8 +511,12 @@ public partial class MainWindow
             ? $" · let op: {alreadySent} kreeg deze periode al een melding"
             : string.Empty;
 
+        string blocked = never > 0
+            ? $" · {never} op nooit"
+            : string.Empty;
+
         EmailSendersHintTextBlock.Text =
-            $"{_emailRows.Count} afzender(s) · {enabled} aangezet · {bounces} bounce(s) in de meldingen{warning}";
+            $"{_emailRows.Count} afzender(s) · {enabled} aangezet{blocked} · {bounces} bounce(s) in de meldingen{warning}";
 
         if (EmailTopStatusTextBlock != null)
         {
@@ -561,6 +566,11 @@ public partial class MainWindow
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)
         {
+            if (row.NeverNotify)
+            {
+                continue;
+            }
+
             row.Enabled = false;
         }
 

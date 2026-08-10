@@ -64,12 +64,17 @@ public sealed record BounceNotificationSettings(
 }
 
 /// <summary>Notificatie-instelling voor één afzender-e-mailadres.</summary>
+/// <param name="NeverNotify">
+/// Blokkeert deze afzender blijvend. Bedoeld voor demo-accounts en praktijken die nooit een
+/// bouncemelding willen ontvangen: "Alles aan" en "Alles uit" laten deze regels met rust.
+/// </param>
 public sealed record BounceNotificationSender(
     string SenderAddress,
     bool Enabled,
     string? RecipientOverride,
     DateTime? LastNotifiedAtUtc,
-    int LastNotifiedBounceCount)
+    int LastNotifiedBounceCount,
+    bool NeverNotify = false)
 {
     public static BounceNotificationSender CreateDisabled(string senderAddress) =>
         new(senderAddress, Enabled: false, RecipientOverride: null, LastNotifiedAtUtc: null, LastNotifiedBounceCount: 0);

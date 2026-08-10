@@ -110,6 +110,75 @@ public sealed class BounceNotificationTests
     }
 
     [Fact]
+    public void NeverNotifySendersIgnoreEnableAll()
+    {
+        BounceNotificationOperationalStore store = CreateStore();
+        store.EnsureSendersExist(["gewoon@bedrijf.nl", "demo@bedrijf.nl"]);
+        store.SaveSender(new BounceNotificationSender(
+            "demo@bedrijf.nl",
+            Enabled: false,
+            RecipientOverride: null,
+            LastNotifiedAtUtc: null,
+            LastNotifiedBounceCount: 0,
+            NeverNotify: true));
+
+        store.SetAllSendersEnabled(true);
+
+        IReadOnlyList<BounceNotificationSender> senders = store.LoadSenders();
+        Assert.True(senders.Single(sender => sender.SenderAddress == "gewoon@bedrijf.nl").Enabled);
+
+        BounceNotificationSender demo = senders.Single(sender => sender.SenderAddress == "demo@bedrijf.nl");
+        Assert.False(demo.Enabled);
+        Assert.True(demo.NeverNotify);
+    }
+
+    [Fact]
+    public void NeverNotifyBlocksSendingEvenWhenEnabled()
+    {
+        var item = new BounceNotificationPlanItem(
+            BuildReport(),
+            new BounceNotificationSender(
+                "verzender@bedrijf.nl",
+                Enabled: true,
+                RecipientOverride: "praktijk@voorbeeld.nl",
+                LastNotifiedAtUtc: null,
+                LastNotifiedBounceCount: 0,
+                NeverNotify: true),
+            "verzender@bedrijf.nl");
+
+        Assert.False(item.IsSendable);
+    }
+
+    [Fact]
+    public void NeverNotifyRowCannotBeSwitchedOn()
+    {
+        var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
+            BuildReport(),
+            new BounceNotificationSender(
+                "verzender@bedrijf.nl",
+                Enabled: true,
+                RecipientOverride: null,
+                LastNotifiedAtUtc: null,
+                LastNotifiedBounceCount: 0,
+                NeverNotify: true),
+            "praktijk@voorbeeld.nl"));
+
+        Assert.True(row.NeverNotify);
+        Assert.False(row.Enabled);
+
+        row.Enabled = true;
+        Assert.False(row.Enabled);
+
+        row.NeverNotify = false;
+        row.Enabled = true;
+        Assert.True(row.Enabled);
+
+        row.NeverNotify = true;
+        Assert.False(row.Enabled);
+        Assert.True(row.ToSetting().NeverNotify);
+    }
+
+    [Fact]
     public void ContentOptionsRoundTripThroughStore()
     {
         BounceNotificationOperationalStore store = CreateStore();

@@ -46,7 +46,8 @@ public sealed class BounceNotificationOperationalStore
                 enabled INTEGER NOT NULL DEFAULT 0,
                 recipient_override TEXT NULL,
                 last_notified_at_utc TEXT NULL,
-                last_notified_bounce_count INTEGER NOT NULL DEFAULT 0
+                last_notified_bounce_count INTEGER NOT NULL DEFAULT 0,
+                never_notify INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS bounce_notification_log (
@@ -75,6 +76,24 @@ public sealed class BounceNotificationOperationalStore
         command.ExecuteNonQuery();
 
         EnsureContentColumns(connection);
+        EnsureSenderColumns(connection);
+    }
+
+    /// <summary>
+    /// Voegt de blokkeerkolom toe aan databases die van voor de "nooit melden"-keuze stammen.
+    /// </summary>
+    private static void EnsureSenderColumns(SqliteConnection connection)
+    {
+        HashSet<string> existing = ReadColumnNames(connection, "bounce_notification_senders");
+        if (existing.Contains("never_notify"))
+        {
+            return;
+        }
+
+        using SqliteCommand alter = connection.CreateCommand();
+        alter.CommandText =
+            "ALTER TABLE bounce_notification_senders ADD COLUMN never_notify INTEGER NOT NULL DEFAULT 0;";
+        alter.ExecuteNonQuery();
     }
 
     /// <summary>
@@ -277,7 +296,8 @@ public sealed class BounceNotificationOperationalStore
                    enabled,
                    recipient_override,
                    last_notified_at_utc,
-                   last_notified_bounce_count
+                   last_notified_bounce_count,
+                   never_notify
             FROM bounce_notification_senders
             ORDER BY sender_address;
             """;
@@ -291,7 +311,8 @@ public sealed class BounceNotificationOperationalStore
                 reader.GetInt64(1) != 0,
                 ReadNullableString(reader, 2),
                 ReadNullableDateTime(reader, 3),
-                reader.IsDBNull(4) ? 0 : (int)reader.GetInt64(4)));
+                reader.IsDBNull(4) ? 0 : (int)reader.GetInt64(4),
+                ReadBoolean(reader, 5, defaultValue: false)));
         }
 
         return senders;
@@ -307,7 +328,8 @@ public sealed class BounceNotificationOperationalStore
                    enabled,
                    recipient_override,
                    last_notified_at_utc,
-                   last_notified_bounce_count
+                   last_notified_bounce_count,
+                   never_notify
             FROM bounce_notification_senders
             WHERE sender_address = $senderAddress;
             """;
@@ -319,7 +341,8 @@ public sealed class BounceNotificationOperationalStore
                 reader.GetInt64(1) != 0,
                 ReadNullableString(reader, 2),
                 ReadNullableDateTime(reader, 3),
-                reader.IsDBNull(4) ? 0 : (int)reader.GetInt64(4))
+                reader.IsDBNull(4) ? 0 : (int)reader.GetInt64(4),
+                ReadBoolean(reader, 5, defaultValue: false))
             : BounceNotificationSender.CreateDisabled(normalized);
     }
 
@@ -371,12 +394,16 @@ public sealed class BounceNotificationOperationalStore
         transaction.Commit();
     }
 
-    /// <summary>Zet alle bekende afzenders in één keer aan of uit.</summary>
+    /// <summary>
+    /// Zet alle bekende afzenders in één keer aan of uit. Afzenders die op "nooit" staan blijven
+    /// ongemoeid, zodat demo-accounts nooit per ongeluk een melding krijgen.
+    /// </summary>
     public void SetAllSendersEnabled(bool enabled)
     {
         using SqliteConnection connection = OpenConnection();
         using SqliteCommand command = connection.CreateCommand();
-        command.CommandText = "UPDATE bounce_notification_senders SET enabled = $enabled;";
+        command.CommandText =
+            "UPDATE bounce_notification_senders SET enabled = $enabled WHERE never_notify = 0;";
         command.Parameters.AddWithValue("$enabled", enabled ? 1 : 0);
         command.ExecuteNonQuery();
     }
@@ -521,20 +548,23 @@ public sealed class BounceNotificationOperationalStore
                 enabled,
                 recipient_override,
                 last_notified_at_utc,
-                last_notified_bounce_count
+                last_notified_bounce_count,
+                never_notify
             )
-            VALUES ($senderAddress, $enabled, $recipientOverride, $lastNotifiedAtUtc, $bounceCount)
+            VALUES ($senderAddress, $enabled, $recipientOverride, $lastNotifiedAtUtc, $bounceCount, $neverNotify)
             ON CONFLICT(sender_address) DO UPDATE SET
                 enabled = excluded.enabled,
                 recipient_override = excluded.recipient_override,
                 last_notified_at_utc = excluded.last_notified_at_utc,
-                last_notified_bounce_count = excluded.last_notified_bounce_count;
+                last_notified_bounce_count = excluded.last_notified_bounce_count,
+                never_notify = excluded.never_notify;
             """;
         command.Parameters.AddWithValue("$senderAddress", NormalizeAddress(sender.SenderAddress));
         command.Parameters.AddWithValue("$enabled", sender.Enabled ? 1 : 0);
         command.Parameters.AddWithValue("$recipientOverride", ToDbValue(sender.RecipientOverride));
         command.Parameters.AddWithValue("$lastNotifiedAtUtc", ToDbValue(sender.LastNotifiedAtUtc));
         command.Parameters.AddWithValue("$bounceCount", sender.LastNotifiedBounceCount);
+        command.Parameters.AddWithValue("$neverNotify", sender.NeverNotify ? 1 : 0);
         command.ExecuteNonQuery();
     }
 

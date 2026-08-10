@@ -91,6 +91,7 @@ Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de 
 
 - Bovenaan staat de periodekeuze: `laatste import`, `de import die net binnenkwam`, `gisteren`, `laatste 7 dagen`, `deze maand` of een eigen datumbereik. De tab opent op `gisteren`, de eerste volledig geïmporteerde dag. Zo is een overgeslagen dag of week alsnog te melden.
 - Nieuwe afzenders staan altijd uit. Per afzender is een aan/uit-vinkje beschikbaar, plus `Alles aanzetten` en `Alles uitzetten`. De keuze wordt onthouden voor volgende imports.
+- De eerste kolom `Nooit` blokkeert een afzender blijvend. Bedoeld voor demo-accounts en praktijken die nooit een bouncemelding mogen ontvangen: zo'n regel kleurt rood, kan niet aangezet worden en blijft ongemoeid bij `Alles aanzetten` en `Alles uitzetten`. Klik op de kolomkop om de geblokkeerde afzenders bij elkaar te sorteren.
 - De melding gaat standaard naar het afzenderadres zelf. Bij `noreply@`, `no-reply@`, `donotreply@` en vergelijkbare adressen wordt `info@` op hetzelfde domein voorgesteld. Elk ontvangeradres is per regel aanpasbaar.
 - Onder `Mailinhoud` bepaalt de gebruiker wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit; staat alles uit, dan blijven de kerncijfers gegarandeerd staan.
 - De bodyvorm is `HTML met tekstalternatief`, `alleen HTML` of `alleen platte tekst`.
@@ -102,7 +103,7 @@ Het tabblad `E-mail` verzamelt alles rond bouncemeldingen: de afzenderlijst, de 
 - Verzenden kan via de bestaande Gmail-koppeling, een SMTP-relay (SMTP.com) of Microsoft 365. Gmail gebruikt dezelfde aanmeldmethode als de IMAP-rapportkoppeling: een app-wachtwoord of Google OAuth. Werkt de IMAP-verbindingstest, dan werkt verzenden ook. Relay-wachtwoorden worden Windows-gebruikergebonden versleuteld opgeslagen.
 - De melding krijgt een `Message-Id` en een HELO-naam op het domein van het afzenderadres, de header `Auto-Submitted: auto-generated` en een `List-Unsubscribe` die naar het afzenderadres wijst met onderwerp `Afmelden`. Zonder die eerste twee vult de mailbibliotheek de naam van de Windows-machine in, wat ontvangende spamfilters als een niet-bestaand domein beoordelen; de afmeldroute zorgt dat Gmail een afmeldknop toont. De standaard afsluitende tekst noemt die route al, zodat mail en header hetzelfde beloven; past u die tekst aan, houd de route er dan in. Landt de mail toch in spam, verstuur dan via SMTP.com vanaf een eigen domein met SPF, DKIM en DMARC: een gedeeld `@gmail.com`-adres heeft geen eigen verzendreputatie.
 
-Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`. Elke verzendpoging wordt vastgelegd in `bounce_notification_log`.
+Instellingen en de aan/uit-status per afzender staan in de operationele database in `bounce_notification_settings` en `bounce_notification_senders`. De kolom `never_notify` bewaart daarbij de blijvende blokkade en wordt bij het openen automatisch toegevoegd aan bestaande databases. Elke verzendpoging wordt vastgelegd in `bounce_notification_log`.
 
 ## Build en test
 

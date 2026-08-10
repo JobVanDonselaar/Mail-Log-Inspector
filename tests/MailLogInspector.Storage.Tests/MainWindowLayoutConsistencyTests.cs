@@ -72,8 +72,8 @@ public sealed class MainWindowLayoutConsistencyTests
         string project = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspector.App.csproj"));
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
-        Assert.Contains("<InformationalVersion>0.224</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.224\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.225</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.225\"", version, StringComparison.Ordinal);
     }
 
     [Fact]

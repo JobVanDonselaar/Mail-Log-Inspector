@@ -10,6 +10,7 @@ namespace MailLogInspector.App;
 public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
 {
     private bool _enabled;
+    private bool _neverNotify;
     private string _recipient;
     private DateTime? _alreadySentAtUtc;
 
@@ -17,7 +18,8 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
     {
         Report = item.Report;
         SuggestedRecipient = item.SuggestedRecipient;
-        _enabled = item.Setting.Enabled;
+        _neverNotify = item.Setting.NeverNotify;
+        _enabled = item.Setting.Enabled && !_neverNotify;
         _recipient = item.EffectiveRecipient;
         LastNotifiedAtUtc = item.Setting.LastNotifiedAtUtc;
     }
@@ -69,13 +71,46 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         get => _enabled;
         set
         {
-            if (_enabled == value)
+            // "Nooit" wint altijd: aanvinken mag niet, maar het scherm moet dat wel terugdraaien.
+            bool effective = value && !_neverNotify;
+
+            if (_enabled == effective)
+            {
+                if (effective != value)
+                {
+                    OnPropertyChanged();
+                }
+
+                return;
+            }
+
+            _enabled = effective;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>
+    /// Blijvende blokkade voor deze afzender. Demo-accounts en praktijken die nooit een melding
+    /// willen ontvangen blijven zo uit, ook na "Alles aan".
+    /// </summary>
+    public bool NeverNotify
+    {
+        get => _neverNotify;
+        set
+        {
+            if (_neverNotify == value)
             {
                 return;
             }
 
-            _enabled = value;
+            _neverNotify = value;
             OnPropertyChanged();
+
+            if (_neverNotify && _enabled)
+            {
+                _enabled = false;
+                OnPropertyChanged(nameof(Enabled));
+            }
         }
     }
 
@@ -126,7 +161,8 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
             Enabled,
             recipientOverride,
             LastNotifiedAtUtc,
-            LastNotifiedBounceCount: 0);
+            LastNotifiedBounceCount: 0,
+            NeverNotify);
     }
 
     public BounceNotificationPlanItem ToPlanItem() =>
