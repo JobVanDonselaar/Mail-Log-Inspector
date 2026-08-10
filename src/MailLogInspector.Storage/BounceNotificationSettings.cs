@@ -67,10 +67,17 @@ public sealed record BounceNotificationSettings(
 public sealed record BounceNotificationSender(
     string SenderAddress,
     bool Enabled,
+    bool NeverNotify,
     string? RecipientOverride,
     DateTime? LastNotifiedAtUtc,
     int LastNotifiedBounceCount)
 {
     public static BounceNotificationSender CreateDisabled(string senderAddress) =>
-        new(senderAddress, Enabled: false, RecipientOverride: null, LastNotifiedAtUtc: null, LastNotifiedBounceCount: 0);
+        new(senderAddress, Enabled: false, NeverNotify: false, RecipientOverride: null, LastNotifiedAtUtc: null, LastNotifiedBounceCount: 0);
+
+    public BounceNotificationSender WithEnabled(bool enabled) =>
+        this with
+        {
+            Enabled = NeverNotify ? false : enabled
+        };
 }

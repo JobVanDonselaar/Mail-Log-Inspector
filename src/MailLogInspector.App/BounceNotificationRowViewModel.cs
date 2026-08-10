@@ -10,6 +10,7 @@ namespace MailLogInspector.App;
 public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
 {
     private bool _enabled;
+    private bool _neverNotify;
     private string _recipient;
     private DateTime? _alreadySentAtUtc;
 
@@ -18,6 +19,7 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         Report = item.Report;
         SuggestedRecipient = item.SuggestedRecipient;
         _enabled = item.Setting.Enabled;
+        _neverNotify = item.Setting.NeverNotify;
         _recipient = item.EffectiveRecipient;
         LastNotifiedAtUtc = item.Setting.LastNotifiedAtUtc;
     }
@@ -69,6 +71,11 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         get => _enabled;
         set
         {
+            if (_neverNotify)
+            {
+                value = false;
+            }
+
             if (_enabled == value)
             {
                 return;
@@ -78,6 +85,59 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
             OnPropertyChanged();
         }
     }
+
+    public bool NeverNotify
+    {
+        get => _neverNotify;
+        set
+        {
+            if (_neverNotify == value)
+            {
+                return;
+            }
+
+            _neverNotify = value;
+            if (_neverNotify)
+            {
+                Enabled = false;
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(NotificationMode));
+            OnPropertyChanged(nameof(NotificationModeSortOrder));
+            OnPropertyChanged(nameof(IsNeverNotify));
+        }
+    }
+
+    public string NotificationMode
+    {
+        get => NeverNotify ? "Nooit" : Enabled ? "Aan" : "Uit";
+        set
+        {
+            switch (value?.Trim().ToLowerInvariant())
+            {
+                case "aan":
+                    NeverNotify = false;
+                    Enabled = true;
+                    break;
+                case "nooit":
+                    NeverNotify = true;
+                    break;
+                default:
+                    NeverNotify = false;
+                    Enabled = false;
+                    break;
+            }
+
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(NotificationModeSortOrder));
+            OnPropertyChanged(nameof(IsNeverNotify));
+        }
+    }
+
+    public int NotificationModeSortOrder => NeverNotify ? 2 : Enabled ? 1 : 0;
+
+    public bool IsNeverNotify => NeverNotify;
 
     /// <summary>
     /// Leeg laten betekent "gebruik het voorstel", niet "geen ontvanger". Het veld toont daarom
@@ -124,6 +184,7 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         return new BounceNotificationSender(
             SenderAddress,
             Enabled,
+            NeverNotify,
             recipientOverride,
             LastNotifiedAtUtc,
             LastNotifiedBounceCount: 0);
