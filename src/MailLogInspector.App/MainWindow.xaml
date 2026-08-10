@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window x:Class="MailLogInspector.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -944,7 +944,7 @@
                   <TextBlock Text="Accepted" Style="{StaticResource MutedTextStyle}" />
                   <TextBlock Name="LiveApiAcceptedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
                 </StackPanel>
-                <Border Width="38" Height="38" CornerRadius="19" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Accepted — ontvangen door SMTP.com">
+                <Border Width="38" Height="38" CornerRadius="19" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Accepted â€” ontvangen door SMTP.com">
                   <TextBlock Text="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
               </Grid>
@@ -1031,7 +1031,7 @@
             <StackPanel>
               <TextBlock Text="Over Live API" FontWeight="SemiBold" Margin="0,0,0,8" />
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" FontSize="12">
-                De Live API-tab haalt totaalstatistieken rechtstreeks op via de SMTP.com REST API v4 — zonder dat je een rapport hoeft te importeren.
+                De Live API-tab haalt totaalstatistieken rechtstreeks op via de SMTP.com REST API v4 â€” zonder dat je een rapport hoeft te importeren.
                 Kies een periode (Vandaag / 7 dagen / 30 dagen) en druk op Vernieuwen, of stel een auto-refresh interval in.
                 Stel het interval in op 0 om automatisch vernieuwen uit te schakelen.
                 De API-sleutel wordt opgehaald uit de Admin-instellingen (SMTP.com API-tab).
@@ -1549,7 +1549,7 @@
                   </Style>
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
-                  <DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" ItemsSource="{StaticResource EmailNotificationModes}" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
+<DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
                   <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
@@ -1807,7 +1807,7 @@
                 <TextBlock Text="&#x2022; Van en Tot en met bepalen de volledige zoekperiode. De datumkiezer toont twee aaneengesloten maanden en navigeert per twee maanden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afzender en Ontvanger accepteren een volledig e-mailadres of een domein. Een afzenderdomein mag met of zonder @ worden ingevoerd." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Resultaten bepaalt hoeveel regels eerst worden geladen. Meer laden voegt de volgende regels aan dezelfde zoekactie toe." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij één gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij Ã©Ã©n gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De statusfilter werkt op de volledige zoekset. Afgeleverd is door de ontvangende server geaccepteerd, Onderweg heeft nog geen eindstatus en Bounce toont waar mogelijk direct de korte reden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
               </StackPanel>
@@ -1818,7 +1818,7 @@
                 <TextBlock Text="Domeinanalyse en Excel" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; Domeinanalyse tonen is beschikbaar bij een afzenderdomein zonder ontvangerfilter. Een exact afzenderadres geeft geen domeinanalyse." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afleversnelheid toont maximaal de laatste 30 dagen binnen de gekozen periode, met dagelijks afgeleverd volume, gemiddelde aflevertijd en de 95%-grens." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Afleververtraging verdeelt afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleververtraging verdeelt afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan Ã©Ã©n uur. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Excel exporteren neemt de werkelijk geladen en zichtbare detailregels over. Een actieve domeinanalyse voegt een eerste werkblad Domeinanalyse toe met KPI's, brondata en grafieken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een statusfilter, bijvoorbeeld alleen bounce, bepaalt welke detailregels naar Excel gaan. De domeinanalyse blijft een overzicht van de volledige gekozen periode." TextWrapping="Wrap" />
               </StackPanel>
@@ -1840,7 +1840,7 @@
                 <TextBlock Text="Dashboard" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; De bovenste balk toont databasegrootte, aantal records, imports, beschikbare periode en laatste update." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De grafieken tonen afleversnelheid, de laatste import ten opzichte van de vorige week en de belangrijkste oorzaken van de laatste import." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Imports is één overzicht van handmatige, SMTP.com- en IMAP-imports. Bron, statusaantallen en eventuele foutinformatie blijven per regel zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Imports is Ã©Ã©n overzicht van handmatige, SMTP.com- en IMAP-imports. Bron, statusaantallen en eventuele foutinformatie blijven per regel zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Gebruik Importeren voor een lokaal CSV- of ZIP-bestand. Nu synchroniseren gebruikt de ingestelde bron en importeert beschikbare dagrapporten." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Database verversen leest de beheerinformatie opnieuw. Open map opent de werkmap met database, bronarchief, logs en maandarchieven." TextWrapping="Wrap" />
               </StackPanel>
@@ -1851,7 +1851,7 @@
                 <TextBlock Text="Synchronisatie en beheerdersinstellingen" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; De bronkeuze is: API downloaden, API met IMAP-terugval, direct downloaden met IMAP-terugval, alleen direct downloaden of alleen IMAP. De gekozen bron geldt voor automatische en handmatige synchronisatie." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De eerste automatische poging start dagelijks om 01:00 lokale tijd. Als het rapport van gisteren nog ontbreekt, volgt iedere 15 minuten een nieuwe poging. Rapportdagen worden uit UTC-tijdstempels bepaald." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; SMTP.com API is de standaardbron. Vul de API-sleutel en eventueel een channel in, stel maximaal drie rapportsyntaxen in en gebruik Beschikbare rapporten ophalen om te kiezen welke klaarstaande rapporten worden geïmporteerd." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; SMTP.com API is de standaardbron. Vul de API-sleutel en eventueel een channel in, stel maximaal drie rapportsyntaxen in en gebruik Beschikbare rapporten ophalen om te kiezen welke klaarstaande rapporten worden geÃ¯mporteerd." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; SMTP.com direct gebruikt een bestaande Ready-rapportregel. Proefdownload controleert download, ZIP en hash zonder te importeren; Diagnose toont dezelfde portaalflow zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; IMAP ondersteunt Gmail, Microsoft 365 / Outlook.com en een eigen IMAP-server. Verbindingen gebruiken altijd TLS: direct SSL of verplichte STARTTLS." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een actieve synchronisatie kan met Stop worden afgebroken. Downloads, import en databasewrites reageren op die annulering." TextWrapping="Wrap" Margin="0,0,0,6" />
@@ -2095,3 +2095,5 @@
     </Border>
   </Grid>
 </Window>
+
+
