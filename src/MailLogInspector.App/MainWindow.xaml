@@ -1535,7 +1535,7 @@
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Verzonden" Width="80" Binding="{Binding TotalCount}" IsReadOnly="True" />
-                  <DataGridTextColumn Header="% Bounce" Width="80" Binding="{Binding BouncePercentDisplay}" IsReadOnly="True" />
+                  <DataGridTextColumn Header="% Bounce" Width="80" Binding="{Binding BouncePercentDisplay}" SortMemberPath="BouncePercent" IsReadOnly="True" />
                   <DataGridTextColumn Header="Belangrijkste oorzaak" Width="*" Binding="{Binding TopReason}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Deze periode" Width="120" Binding="{Binding PeriodStateDisplay}" IsReadOnly="True" />
                   <DataGridTemplateColumn Header="" Width="84">

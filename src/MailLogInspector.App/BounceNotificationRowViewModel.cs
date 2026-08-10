@@ -37,6 +37,8 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
     public string BouncePercentDisplay =>
         Report.BouncePercent.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
+    public double BouncePercent => Report.BouncePercent;
+
     public string TopReason => Report.ReasonBreakdown.Count > 0
         ? $"{Report.ReasonBreakdown[0].Reason} ({Report.ReasonBreakdown[0].Count})"
         : "-";
