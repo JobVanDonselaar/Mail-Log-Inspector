@@ -195,14 +195,14 @@ public partial class MainWindow
             ("15–60 min", distribution.FifteenToSixtyMinutes, "#D97706"),
             ("> 1 uur", distribution.OverOneHour, "#C83B2B")
         ];
-        int delayedMaximum = delayedBuckets.Max(static bucket => bucket.Count);
+        int delayedScaleBase = Math.Max(distribution.DurationCount, delayedBuckets.Max(static bucket => bucket.Count));
         SenderDurationDelayItemsControl.ItemsSource = delayedBuckets
             .Select(bucket => new SenderDurationDelayBar(
                 bucket.Label,
                 FormatDurationDelaySummary(bucket.Count, delayedCount, distribution.DurationCount),
-                bucket.Count <= 0 || delayedMaximum <= 0
+                bucket.Count <= 0 || delayedScaleBase <= 0
                     ? 0
-                    : Math.Max(4, bucket.Count * 220.0 / delayedMaximum),
+                    : Math.Max(4, bucket.Count * 220.0 / delayedScaleBase),
                 bucket.Color))
             .ToArray();
 

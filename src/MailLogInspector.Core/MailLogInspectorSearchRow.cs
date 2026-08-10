@@ -22,9 +22,13 @@ public sealed record MailLogInspectorSearchRow(DateTime? AcceptedAt, string Send
 	{
 		get
 		{
-			if (!DurationSeconds.HasValue || DurationSeconds.Value <= 0)
+			if (!DurationSeconds.HasValue)
 			{
 				return "-";
+			}
+			if (DurationSeconds.Value <= 0)
+			{
+				return "< 1 min";
 			}
 			TimeSpan timeSpan = TimeSpan.FromSeconds(DurationSeconds.Value);
 			if (!(timeSpan.TotalHours >= 1.0))

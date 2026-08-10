@@ -1806,7 +1806,7 @@
                 <TextBlock Text="&#x2022; Resultaten bepaalt hoeveel regels eerst worden geladen. Meer laden voegt de volgende regels aan dezelfde zoekactie toe." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij één gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De statusfilter werkt op de volledige zoekset. Afgeleverd is door de ontvangende server geaccepteerd, Onderweg heeft nog geen eindstatus en Bounce toont waar mogelijk direct de korte reden." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren. De logbron registreert op hele minuten, dus &lt; 1 min betekent afgeleverd binnen dezelfde minuut; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 
@@ -1815,7 +1815,7 @@
                 <TextBlock Text="Domeinanalyse en Excel" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; Domeinanalyse tonen is beschikbaar bij een afzenderdomein zonder ontvangerfilter. Een exact afzenderadres geeft geen domeinanalyse." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afleversnelheid toont maximaal de laatste 30 dagen binnen de gekozen periode, met dagelijks afgeleverd volume, gemiddelde aflevertijd en de 95%-grens." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Afleververtraging verdeelt afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleververtraging verdeelt uitsluitend afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur; bounces en onderweg tellen hier niet mee. De balken zijn geschaald op het totaal afgeleverd, zodat één trage mail geen volle balk oplevert. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Excel exporteren neemt de werkelijk geladen en zichtbare detailregels over. Een actieve domeinanalyse voegt een eerste werkblad Domeinanalyse toe met KPI's, brondata en grafieken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een statusfilter, bijvoorbeeld alleen bounce, bepaalt welke detailregels naar Excel gaan. De domeinanalyse blijft een overzicht van de volledige gekozen periode." TextWrapping="Wrap" />
               </StackPanel>

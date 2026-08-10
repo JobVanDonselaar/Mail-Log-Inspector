@@ -63,7 +63,7 @@ public sealed class MainWindowSenderDomainDashboardTests
         Assert.DoesNotContain("Name=\"SenderDurationWithinOneColumn\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Langer dan 1 min", xaml, StringComparison.Ordinal);
         Assert.Contains("SenderDurationDelayBar", code, StringComparison.Ordinal);
-        Assert.Contains("delayedMaximum", code, StringComparison.Ordinal);
+        Assert.Contains("delayedScaleBase", code, StringComparison.Ordinal);
         Assert.Contains("FormatDurationDelaySummary", code, StringComparison.Ordinal);
         Assert.Contains("RoundTrendMaximum", code, StringComparison.Ordinal);
         Assert.Contains("DurationDistribution", code, StringComparison.Ordinal);
