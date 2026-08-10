@@ -328,10 +328,6 @@ public sealed class EmailTabTests
         Assert.Contains("Name=\"EmailFromDatePicker\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailThroughDatePicker\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailSendersGrid\"", emailXaml, StringComparison.Ordinal);
-        Assert.Contains("EmailNotificationModeColumn", emailXaml, StringComparison.Ordinal);
-        Assert.Contains("ItemsSource=\"{StaticResource EmailNotificationModes}\"", emailXaml, StringComparison.Ordinal);
-        Assert.Contains("SortMemberPath=\"NotificationModeSortOrder\"", emailXaml, StringComparison.Ordinal);
-        Assert.Contains("Binding=\"{Binding IsNeverNotify}\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailHistoryGrid\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailTransportComboBox\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailIncludeAttachmentCheckBox\"", emailXaml, StringComparison.Ordinal);

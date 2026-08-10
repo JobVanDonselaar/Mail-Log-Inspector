@@ -20,7 +20,6 @@ public sealed record BounceNotificationPlanItem(
 
     public bool IsSendable =>
         Setting.Enabled &&
-        !Setting.NeverNotify &&
         Report.BounceCount > 0 &&
         MailLogInspectorNotificationAddressPolicy.IsPlausibleAddress(EffectiveRecipient);
 }

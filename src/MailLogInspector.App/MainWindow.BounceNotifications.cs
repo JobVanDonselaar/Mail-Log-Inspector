@@ -24,7 +24,6 @@ public partial class MainWindow
     private const string DefaultEmailScope = "yesterday";
 
     private readonly ObservableCollection<BounceNotificationRowViewModel> _emailRows = [];
-    private static readonly string[] EmailNotificationModes = ["Uit", "Aan", "Nooit"];
     private IReadOnlyList<EmailImportListItem> _emailImports = [];
     private BounceNotificationPeriod? _emailPeriod;
     private bool _emailTabInitialized;
@@ -503,23 +502,22 @@ public partial class MainWindow
 
     private void UpdateEmailSummary()
     {
-        int enabled = _emailRows.Count(row => row.Enabled && !row.NeverNotify);
-        int never = _emailRows.Count(row => row.NeverNotify);
-        int bounces = _emailRows.Where(row => row.Enabled && !row.NeverNotify).Sum(row => row.BounceCount);
-        int alreadySent = _emailRows.Count(row => row.Enabled && !row.NeverNotify && row.AlreadySentAtUtc.HasValue);
+        int enabled = _emailRows.Count(row => row.Enabled);
+        int bounces = _emailRows.Where(row => row.Enabled).Sum(row => row.BounceCount);
+        int alreadySent = _emailRows.Count(row => row.Enabled && row.AlreadySentAtUtc.HasValue);
 
         string warning = alreadySent > 0
             ? $" · let op: {alreadySent} kreeg deze periode al een melding"
             : string.Empty;
 
         EmailSendersHintTextBlock.Text =
-            $"{_emailRows.Count} afzender(s) · {enabled} aangezet · {never} op nooit · {bounces} bounce(s) in de meldingen{warning}";
+            $"{_emailRows.Count} afzender(s) · {enabled} aangezet · {bounces} bounce(s) in de meldingen{warning}";
 
         if (EmailTopStatusTextBlock != null)
         {
             EmailTopStatusTextBlock.Text = _emailPeriod is null
                 ? "Bouncemeldingen naar afzenders."
-                : $"{_emailPeriod.Describe()} · {enabled} aan · {never} nooit";
+                : $"{_emailPeriod.Describe()} · {enabled} van {_emailRows.Count} afzender(s) aangezet";
         }
     }
 
@@ -553,10 +551,7 @@ public partial class MainWindow
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)
         {
-            if (!row.NeverNotify)
-            {
-                row.Enabled = true;
-            }
+            row.Enabled = true;
         }
 
         UpdateEmailSummary();
@@ -566,10 +561,7 @@ public partial class MainWindow
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)
         {
-            if (!row.NeverNotify)
-            {
-                row.Enabled = false;
-            }
+            row.Enabled = false;
         }
 
         UpdateEmailSummary();
