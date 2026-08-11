@@ -349,29 +349,81 @@ public static class BounceNotificationContentBuilder
         MailLogInspectorSenderBounceReport report,
         int maxRows)
     {
+        // Groepeer per ontvanger zodat elk adres slechts één keer zichtbaar is.
+        // Via <details>/<summary> zijn de individuele pogingen uitklapbaar.
+        var groups = report.Bounces
+            .Take(maxRows)
+            .GroupBy(r => r.Recipient, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         html.Append("<div style=\"font-size:14px;font-weight:600;margin:20px 0 8px 0;\">Gebouncede berichten</div>");
         html.Append("<table style=\"width:100%;border-collapse:collapse;font-size:12px;\">");
         html.Append("<thead><tr style=\"background:#f8fafc;\">");
-        html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Tijdstip</th>");
         html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Ontvanger</th>");
         html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Oorzaak</th>");
-        html.Append("<th style=\"text-align:right;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Code</th>");
+        html.Append("<th style=\"text-align:right;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Aantal</th>");
         html.Append("</tr></thead><tbody>");
 
         int index = 0;
-        foreach (MailLogInspectorBounceRow row in report.Bounces.Take(maxRows))
+        foreach (var group in groups)
         {
             string background = index % 2 == 0 ? "#ffffff" : "#f8fafc";
+            var rows = group.ToList();
+
+            // Meest voorkomende oorzaak als samenvatting
+            string reasonSummary = rows
+                .GroupBy(r => r.ReasonDisplay, StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .First();
+
             html.Append($"<tr style=\"background:{background};\">");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;white-space:nowrap;\">{Encode(row.AcceptedAtDisplay)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(row.Recipient)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(row.ReasonDisplay)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;\">{Encode(row.ResponseDisplay)}</td>");
+
+            if (rows.Count == 1)
+            {
+                // Slechts één poging: gewone rij, geen uitklapper nodig
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(rows[0].Recipient)}<br><span style=\"color:#888;font-size:11px;\">{Encode(rows[0].AcceptedAtDisplay)}</span></td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(rows[0].ReasonDisplay)}</td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;\">1</td>");
+            }
+            else
+            {
+                // Meerdere pogingen: uitklapbaar via <details>/<summary>
+                // <details> wordt ondersteund door Outlook Web, Apple Mail, Thunderbird, Gmail webmail.
+                string detailRows = BuildDetailRows(rows);
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">");
+                html.Append($"<details><summary style=\"cursor:pointer;list-style:none;\">");
+                html.Append($"<span style=\"text-decoration:underline dotted;\">{Encode(group.Key)}</span>");
+                html.Append($"</summary>");
+                html.Append(detailRows);
+                html.Append("</details></td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(reasonSummary)}</td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;font-weight:600;\">{rows.Count}</td>");
+            }
+
             html.Append("</tr>");
             index++;
         }
 
         html.Append("</tbody></table>");
+    }
+
+    private static string BuildDetailRows(List<MailLogInspectorBounceRow> rows)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<table style=\"margin:6px 0 2px 12px;font-size:11px;border-collapse:collapse;color:#555;\">");
+        foreach (var row in rows)
+        {
+            sb.Append("<tr>");
+            sb.Append($"<td style=\"padding:2px 8px 2px 0;white-space:nowrap;\">{Encode(row.AcceptedAtDisplay)}</td>");
+            sb.Append($"<td style=\"padding:2px 8px 2px 0;\">{Encode(row.ReasonDisplay)}</td>");
+            sb.Append($"<td style=\"padding:2px 0;\">{Encode(row.ResponseDisplay)}</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</table>");
+        return sb.ToString();
     }
 
     /// <summary>
