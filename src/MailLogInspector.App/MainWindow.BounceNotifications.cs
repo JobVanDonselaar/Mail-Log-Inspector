@@ -709,7 +709,8 @@ public partial class MainWindow
                     hasAttachment: content.IncludeExcelAttachment,
                     content,
                     _emailPeriod?.FromInclusive ?? reportDate,
-                    _emailPeriod?.ThroughInclusive ?? reportDate);
+                    _emailPeriod?.ThroughInclusive ?? reportDate,
+                    BounceNotificationHeaderLogo.DataUri);
                 extension = "html";
             }
             else

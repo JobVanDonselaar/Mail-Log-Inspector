@@ -49,7 +49,8 @@ public static class BounceNotificationContentBuilder
         bool hasAttachment,
         BounceNotificationContentOptions options,
         DateTime? fromInclusive = null,
-        DateTime? throughInclusive = null)
+        DateTime? throughInclusive = null,
+        string? headerLogoSource = null)
     {
         BounceNotificationContentOptions content =
             (options ?? BounceNotificationContentOptions.Default).EnsureNotEmpty();
@@ -71,8 +72,10 @@ public static class BounceNotificationContentBuilder
         html.Append($"{Encode(dateRange)} &middot; ");
         html.Append(RenderSenderAddress(report.SenderAddress));
         html.Append("</div></td>");
-        html.Append("<td style=\"width:64px;text-align:right;vertical-align:middle;padding-left:16px;\">");
-        html.Append("<div style=\"display:inline-block;width:52px;height:52px;line-height:52px;text-align:center;background:#ffffff;color:#1f5d8c;border-radius:50%;font-size:29px;\">&#x1F9B7;</div>");
+        html.Append("<td style=\"width:68px;text-align:right;vertical-align:middle;padding-left:16px;\">");
+        html.Append($"<img src=\"{Encode(headerLogoSource ?? BounceNotificationHeaderLogo.ContentSource)}\" ");
+        html.Append("alt=\"Exquise Next\" width=\"64\" height=\"64\" ");
+        html.Append("style=\"display:block;width:64px;height:64px;border:0;border-radius:14px;\" />");
         html.Append("</td></tr></table></div>");
 
         html.Append("<div style=\"background:#ffffff;border:1px solid #d8e0ea;border-top:none;padding:22px;border-radius:0 0 6px 6px;\">");
