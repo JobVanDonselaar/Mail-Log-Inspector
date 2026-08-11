@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using MailLogInspector.Core;
 using MailLogInspector.Storage;
 
@@ -24,6 +26,7 @@ public partial class MainWindow
     private const string DefaultEmailScope = "yesterday";
 
     private readonly ObservableCollection<BounceNotificationRowViewModel> _emailRows = [];
+    private CollectionViewSource? _emailRowsView;
     private IReadOnlyList<EmailImportListItem> _emailImports = [];
     private BounceNotificationPeriod? _emailPeriod;
     private bool _emailTabInitialized;
@@ -54,7 +57,9 @@ public partial class MainWindow
 
         try
         {
-            EmailSendersGrid.ItemsSource = _emailRows;
+            _emailRowsView = new CollectionViewSource { Source = _emailRows };
+            _emailRowsView.Filter += EmailRowsView_Filter;
+            EmailSendersGrid.ItemsSource = _emailRowsView.View;
             LoadEmailSettingsIntoForm();
             ReloadEmailImportChoices();
             RefreshEmailHistory();
@@ -947,7 +952,9 @@ public partial class MainWindow
         if (!_emailTabInitialized)
         {
             _emailTabInitialized = true;
-            EmailSendersGrid.ItemsSource = _emailRows;
+            _emailRowsView = new CollectionViewSource { Source = _emailRows };
+            _emailRowsView.Filter += EmailRowsView_Filter;
+            EmailSendersGrid.ItemsSource = _emailRowsView.View;
             LoadEmailSettingsIntoForm();
         }
 
@@ -976,5 +983,36 @@ public partial class MainWindow
 
         MainTabControl.SelectedItem = EmailTab;
         StatusTextBlock.Text = $"{plan.Count} afzender(s) met bounces. Zie de tab E-mail.";
+    }
+
+    // ── Afzenderfilter ──────────────────────────────────────────────────────────
+
+    private void EmailRowsView_Filter(object sender, FilterEventArgs e)
+    {
+        string filter = EmailSenderFilterTextBox?.Text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            e.Accepted = true;
+            return;
+        }
+
+        e.Accepted = e.Item is BounceNotificationRowViewModel row
+            && row.SenderAddress.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void EmailSenderFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        EmailSenderFilterClearButton.Visibility =
+            string.IsNullOrEmpty(EmailSenderFilterTextBox.Text)
+                ? System.Windows.Visibility.Collapsed
+                : System.Windows.Visibility.Visible;
+
+        _emailRowsView?.View.Refresh();
+    }
+
+    private void EmailSenderFilterClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        EmailSenderFilterTextBox.Clear();
+        EmailSenderFilterTextBox.Focus();
     }
 }

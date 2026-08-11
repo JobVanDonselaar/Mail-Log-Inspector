@@ -1506,6 +1506,10 @@
               </Grid.RowDefinitions>
 
               <Grid Margin="14,12,14,8">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
@@ -1525,6 +1529,45 @@
                     <TextBlock Text="Alles uit" />
                   </Button>
                 </StackPanel>
+                <!-- Zoekbalk -->
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBox Name="EmailSenderFilterTextBox"
+                           Height="26"
+                           VerticalContentAlignment="Center"
+                           Padding="6,0"
+                           FontSize="12"
+                           TextChanged="EmailSenderFilterTextBox_TextChanged"
+                           ToolTip="Filter op (een deel van) het afzenderadres" />
+                  <TextBlock IsHitTestVisible="False"
+                             Text="🔍 Zoek afzender…"
+                             FontSize="11"
+                             Foreground="#999"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding Text, ElementName=EmailSenderFilterTextBox}" Value="">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <Button Grid.Column="1" Name="EmailSenderFilterClearButton"
+                          Content="✕" Width="26" Height="26"
+                          Margin="4,0,0,0" Padding="0"
+                          FontSize="11"
+                          Visibility="Collapsed"
+                          Style="{StaticResource SecondaryButtonStyle}"
+                          Click="EmailSenderFilterClearButton_Click"
+                          ToolTip="Filter wissen" />
+                </Grid>
               </Grid>
 
               <DataGrid Name="EmailSendersGrid"
