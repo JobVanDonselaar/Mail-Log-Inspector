@@ -31,19 +31,33 @@ public sealed class GmailImapReportClient : IGmailImapReportClient
     {
         using ImapClient client = await ConnectAsync(settings, cancellationToken);
 
+        // Verwijder uit Verzonden
         IMailFolder sentFolder = client.GetFolder(SpecialFolder.Sent)
             ?? throw new InvalidOperationException("De Verzonden-map kon niet worden gevonden in het Gmail-account.");
 
         await sentFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+        IList<UniqueId> sentUids = await sentFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (sentUids.Count > 0)
+        {
+            await sentFolder.AddFlagsAsync(sentUids, MessageFlags.Deleted, silent: true, cancellationToken);
+            await sentFolder.ExpungeAsync(cancellationToken);
+        }
 
-        IList<UniqueId> uids = await sentFolder.SearchAsync(SearchQuery.All, cancellationToken);
-        if (uids.Count == 0)
+        // Gmail bewaart berichten ook in "Alle e-mail" ([Gmail]/All Mail).
+        // Verwijder ze daar ook zodat ze nergens meer zichtbaar zijn.
+        IMailFolder? allMailFolder = client.GetFolder(SpecialFolder.All);
+        if (allMailFolder is null)
         {
             return;
         }
 
-        await sentFolder.AddFlagsAsync(uids, MessageFlags.Deleted, silent: true, cancellationToken);
-        await sentFolder.ExpungeAsync(cancellationToken);
+        await allMailFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+        IList<UniqueId> allUids = await allMailFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (allUids.Count > 0)
+        {
+            await allMailFolder.AddFlagsAsync(allUids, MessageFlags.Deleted, silent: true, cancellationToken);
+            await allMailFolder.ExpungeAsync(cancellationToken);
+        }
     }
 
     public async Task DeleteMessagePermanentlyAsync(GmailImapConnectionSettings settings, GmailImapReportMessage message, CancellationToken cancellationToken)
