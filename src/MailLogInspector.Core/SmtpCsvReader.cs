@@ -23,6 +23,29 @@ public static class SmtpCsvReader
         CancellationToken cancellationToken = default)
     {
         using var parser = CreateParser(path);
+        foreach (var entry in EnumerateCore(parser, onError, cancellationToken))
+        {
+            yield return entry;
+        }
+    }
+
+    public static IEnumerable<SmtpLogEntry> Enumerate(
+        TextReader reader,
+        Action<SmtpParseError>? onError = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var parser = CreateParser(reader);
+        foreach (var entry in EnumerateCore(parser, onError, cancellationToken))
+        {
+            yield return entry;
+        }
+    }
+
+    private static IEnumerable<SmtpLogEntry> EnumerateCore(
+        TextFieldParser parser,
+        Action<SmtpParseError>? onError,
+        CancellationToken cancellationToken)
+    {
         var headers = ReadHeaders(parser);
         var index = BuildHeaderIndex(headers);
         var rowNumber = 1;
@@ -68,6 +91,11 @@ public static class SmtpCsvReader
     {
         var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var reader = new StreamReader(stream);
+        return CreateParser(reader);
+    }
+
+    private static TextFieldParser CreateParser(TextReader reader)
+    {
         var parser = new TextFieldParser(reader);
         parser.TextFieldType = FieldType.Delimited;
         parser.SetDelimiters(",");

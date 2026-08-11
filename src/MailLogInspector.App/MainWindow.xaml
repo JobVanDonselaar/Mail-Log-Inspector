@@ -15,11 +15,6 @@
         TextOptions.TextRenderingMode="ClearType"
         WindowStartupLocation="CenterScreen">
   <Window.Resources>
-    <x:Array x:Key="EmailNotificationModes" Type="{x:Type sys:String}" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-      <sys:String>Uit</sys:String>
-      <sys:String>Aan</sys:String>
-      <sys:String>Nooit</sys:String>
-    </x:Array>
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F5F8" />
     <SolidColorBrush x:Key="PanelFillBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="PanelSubtleFillBrush" Color="#F8FAFC" />
@@ -478,7 +473,12 @@
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Border Name="SearchResultsPanel" Grid.Column="0" Grid.ColumnSpan="5" Style="{StaticResource PanelBorderStyle}" Padding="0">
-              <DataGrid Name="SearchResultsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="30" ColumnHeaderHeight="30">
+              <DataGrid Name="SearchResultsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="30" ColumnHeaderHeight="30" PreviewMouseRightButtonDown="SearchResultsGrid_PreviewMouseRightButtonDown">
+                <DataGrid.ContextMenu>
+                  <ContextMenu Opened="SearchResultsContextMenu_Opened">
+                    <MenuItem Header="Volledige historie uit archief…" Click="SearchResultsHistoryMenuItem_Click" />
+                  </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.Columns>
                   <DataGridTextColumn Header="Accepted" Width="132" Binding="{Binding AcceptedDisplay}" />
                   <DataGridTemplateColumn Header="" Width="28">
@@ -624,7 +624,13 @@
                           </Grid.ColumnDefinitions>
                           <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
                           <Border Grid.Column="1" Background="#E7EDF3" Height="16" VerticalAlignment="Center">
-                            <Border Width="{Binding Width}" Background="{Binding Color}" HorizontalAlignment="Left" />
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="{Binding FillWidth}" />
+                                <ColumnDefinition Width="{Binding RestWidth}" />
+                              </Grid.ColumnDefinitions>
+                              <Border Background="{Binding Color}" MinWidth="{Binding MinFillWidth}" />
+                            </Grid>
                           </Border>
                           <TextBlock Grid.Column="2" Text="{Binding Summary}" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                         </Grid>
@@ -1500,6 +1506,10 @@
               </Grid.RowDefinitions>
 
               <Grid Margin="14,12,14,8">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
@@ -1519,6 +1529,45 @@
                     <TextBlock Text="Alles uit" />
                   </Button>
                 </StackPanel>
+                <!-- Zoekbalk -->
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBox Name="EmailSenderFilterTextBox"
+                           Height="26"
+                           VerticalContentAlignment="Center"
+                           Padding="6,0"
+                           FontSize="12"
+                           TextChanged="EmailSenderFilterTextBox_TextChanged"
+                           ToolTip="Filter op (een deel van) het afzenderadres" />
+                  <TextBlock IsHitTestVisible="False"
+                             Text="🔍 Zoek afzender…"
+                             FontSize="11"
+                             Foreground="#999"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding Text, ElementName=EmailSenderFilterTextBox}" Value="">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <Button Grid.Column="1" Name="EmailSenderFilterClearButton"
+                          Content="✕" Width="26" Height="26"
+                          Margin="4,0,0,0" Padding="0"
+                          FontSize="11"
+                          Visibility="Collapsed"
+                          Style="{StaticResource SecondaryButtonStyle}"
+                          Click="EmailSenderFilterClearButton_Click"
+                          ToolTip="Filter wissen" />
+                </Grid>
               </Grid>
 
               <DataGrid Name="EmailSendersGrid"
@@ -1533,24 +1582,26 @@
                         SelectionMode="Single"
                         VerticalScrollBarVisibility="Auto"
                         HorizontalScrollBarVisibility="Auto"
+                        MouseDoubleClick="EmailSendersGrid_MouseDoubleClick"
                         CellEditEnding="EmailSendersGrid_CellEditEnding">
                 <DataGrid.RowStyle>
                   <Style TargetType="{x:Type DataGridRow}">
-                    <Setter Property="Height" Value="28" />
+                    <Setter Property="Height" Value="22" />
                     <Setter Property="MinHeight" Value="0" />
                     <Setter Property="BorderThickness" Value="0" />
                     <Setter Property="SnapsToDevicePixels" Value="True" />
                     <Style.Triggers>
-                      <DataTrigger Binding="{Binding IsNeverNotify}" Value="True">
+                      <DataTrigger Binding="{Binding NeverNotify}" Value="True">
                         <Setter Property="Background" Value="#FDECE9" />
-                        <Setter Property="Foreground" Value="{StaticResource DangerBrush}" />
+                        <Setter Property="Foreground" Value="#C83B2B" />
                       </DataTrigger>
                     </Style.Triggers>
                   </Style>
                 </DataGrid.RowStyle>
                 <DataGrid.Columns>
-<DataGridComboBoxColumn x:Name="EmailNotificationModeColumn" Header="Melding" Width="76" SelectedItemBinding="{Binding NotificationMode, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NotificationModeSortOrder" />
-                  <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" IsReadOnly="True" />
+                  <DataGridCheckBoxColumn Header="Nooit" Width="52" Binding="{Binding NeverNotify, UpdateSourceTrigger=PropertyChanged}" SortMemberPath="NeverNotify" />
+                  <DataGridCheckBoxColumn Header="Aan" Width="44" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" />
+                  <DataGridTextColumn Header="Afzender" Width="2*" Binding="{Binding SenderAddress}" SortMemberPath="SenderAddress" IsReadOnly="True" />
                   <DataGridTextColumn Header="Ontvanger van de melding" Width="2*" Binding="{Binding Recipient, UpdateSourceTrigger=PropertyChanged}" />
                   <DataGridTextColumn Header="Bounces" Width="72" Binding="{Binding BounceCount}" IsReadOnly="True" />
                   <DataGridTextColumn Header="Verzonden" Width="80" Binding="{Binding TotalCount}" IsReadOnly="True" />
@@ -1658,6 +1709,9 @@
 
                     <CheckBox Name="EmailAutoSendCheckBox" Content="Automatisch versturen na elke import" Margin="0,2,0,0" />
                     <TextBlock Text="Staat dit uit, dan opent de app na een import deze tab met het overzicht klaar."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,5,0,0" />
+                    <CheckBox Name="EmailClearGmailSentCheckBox" Content="Verzonden-map leegmaken na verzenden (alleen Gmail)" Margin="0,12,0,0" />
+                    <TextBlock Text="Gmail slaat elke verzonden bouncemelding automatisch op in Verzonden items. Met deze optie worden die berichten direct daarna verwijderd."
                                Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,5,0,0" />
                   </StackPanel>
                 </Expander>
@@ -1807,9 +1861,10 @@
                 <TextBlock Text="&#x2022; Van en Tot en met bepalen de volledige zoekperiode. De datumkiezer toont twee aaneengesloten maanden en navigeert per twee maanden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afzender en Ontvanger accepteren een volledig e-mailadres of een domein. Een afzenderdomein mag met of zonder @ worden ingevoerd." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Resultaten bepaalt hoeveel regels eerst worden geladen. Meer laden voegt de volgende regels aan dezelfde zoekactie toe." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij Ã©Ã©n gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij één gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De statusfilter werkt op de volledige zoekset. Afgeleverd is door de ontvangende server geaccepteerd, Onderweg heeft nog geen eindstatus en Bounce toont waar mogelijk direct de korte reden." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren. De logbron registreert op hele minuten, dus &lt; 1 min betekent afgeleverd binnen dezelfde minuut; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Rechtsklik op een detailregel en kies Volledige historie uit archief voor alle afleverpogingen van die ene mail, inclusief tussenstappen zoals een tijdelijk uitgestelde poging. De database bewaart alleen de eindstand; de tussenstappen worden op dat moment uit de bewaarde rapporten gelezen, zodat de database klein en snel blijft. Het doorzoeken duurt enkele seconden." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 
@@ -1818,7 +1873,7 @@
                 <TextBlock Text="Domeinanalyse en Excel" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; Domeinanalyse tonen is beschikbaar bij een afzenderdomein zonder ontvangerfilter. Een exact afzenderadres geeft geen domeinanalyse." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Afleversnelheid toont maximaal de laatste 30 dagen binnen de gekozen periode, met dagelijks afgeleverd volume, gemiddelde aflevertijd en de 95%-grens." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Afleververtraging verdeelt afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan Ã©Ã©n uur. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Afleververtraging verdeelt uitsluitend afgeleverde mails over 1-5, 5-15, 15-60 minuten en langer dan één uur; bounces en onderweg tellen hier niet mee. Elke balk vult het deel van de vertraagde mails dat in die categorie valt, gelijk aan het percentage vertraagd dat ernaast staat. Bounce-oorzaken toont de belangrijkste genormaliseerde oorzaken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Excel exporteren neemt de werkelijk geladen en zichtbare detailregels over. Een actieve domeinanalyse voegt een eerste werkblad Domeinanalyse toe met KPI's, brondata en grafieken." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een statusfilter, bijvoorbeeld alleen bounce, bepaalt welke detailregels naar Excel gaan. De domeinanalyse blijft een overzicht van de volledige gekozen periode." TextWrapping="Wrap" />
               </StackPanel>
@@ -1840,7 +1895,7 @@
                 <TextBlock Text="Dashboard" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; De bovenste balk toont databasegrootte, aantal records, imports, beschikbare periode en laatste update." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De grafieken tonen afleversnelheid, de laatste import ten opzichte van de vorige week en de belangrijkste oorzaken van de laatste import." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Imports is Ã©Ã©n overzicht van handmatige, SMTP.com- en IMAP-imports. Bron, statusaantallen en eventuele foutinformatie blijven per regel zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Imports is één overzicht van handmatige, SMTP.com- en IMAP-imports. Bron, statusaantallen en eventuele foutinformatie blijven per regel zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Gebruik Importeren voor een lokaal CSV- of ZIP-bestand. Nu synchroniseren gebruikt de ingestelde bron en importeert beschikbare dagrapporten." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Database verversen leest de beheerinformatie opnieuw. Open map opent de werkmap met database, bronarchief, logs en maandarchieven." TextWrapping="Wrap" />
               </StackPanel>
@@ -1851,7 +1906,7 @@
                 <TextBlock Text="Synchronisatie en beheerdersinstellingen" Style="{StaticResource SectionTitleStyle}" FontSize="18" Margin="0,0,0,10" />
                 <TextBlock Text="&#x2022; De bronkeuze is: API downloaden, API met IMAP-terugval, direct downloaden met IMAP-terugval, alleen direct downloaden of alleen IMAP. De gekozen bron geldt voor automatische en handmatige synchronisatie." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De eerste automatische poging start dagelijks om 01:00 lokale tijd. Als het rapport van gisteren nog ontbreekt, volgt iedere 15 minuten een nieuwe poging. Rapportdagen worden uit UTC-tijdstempels bepaald." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; SMTP.com API is de standaardbron. Vul de API-sleutel en eventueel een channel in, stel maximaal drie rapportsyntaxen in en gebruik Beschikbare rapporten ophalen om te kiezen welke klaarstaande rapporten worden geÃ¯mporteerd." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; SMTP.com API is de standaardbron. Vul de API-sleutel en eventueel een channel in, stel maximaal drie rapportsyntaxen in en gebruik Beschikbare rapporten ophalen om te kiezen welke klaarstaande rapporten worden geïmporteerd." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; SMTP.com direct gebruikt een bestaande Ready-rapportregel. Proefdownload controleert download, ZIP en hash zonder te importeren; Diagnose toont dezelfde portaalflow zichtbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; IMAP ondersteunt Gmail, Microsoft 365 / Outlook.com en een eigen IMAP-server. Verbindingen gebruiken altijd TLS: direct SSL of verplichte STARTTLS." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Een actieve synchronisatie kan met Stop worden afgebroken. Downloads, import en databasewrites reageren op die annulering." TextWrapping="Wrap" Margin="0,0,0,6" />
@@ -1876,6 +1931,8 @@
                 <TextBlock Text="&#x2022; Alles rond bouncemeldingen staat op het tabblad E-mail: de afzenderlijst, de mailinhoud, de verzendinstellingen en de verzendgeschiedenis. Na een import springt de applicatie er vanzelf naartoe." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Bovenaan kiest u de periode: de laatste import, alleen gisteren, de laatste zeven dagen, deze maand of een eigen datumbereik. De tab opent op gisteren, de eerste volledig ge&#x00EF;mporteerde dag. Zo is een overgeslagen dag of week alsnog te melden." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Nieuwe afzenders staan altijd uit. Zet per afzender aan wie een melding krijgt, of gebruik Alles aanzetten. De keuze wordt onthouden voor volgende imports." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; De eerste kolom Nooit blokkeert een afzender blijvend, bedoeld voor demo-accounts en praktijken die nooit een melding mogen krijgen. Zo'n regel kleurt rood, kan niet aangezet worden en blijft ongemoeid bij Alles aanzetten en Alles uitzetten. Klik op de kolomkop om ze bij elkaar te sorteren." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Dubbelklik op een afzenderadres om naar Zoeken te springen met dat adres als afzenderfilter en de periode van de melding. De zoekactie start meteen, zodat de bounces achter het getal direct zichtbaar zijn." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De melding gaat standaard naar het afzenderadres zelf. Bij noreply-achtige adressen wordt info@ op hetzelfde domein voorgesteld; elk ontvangeradres is aanpasbaar." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Onder Mailinhoud bepaalt u wat er meegaat: kerncijfers, bounce-oorzaken, ontvangende domeinen, de detailtabel, de bronbestandsnaam en de Excel-bijlage. Elk blok kan los aan of uit." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De bodyvorm is HTML met tekstalternatief, alleen HTML of alleen platte tekst. Een eigen inleidende en afsluitende tekst is mogelijk; daarin werken {sender}, {domain}, {count} en {date}." TextWrapping="Wrap" Margin="0,0,0,6" />
@@ -2095,5 +2152,3 @@
     </Border>
   </Grid>
 </Window>
-
-

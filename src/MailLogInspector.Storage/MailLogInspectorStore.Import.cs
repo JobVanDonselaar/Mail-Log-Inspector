@@ -445,7 +445,11 @@ public sealed partial class MailLogInspectorStore
 		return MailLogInspectorAttemptMeaning.DescribeReason((MailLogInspectorReasonCode)reasonCode);
 	}
 
-	private static byte[] BuildTrackingKey(string? trackingId, string? recipient)
+	/// <summary>
+	/// De sleutel is omkeerbaar voor een GUID-tracking-id en anders een hash over tracking-id en
+	/// ontvanger. De archiefopzoeking gebruikt dezelfde berekening om een logregel te herkennen.
+	/// </summary>
+	internal static byte[] BuildTrackingKey(string? trackingId, string? recipient)
 	{
 		string normalizedTrackingId = (trackingId ?? string.Empty).Trim();
 		if (Guid.TryParse(normalizedTrackingId, out Guid guid))

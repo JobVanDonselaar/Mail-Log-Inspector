@@ -27,6 +27,39 @@ public sealed class GmailImapReportClient : IGmailImapReportClient
         return await ReadMessagesAsync(sourceFolder, uids, sourceFolder.FullName, cancellationToken);
     }
 
+    public async Task ClearSentFolderAsync(GmailImapConnectionSettings settings, CancellationToken cancellationToken)
+    {
+        using ImapClient client = await ConnectAsync(settings, cancellationToken);
+
+        // Gmail-strategie voor permanent verwijderen:
+        // 1. Berichten vanuit Verzonden naar Prullenbak verplaatsen (MoveTo)
+        // 2. Prullenbak openen en expungen — dan zijn ze echt weg
+        // Alleen \Deleted + Expunge op Sent/All Mail stuurt berichten naar Prullenbak, niet weg.
+
+        IMailFolder sentFolder = client.GetFolder(SpecialFolder.Sent)
+            ?? throw new InvalidOperationException("De Verzonden-map kon niet worden gevonden in het Gmail-account.");
+
+        IMailFolder trashFolder = client.GetFolder(SpecialFolder.Trash)
+            ?? throw new InvalidOperationException("De Prullenbak-map kon niet worden gevonden in het Gmail-account.");
+
+        await sentFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+        IList<UniqueId> sentUids = await sentFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (sentUids.Count > 0)
+        {
+            // Verplaats naar Trash — hiermee verdwijnt het ook automatisch uit All Mail
+            await sentFolder.MoveToAsync(sentUids, trashFolder, cancellationToken);
+        }
+
+        // Trash leegmaken = permanent verwijderd
+        await trashFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+        IList<UniqueId> trashUids = await trashFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (trashUids.Count > 0)
+        {
+            await trashFolder.AddFlagsAsync(trashUids, MessageFlags.Deleted, silent: true, cancellationToken);
+            await trashFolder.ExpungeAsync(cancellationToken);
+        }
+    }
+
     public async Task DeleteMessagePermanentlyAsync(GmailImapConnectionSettings settings, GmailImapReportMessage message, CancellationToken cancellationToken)
     {
         using ImapClient client = await ConnectAsync(settings, cancellationToken);

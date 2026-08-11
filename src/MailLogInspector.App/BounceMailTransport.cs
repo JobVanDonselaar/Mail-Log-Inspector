@@ -223,18 +223,24 @@ public sealed class GmailBounceMailTransport : IBounceMailTransport
     private const string SmtpHost = "smtp.gmail.com";
     private const int SmtpPort = 587;
 
+    private const string ImapHost = "imap.gmail.com";
+    private const int ImapPort = 993;
+
     private readonly GmailReportOperationalStore _gmailStore;
     private readonly IGmailAccessTokenProvider _tokenProvider;
     private readonly BounceNotificationSettings _settings;
+    private readonly IGmailImapReportClient _imapClient;
 
     public GmailBounceMailTransport(
         GmailReportOperationalStore gmailStore,
         IGmailAccessTokenProvider tokenProvider,
-        BounceNotificationSettings settings)
+        BounceNotificationSettings settings,
+        IGmailImapReportClient imapClient)
     {
         _gmailStore = gmailStore;
         _tokenProvider = tokenProvider;
         _settings = settings;
+        _imapClient = imapClient;
     }
 
     public string Name => "Gmail";
@@ -249,19 +255,23 @@ public sealed class GmailBounceMailTransport : IBounceMailTransport
             string.IsNullOrWhiteSpace(_settings.FromAddress) ? config.AccountEmailAddress! : _settings.FromAddress!,
             _settings.FromDisplayName);
 
+        string? accessToken = null;
+        if (method == GmailBounceAuthenticationPlan.Method.OAuth)
+        {
+            accessToken = await _tokenProvider.GetAccessTokenAsync(
+                new GmailOAuthConfig(
+                    config.AccountEmailAddress!,
+                    config.ClientId!,
+                    GmailOAuthService.UnprotectClientSecret(config.ClientSecret!),
+                    GmailOAuthService.UnprotectRefreshToken(config.EncryptedRefreshToken!)),
+                cancellationToken);
+        }
+
         SaslMechanism authentication = method == GmailBounceAuthenticationPlan.Method.AppPassword
             ? new SaslMechanismLogin(
                 config.AccountEmailAddress!,
                 GmailOAuthService.UnprotectSecret(config.EncryptedAppPassword!))
-            : new SaslMechanismOAuth2(
-                config.AccountEmailAddress!,
-                await _tokenProvider.GetAccessTokenAsync(
-                    new GmailOAuthConfig(
-                        config.AccountEmailAddress!,
-                        config.ClientId!,
-                        GmailOAuthService.UnprotectClientSecret(config.ClientSecret!),
-                        GmailOAuthService.UnprotectRefreshToken(config.EncryptedRefreshToken!)),
-                    cancellationToken));
+            : new SaslMechanismOAuth2(config.AccountEmailAddress!, accessToken!);
 
         using var client = new SmtpClient
         {
@@ -271,6 +281,31 @@ public sealed class GmailBounceMailTransport : IBounceMailTransport
         await client.AuthenticateAsync(authentication, cancellationToken);
         await client.SendAsync(mime, cancellationToken);
         await client.DisconnectAsync(true, cancellationToken);
+
+        if (_settings.ClearGmailSentItemsAfterSend)
+        {
+            GmailImapConnectionSettings imapSettings = method == GmailBounceAuthenticationPlan.Method.AppPassword
+                ? new GmailImapConnectionSettings(
+                    config.AccountEmailAddress!,
+                    GmailAuthenticationMode.AppPassword,
+                    null,
+                    GmailOAuthService.UnprotectSecret(config.EncryptedAppPassword!),
+                    ImapHost,
+                    ImapPort,
+                    UseSsl: true,
+                    ImapProvider: ImapProvider.Gmail)
+                : new GmailImapConnectionSettings(
+                    config.AccountEmailAddress!,
+                    GmailAuthenticationMode.OAuth,
+                    accessToken!,
+                    null,
+                    ImapHost,
+                    ImapPort,
+                    UseSsl: true,
+                    ImapProvider: ImapProvider.Gmail);
+
+            await _imapClient.ClearSentFolderAsync(imapSettings, cancellationToken);
+        }
     }
 }
 
@@ -336,13 +371,14 @@ public static class BounceMailTransportFactory
     public static IBounceMailTransport Create(
         BounceNotificationSettings settings,
         GmailReportOperationalStore gmailStore,
-        IGmailAccessTokenProvider tokenProvider)
+        IGmailAccessTokenProvider tokenProvider,
+        IGmailImapReportClient? imapClient = null)
     {
         return BounceNotificationTransport.Normalize(settings.Transport) switch
         {
             BounceNotificationTransport.SmtpRelay => new SmtpRelayBounceMailTransport(settings),
             BounceNotificationTransport.Microsoft365 => new SmtpRelayBounceMailTransport(settings),
-            _ => new GmailBounceMailTransport(gmailStore, tokenProvider, settings)
+            _ => new GmailBounceMailTransport(gmailStore, tokenProvider, settings, imapClient ?? new GmailImapReportClient())
         };
     }
 }

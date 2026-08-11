@@ -98,6 +98,19 @@ public static class MailLogInspectorAttemptMeaning
 		};
 	}
 
+	public static string DescribeRawStatus(string? status)
+	{
+		return (status?.Trim().ToUpperInvariant() ?? string.Empty) switch
+		{
+			"D" => "Afgeleverd",
+			"B" => "Bounce",
+			"T" => "Tijdelijk uitgesteld",
+			"Q" => "In wachtrij",
+			"" => "Onbekend",
+			_ => status!.Trim()
+		};
+	}
+
 	public static string DescribeResponseCode(string? responseCode)
 	{
 		return (responseCode?.Trim() ?? string.Empty) switch

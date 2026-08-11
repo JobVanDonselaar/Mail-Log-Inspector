@@ -156,7 +156,9 @@ public sealed class BounceNotificationService
                             reportDate,
                             sourceFileName,
                             hasAttachment: attachmentPath is not null,
-                            content)
+                            content,
+                            period.FromInclusive,
+                            period.ThroughInclusive)
                         : null,
                     PlainTextBody: content.WantsPlainText()
                         ? BounceNotificationContentBuilder.BuildPlainTextBody(
@@ -164,7 +166,9 @@ public sealed class BounceNotificationService
                             reportDate,
                             sourceFileName,
                             hasAttachment: attachmentPath is not null,
-                            content)
+                            content,
+                            period.FromInclusive,
+                            period.ThroughInclusive)
                         : null,
                     AttachmentPath: attachmentPath,
                     AttachmentFileName: attachmentPath is null

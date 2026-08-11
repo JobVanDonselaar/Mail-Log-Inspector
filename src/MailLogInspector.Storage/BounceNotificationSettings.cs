@@ -38,7 +38,8 @@ public sealed record BounceNotificationSettings(
     int RelayPort,
     string? RelayUsername,
     string? EncryptedRelayPassword,
-    BounceNotificationContentOptions Content)
+    BounceNotificationContentOptions Content,
+    bool ClearGmailSentItemsAfterSend = false)
 {
     public const string DefaultSubjectTemplate = "Bounce-overzicht {sender} - {date}";
 
@@ -53,7 +54,8 @@ public sealed record BounceNotificationSettings(
         RelayPort: 587,
         RelayUsername: null,
         EncryptedRelayPassword: null,
-        Content: BounceNotificationContentOptions.Default);
+        Content: BounceNotificationContentOptions.Default,
+        ClearGmailSentItemsAfterSend: false);
 
     public string ResolveSubjectTemplate() =>
         string.IsNullOrWhiteSpace(SubjectTemplate) ? DefaultSubjectTemplate : SubjectTemplate.Trim();
@@ -64,20 +66,18 @@ public sealed record BounceNotificationSettings(
 }
 
 /// <summary>Notificatie-instelling voor één afzender-e-mailadres.</summary>
+/// <param name="NeverNotify">
+/// Blokkeert deze afzender blijvend. Bedoeld voor demo-accounts en praktijken die nooit een
+/// bouncemelding willen ontvangen: "Alles aan" en "Alles uit" laten deze regels met rust.
+/// </param>
 public sealed record BounceNotificationSender(
     string SenderAddress,
     bool Enabled,
-    bool NeverNotify,
     string? RecipientOverride,
     DateTime? LastNotifiedAtUtc,
-    int LastNotifiedBounceCount)
+    int LastNotifiedBounceCount,
+    bool NeverNotify = false)
 {
     public static BounceNotificationSender CreateDisabled(string senderAddress) =>
-        new(senderAddress, Enabled: false, NeverNotify: false, RecipientOverride: null, LastNotifiedAtUtc: null, LastNotifiedBounceCount: 0);
-
-    public BounceNotificationSender WithEnabled(bool enabled) =>
-        this with
-        {
-            Enabled = NeverNotify ? false : enabled
-        };
+        new(senderAddress, Enabled: false, RecipientOverride: null, LastNotifiedAtUtc: null, LastNotifiedBounceCount: 0);
 }

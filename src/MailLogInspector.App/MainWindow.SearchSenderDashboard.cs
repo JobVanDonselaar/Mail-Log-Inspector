@@ -28,7 +28,13 @@ public partial class MainWindow
 
     private sealed record SenderDomainTrendBar(double Height, string ToolTip);
     private sealed record SenderDomainCauseBar(string Label, string Count, double Width);
-    private sealed record SenderDurationDelayBar(string Label, string Summary, double Width, string Color);
+    private sealed record SenderDurationDelayBar(
+        string Label,
+        string Summary,
+        GridLength FillWidth,
+        GridLength RestWidth,
+        double MinFillWidth,
+        string Color);
 
     private void SearchDashboardInputs_Changed(object sender, TextChangedEventArgs e)
     {
@@ -195,14 +201,12 @@ public partial class MainWindow
             ("15–60 min", distribution.FifteenToSixtyMinutes, "#D97706"),
             ("> 1 uur", distribution.OverOneHour, "#C83B2B")
         ];
-        int delayedMaximum = delayedBuckets.Max(static bucket => bucket.Count);
         SenderDurationDelayItemsControl.ItemsSource = delayedBuckets
-            .Select(bucket => new SenderDurationDelayBar(
+            .Select(bucket => BuildDelayBar(
                 bucket.Label,
                 FormatDurationDelaySummary(bucket.Count, delayedCount, distribution.DurationCount),
-                bucket.Count <= 0 || delayedMaximum <= 0
-                    ? 0
-                    : Math.Max(4, bucket.Count * 220.0 / delayedMaximum),
+                bucket.Count,
+                delayedCount,
                 bucket.Color))
             .ToArray();
 
@@ -211,6 +215,25 @@ public partial class MainWindow
             : $"Duur beschikbaar voor {FormatCompactCount(distribution.DurationCount)} van " +
               $"{FormatCompactCount(dashboard.DeliveredCount)} afgeleverde mails " +
               $"({FormatDurationPercent(distribution.DurationCount, dashboard.DeliveredCount)}).";
+    }
+
+    private static SenderDurationDelayBar BuildDelayBar(
+        string label,
+        string summary,
+        int count,
+        int delayedCount,
+        string color)
+    {
+        double share = delayedCount <= 0 || count <= 0
+            ? 0
+            : Math.Clamp(count / (double)delayedCount, 0, 1);
+        return new SenderDurationDelayBar(
+            label,
+            summary,
+            new GridLength(share, GridUnitType.Star),
+            new GridLength(1 - share, GridUnitType.Star),
+            count <= 0 || share <= 0 ? 0 : 4,
+            color);
     }
 
     private static string FormatDurationDelaySummary(int count, int delayedCount, int durationCount)

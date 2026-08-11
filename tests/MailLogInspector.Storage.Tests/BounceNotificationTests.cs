@@ -110,39 +110,72 @@ public sealed class BounceNotificationTests
     }
 
     [Fact]
-    public void SetAllSendersEnabledLeavesNeverNotifyUntouched()
+    public void NeverNotifySendersIgnoreEnableAll()
     {
         BounceNotificationOperationalStore store = CreateStore();
-        store.SaveSenders(
-        [
-            new BounceNotificationSender("een@bedrijf.nl", true, false, null, null, 0),
-            new BounceNotificationSender("twee@bedrijf.nl", false, true, null, null, 0)
-        ]);
+        store.EnsureSendersExist(["gewoon@bedrijf.nl", "demo@bedrijf.nl"]);
+        store.SaveSender(new BounceNotificationSender(
+            "demo@bedrijf.nl",
+            Enabled: false,
+            RecipientOverride: null,
+            LastNotifiedAtUtc: null,
+            LastNotifiedBounceCount: 0,
+            NeverNotify: true));
 
-        store.SetAllSendersEnabled(false);
+        store.SetAllSendersEnabled(true);
 
         IReadOnlyList<BounceNotificationSender> senders = store.LoadSenders();
-        Assert.False(senders.Single(sender => sender.SenderAddress == "een@bedrijf.nl").Enabled);
-        BounceNotificationSender never = senders.Single(sender => sender.SenderAddress == "twee@bedrijf.nl");
-        Assert.True(never.NeverNotify);
-        Assert.False(never.Enabled);
+        Assert.True(senders.Single(sender => sender.SenderAddress == "gewoon@bedrijf.nl").Enabled);
+
+        BounceNotificationSender demo = senders.Single(sender => sender.SenderAddress == "demo@bedrijf.nl");
+        Assert.False(demo.Enabled);
+        Assert.True(demo.NeverNotify);
     }
 
     [Fact]
-    public void NotificationModeNooitTurnsTheRowIntoNeverNotify()
+    public void NeverNotifyBlocksSendingEvenWhenEnabled()
+    {
+        var item = new BounceNotificationPlanItem(
+            BuildReport(),
+            new BounceNotificationSender(
+                "verzender@bedrijf.nl",
+                Enabled: true,
+                RecipientOverride: "praktijk@voorbeeld.nl",
+                LastNotifiedAtUtc: null,
+                LastNotifiedBounceCount: 0,
+                NeverNotify: true),
+            "verzender@bedrijf.nl");
+
+        Assert.False(item.IsSendable);
+    }
+
+    [Fact]
+    public void NeverNotifyRowCannotBeSwitchedOn()
     {
         var row = new BounceNotificationRowViewModel(new BounceNotificationPlanItem(
             BuildReport(),
-            new BounceNotificationSender("verzender@bedrijf.nl", true, false, null, null, 0),
-            "verzender@bedrijf.nl"));
-
-        row.NotificationMode = "Nooit";
+            new BounceNotificationSender(
+                "verzender@bedrijf.nl",
+                Enabled: true,
+                RecipientOverride: null,
+                LastNotifiedAtUtc: null,
+                LastNotifiedBounceCount: 0,
+                NeverNotify: true),
+            "praktijk@voorbeeld.nl"));
 
         Assert.True(row.NeverNotify);
         Assert.False(row.Enabled);
-        Assert.True(row.IsNeverNotify);
-        Assert.Equal(2, row.NotificationModeSortOrder);
-        Assert.Equal("Nooit", row.NotificationMode);
+
+        row.Enabled = true;
+        Assert.False(row.Enabled);
+
+        row.NeverNotify = false;
+        row.Enabled = true;
+        Assert.True(row.Enabled);
+
+        row.NeverNotify = true;
+        Assert.False(row.Enabled);
+        Assert.True(row.ToSetting().NeverNotify);
     }
 
     [Fact]
@@ -250,6 +283,24 @@ public sealed class BounceNotificationTests
 
         Assert.Contains("mailto:verzender%40bedrijf.nl", header, StringComparison.Ordinal);
         Assert.Contains("color:#ffffff;text-decoration:none;", header, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HeaderShowsExquiseTitleIconAndSentMailDateRange()
+    {
+        string html = BounceNotificationContentBuilder.BuildHtmlBody(
+            BuildReport(),
+            new DateTime(2026, 2, 17),
+            sourceFileName: null,
+            hasAttachment: false,
+            BounceNotificationContentOptions.Default,
+            fromInclusive: new DateTime(2026, 2, 10),
+            throughInclusive: new DateTime(2026, 2, 17));
+
+        Assert.Contains("Overzicht gestuurde mails vanuit Exquise Next", html, StringComparison.Ordinal);
+        Assert.Contains("10-02-2026 t/m 17-02-2026", html, StringComparison.Ordinal);
+        Assert.Contains("&#x1F9B7;", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bounce-overzicht", html, StringComparison.Ordinal);
     }
 
     // ------------------------------------------------- ontvanger in het raster

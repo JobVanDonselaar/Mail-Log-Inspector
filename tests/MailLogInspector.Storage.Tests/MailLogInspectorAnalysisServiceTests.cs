@@ -193,7 +193,11 @@ public sealed class MailLogInspectorAnalysisServiceTests
         Assert.Equal(2, rows.Count);
         Assert.Contains(rows, row => row.Recipient == "one@example.net");
         Assert.Contains(rows, row => row.Recipient == "two@example.net");
-        Assert.All(rows, row => Assert.Equal(string.Empty, row.TrackingId));
+
+        // Een tracking-id dat geen GUID is wordt per ontvanger gehasht, dus beide regels houden
+        // een eigen sleutel waarmee de archiefopzoeking ze uit elkaar kan houden.
+        Assert.All(rows, row => Assert.NotEqual(string.Empty, row.TrackingId));
+        Assert.Equal(2, rows.Select(row => row.TrackingId).Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]

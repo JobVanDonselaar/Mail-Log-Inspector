@@ -47,11 +47,16 @@ public static class BounceNotificationContentBuilder
         DateTime reportDate,
         string? sourceFileName,
         bool hasAttachment,
-        BounceNotificationContentOptions options)
+        BounceNotificationContentOptions options,
+        DateTime? fromInclusive = null,
+        DateTime? throughInclusive = null)
     {
         BounceNotificationContentOptions content =
             (options ?? BounceNotificationContentOptions.Default).EnsureNotEmpty();
         int maxRows = content.ResolveMaxDetailRows();
+        string dateRange = FormatDateRange(
+            fromInclusive ?? reportDate,
+            throughInclusive ?? reportDate);
 
         var html = new StringBuilder();
         html.Append("<!DOCTYPE html><html><head><meta charset=\"utf-8\" /></head>");
@@ -59,11 +64,16 @@ public static class BounceNotificationContentBuilder
         html.Append("<div style=\"max-width:820px;margin:0 auto;\">");
 
         html.Append("<div style=\"background:#1f5d8c;color:#ffffff;padding:18px 22px;border-radius:6px 6px 0 0;\">");
-        html.Append("<div style=\"font-size:19px;font-weight:600;\">Bounce-overzicht</div>");
-        html.Append("<div style=\"font-size:13px;opacity:0.9;margin-top:4px;\">");
+        html.Append("<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\"><tr>");
+        html.Append("<td style=\"vertical-align:middle;\">");
+        html.Append("<div style=\"font-size:19px;font-weight:600;line-height:1.25;\">Overzicht gestuurde mails vanuit Exquise Next</div>");
+        html.Append("<div style=\"font-size:13px;opacity:0.9;margin-top:5px;\">");
+        html.Append($"{Encode(dateRange)} &middot; ");
         html.Append(RenderSenderAddress(report.SenderAddress));
-        html.Append($" &middot; {Encode(reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture))}</div>");
-        html.Append("</div>");
+        html.Append("</div></td>");
+        html.Append("<td style=\"width:64px;text-align:right;vertical-align:middle;padding-left:16px;\">");
+        html.Append("<div style=\"display:inline-block;width:52px;height:52px;line-height:52px;text-align:center;background:#ffffff;color:#1f5d8c;border-radius:50%;font-size:29px;\">&#x1F9B7;</div>");
+        html.Append("</td></tr></table></div>");
 
         html.Append("<div style=\"background:#ffffff;border:1px solid #d8e0ea;border-top:none;padding:22px;border-radius:0 0 6px 6px;\">");
 
@@ -143,16 +153,18 @@ public static class BounceNotificationContentBuilder
         DateTime reportDate,
         string? sourceFileName,
         bool hasAttachment,
-        BounceNotificationContentOptions options)
+        BounceNotificationContentOptions options,
+        DateTime? fromInclusive = null,
+        DateTime? throughInclusive = null)
     {
         BounceNotificationContentOptions content =
             (options ?? BounceNotificationContentOptions.Default).EnsureNotEmpty();
         int maxRows = content.ResolveMaxDetailRows();
 
         var text = new StringBuilder();
-        text.AppendLine("BOUNCE-OVERZICHT");
+        text.AppendLine("OVERZICHT GESTUURDE MAILS VANUIT EXQUISE NEXT");
         text.AppendLine($"Afzender: {report.SenderAddress}");
-        text.AppendLine($"Datum: {reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)}");
+        text.AppendLine($"Periode: {FormatDateRange(fromInclusive ?? reportDate, throughInclusive ?? reportDate)}");
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(content.IntroText))
@@ -349,29 +361,81 @@ public static class BounceNotificationContentBuilder
         MailLogInspectorSenderBounceReport report,
         int maxRows)
     {
+        // Groepeer per ontvanger zodat elk adres slechts één keer zichtbaar is.
+        // Via <details>/<summary> zijn de individuele pogingen uitklapbaar.
+        var groups = report.Bounces
+            .Take(maxRows)
+            .GroupBy(r => r.Recipient, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
         html.Append("<div style=\"font-size:14px;font-weight:600;margin:20px 0 8px 0;\">Gebouncede berichten</div>");
         html.Append("<table style=\"width:100%;border-collapse:collapse;font-size:12px;\">");
         html.Append("<thead><tr style=\"background:#f8fafc;\">");
-        html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Tijdstip</th>");
         html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Ontvanger</th>");
         html.Append("<th style=\"text-align:left;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Oorzaak</th>");
-        html.Append("<th style=\"text-align:right;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Code</th>");
+        html.Append("<th style=\"text-align:right;padding:7px 8px;border-bottom:1px solid #d8e0ea;font-weight:600;\">Aantal</th>");
         html.Append("</tr></thead><tbody>");
 
         int index = 0;
-        foreach (MailLogInspectorBounceRow row in report.Bounces.Take(maxRows))
+        foreach (var group in groups)
         {
             string background = index % 2 == 0 ? "#ffffff" : "#f8fafc";
+            var rows = group.ToList();
+
+            // Meest voorkomende oorzaak als samenvatting
+            string reasonSummary = rows
+                .GroupBy(r => r.ReasonDisplay, StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(g => g.Count())
+                .Select(g => g.Key)
+                .First();
+
             html.Append($"<tr style=\"background:{background};\">");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;white-space:nowrap;\">{Encode(row.AcceptedAtDisplay)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(row.Recipient)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(row.ReasonDisplay)}</td>");
-            html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;\">{Encode(row.ResponseDisplay)}</td>");
+
+            if (rows.Count == 1)
+            {
+                // Slechts één poging: gewone rij, geen uitklapper nodig
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(rows[0].Recipient)}<br><span style=\"color:#888;font-size:11px;\">{Encode(rows[0].AcceptedAtDisplay)}</span></td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(rows[0].ReasonDisplay)}</td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;\">1</td>");
+            }
+            else
+            {
+                // Meerdere pogingen: uitklapbaar via <details>/<summary>
+                // <details> wordt ondersteund door Outlook Web, Apple Mail, Thunderbird, Gmail webmail.
+                string detailRows = BuildDetailRows(rows);
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">");
+                html.Append($"<details><summary style=\"cursor:pointer;list-style:none;\">");
+                html.Append($"<span style=\"text-decoration:underline dotted;\">{Encode(group.Key)}</span>");
+                html.Append($"</summary>");
+                html.Append(detailRows);
+                html.Append("</details></td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;\">{Encode(reasonSummary)}</td>");
+                html.Append($"<td style=\"padding:6px 8px;border-bottom:1px solid #edf1f5;text-align:right;font-weight:600;\">{rows.Count}</td>");
+            }
+
             html.Append("</tr>");
             index++;
         }
 
         html.Append("</tbody></table>");
+    }
+
+    private static string BuildDetailRows(List<MailLogInspectorBounceRow> rows)
+    {
+        var sb = new StringBuilder();
+        sb.Append("<table style=\"margin:6px 0 2px 12px;font-size:11px;border-collapse:collapse;color:#555;\">");
+        foreach (var row in rows)
+        {
+            sb.Append("<tr>");
+            sb.Append($"<td style=\"padding:2px 8px 2px 0;white-space:nowrap;\">{Encode(row.AcceptedAtDisplay)}</td>");
+            sb.Append($"<td style=\"padding:2px 8px 2px 0;\">{Encode(row.ReasonDisplay)}</td>");
+            sb.Append($"<td style=\"padding:2px 0;\">{Encode(row.ResponseDisplay)}</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</table>");
+        return sb.ToString();
     }
 
     /// <summary>
@@ -385,6 +449,21 @@ public static class BounceNotificationContentBuilder
         return $"<a href=\"mailto:{Encode(Uri.EscapeDataString(address))}\" " +
                "style=\"color:#ffffff;text-decoration:none;\">" +
                $"<span style=\"color:#ffffff;\">{encoded}</span></a>";
+    }
+
+    private static string FormatDateRange(DateTime fromInclusive, DateTime throughInclusive)
+    {
+        DateTime start = fromInclusive.Date;
+        DateTime end = throughInclusive.Date;
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
+
+        string startDisplay = start.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture);
+        return start == end
+            ? startDisplay
+            : $"{startDisplay} t/m {end.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)}";
     }
 
     private static string Encode(string value) => WebUtility.HtmlEncode(value);

@@ -476,6 +476,77 @@ public partial class MainWindow : Window
 		RebindSearchResultsFromCache(item.Group.GroupKey);
 	}
 
+	/// <summary>
+	/// De tussenliggende afleverpogingen staan bewust niet in de database. Op aanvraag halen we
+	/// ze alsnog uit het archief, zodat incidenteel onderzoek mogelijk blijft zonder dat de
+	/// database groeit.
+	/// </summary>
+	private void SearchResultsHistoryMenuItem_Click(object sender, RoutedEventArgs e)
+	{
+		OpenMailHistoryForSelection();
+	}
+
+	/// <summary>
+	/// Een DataGrid selecteert de aangewezen rij niet bij rechtsklik, waardoor het contextmenu op
+	/// de vorige selectie zou werken. Daarom selecteren we de rij onder de muis zelf.
+	/// </summary>
+	private void SearchResultsGrid_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+	{
+		DependencyObject? current = e.OriginalSource as DependencyObject;
+		while (current is not null and not System.Windows.Controls.DataGridRow)
+		{
+			current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+		}
+
+		if (current is System.Windows.Controls.DataGridRow row)
+		{
+			SearchResultsGrid.SelectedItem = row.Item;
+		}
+	}
+
+	private void SearchResultsContextMenu_Opened(object sender, RoutedEventArgs e)
+	{
+		if (sender is not System.Windows.Controls.ContextMenu menu)
+		{
+			return;
+		}
+
+		bool available = SearchResultsGrid.SelectedItem is SearchResultsListItem { IsGroup: false, Row: not null };
+		foreach (object entry in menu.Items)
+		{
+			if (entry is System.Windows.Controls.MenuItem item)
+			{
+				item.IsEnabled = available;
+			}
+		}
+	}
+
+	private void OpenMailHistoryForSelection()
+	{
+		if (SearchResultsGrid.SelectedItem is not SearchResultsListItem { IsGroup: false, Row: not null } item)
+		{
+			return;
+		}
+
+		if (string.IsNullOrWhiteSpace(item.Row.TrackingId))
+		{
+			System.Windows.MessageBox.Show(
+				this,
+				"Deze regel heeft geen bruikbaar tracking-ID, daarom kan de volledige historie niet opgezocht worden.",
+				"Mail Log Inspector",
+				MessageBoxButton.OK,
+				MessageBoxImage.Information);
+			return;
+		}
+
+		MailHistoryWindow window = new(new MailLogInspectorMailHistoryService(_store), item.Row)
+		{
+			Owner = this
+		};
+
+		window.ShowDialog();
+	}
+
 	private async void AnalysisSenderGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
 	{
 		if ((sender as System.Windows.Controls.DataGrid)?.SelectedItem is MailLogInspectorBreakdownRow row)

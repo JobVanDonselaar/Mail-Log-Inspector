@@ -18,8 +18,8 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
     {
         Report = item.Report;
         SuggestedRecipient = item.SuggestedRecipient;
-        _enabled = item.Setting.Enabled;
         _neverNotify = item.Setting.NeverNotify;
+        _enabled = item.Setting.Enabled && !_neverNotify;
         _recipient = item.EffectiveRecipient;
         LastNotifiedAtUtc = item.Setting.LastNotifiedAtUtc;
     }
@@ -71,21 +71,28 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         get => _enabled;
         set
         {
-            if (_neverNotify)
-            {
-                value = false;
-            }
+            // "Nooit" wint altijd: aanvinken mag niet, maar het scherm moet dat wel terugdraaien.
+            bool effective = value && !_neverNotify;
 
-            if (_enabled == value)
+            if (_enabled == effective)
             {
+                if (effective != value)
+                {
+                    OnPropertyChanged();
+                }
+
                 return;
             }
 
-            _enabled = value;
+            _enabled = effective;
             OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Blijvende blokkade voor deze afzender. Demo-accounts en praktijken die nooit een melding
+    /// willen ontvangen blijven zo uit, ook na "Alles aan".
+    /// </summary>
     public bool NeverNotify
     {
         get => _neverNotify;
@@ -97,47 +104,15 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
             }
 
             _neverNotify = value;
-            if (_neverNotify)
-            {
-                Enabled = false;
-            }
-
             OnPropertyChanged();
-            OnPropertyChanged(nameof(NotificationMode));
-            OnPropertyChanged(nameof(NotificationModeSortOrder));
-            OnPropertyChanged(nameof(IsNeverNotify));
+
+            if (_neverNotify && _enabled)
+            {
+                _enabled = false;
+                OnPropertyChanged(nameof(Enabled));
+            }
         }
     }
-
-    public string NotificationMode
-    {
-        get => NeverNotify ? "Nooit" : Enabled ? "Aan" : "Uit";
-        set
-        {
-            switch (value?.Trim().ToLowerInvariant())
-            {
-                case "aan":
-                    NeverNotify = false;
-                    Enabled = true;
-                    break;
-                case "nooit":
-                    NeverNotify = true;
-                    break;
-                default:
-                    NeverNotify = false;
-                    Enabled = false;
-                    break;
-            }
-
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(NotificationModeSortOrder));
-            OnPropertyChanged(nameof(IsNeverNotify));
-        }
-    }
-
-    public int NotificationModeSortOrder => NeverNotify ? 2 : Enabled ? 1 : 0;
-
-    public bool IsNeverNotify => NeverNotify;
 
     /// <summary>
     /// Leeg laten betekent "gebruik het voorstel", niet "geen ontvanger". Het veld toont daarom
@@ -184,10 +159,10 @@ public sealed class BounceNotificationRowViewModel : INotifyPropertyChanged
         return new BounceNotificationSender(
             SenderAddress,
             Enabled,
-            NeverNotify,
             recipientOverride,
             LastNotifiedAtUtc,
-            LastNotifiedBounceCount: 0);
+            LastNotifiedBounceCount: 0,
+            NeverNotify);
     }
 
     public BounceNotificationPlanItem ToPlanItem() =>

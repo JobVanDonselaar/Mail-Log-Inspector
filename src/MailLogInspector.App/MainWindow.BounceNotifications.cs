@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using MailLogInspector.Core;
 using MailLogInspector.Storage;
 
@@ -24,7 +26,7 @@ public partial class MainWindow
     private const string DefaultEmailScope = "yesterday";
 
     private readonly ObservableCollection<BounceNotificationRowViewModel> _emailRows = [];
-    private static readonly string[] EmailNotificationModes = ["Uit", "Aan", "Nooit"];
+    private CollectionViewSource? _emailRowsView;
     private IReadOnlyList<EmailImportListItem> _emailImports = [];
     private BounceNotificationPeriod? _emailPeriod;
     private bool _emailTabInitialized;
@@ -55,8 +57,9 @@ public partial class MainWindow
 
         try
         {
-            EmailSendersGrid.ItemsSource = _emailRows;
-            EmailNotificationModeColumn.ItemsSource = EmailNotificationModes;
+            _emailRowsView = new CollectionViewSource { Source = _emailRows };
+            _emailRowsView.Filter += EmailRowsView_Filter;
+            EmailSendersGrid.ItemsSource = _emailRowsView.View;
             LoadEmailSettingsIntoForm();
             ReloadEmailImportChoices();
             RefreshEmailHistory();
@@ -289,6 +292,7 @@ public partial class MainWindow
             EmailFromNameTextBox.Text = settings.FromDisplayName ?? "Mail Log Inspector";
             EmailSubjectTextBox.Text = settings.ResolveSubjectTemplate();
             EmailAutoSendCheckBox.IsChecked = settings.AutoSendAfterImport;
+            EmailClearGmailSentCheckBox.IsChecked = settings.ClearGmailSentItemsAfterSend;
             EmailRelayHostTextBox.Text = settings.RelayHost ?? string.Empty;
             EmailRelayPortTextBox.Text = settings.RelayPort.ToString(CultureInfo.InvariantCulture);
             EmailRelayUsernameTextBox.Text = settings.RelayUsername ?? string.Empty;
@@ -408,6 +412,7 @@ public partial class MainWindow
         {
             Enabled = _emailRows.Any(row => row.Enabled),
             AutoSendAfterImport = EmailAutoSendCheckBox.IsChecked == true,
+            ClearGmailSentItemsAfterSend = EmailClearGmailSentCheckBox.IsChecked == true,
             Transport = ReadSelectedEmailTransport(),
             FromAddress = EmailFromAddressTextBox.Text.Trim(),
             FromDisplayName = EmailFromNameTextBox.Text.Trim(),
@@ -504,23 +509,27 @@ public partial class MainWindow
 
     private void UpdateEmailSummary()
     {
-        int enabled = _emailRows.Count(row => row.Enabled && !row.NeverNotify);
+        int enabled = _emailRows.Count(row => row.Enabled);
         int never = _emailRows.Count(row => row.NeverNotify);
-        int bounces = _emailRows.Where(row => row.Enabled && !row.NeverNotify).Sum(row => row.BounceCount);
-        int alreadySent = _emailRows.Count(row => row.Enabled && !row.NeverNotify && row.AlreadySentAtUtc.HasValue);
+        int bounces = _emailRows.Where(row => row.Enabled).Sum(row => row.BounceCount);
+        int alreadySent = _emailRows.Count(row => row.Enabled && row.AlreadySentAtUtc.HasValue);
 
         string warning = alreadySent > 0
             ? $" · let op: {alreadySent} kreeg deze periode al een melding"
             : string.Empty;
 
+        string blocked = never > 0
+            ? $" · {never} op nooit"
+            : string.Empty;
+
         EmailSendersHintTextBlock.Text =
-            $"{_emailRows.Count} afzender(s) · {enabled} aangezet · {never} op nooit · {bounces} bounce(s) in de meldingen{warning}";
+            $"{_emailRows.Count} afzender(s) · {enabled} aangezet{blocked} · {bounces} bounce(s) in de meldingen{warning}";
 
         if (EmailTopStatusTextBlock != null)
         {
             EmailTopStatusTextBlock.Text = _emailPeriod is null
                 ? "Bouncemeldingen naar afzenders."
-                : $"{_emailPeriod.Describe()} · {enabled} aan · {never} nooit";
+                : $"{_emailPeriod.Describe()} · {enabled} van {_emailRows.Count} afzender(s) aangezet";
         }
     }
 
@@ -550,14 +559,83 @@ public partial class MainWindow
         }));
     }
 
+    /// <summary>
+    /// Dubbelklikken op een afzender opent Zoeken met dat adres en de gekozen periode. Zo zijn de
+    /// bounces achter het getal meteen te bekijken. Andere kolommen blijven bewerkbaar, dus alleen
+    /// een klik in de afzenderkolom springt weg.
+    /// </summary>
+    private async void EmailSendersGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        System.Windows.Controls.DataGridCell? cell =
+            FindVisualParent<System.Windows.Controls.DataGridCell>(e.OriginalSource as DependencyObject);
+        if (cell is null ||
+            !string.Equals(
+                cell.Column?.SortMemberPath,
+                nameof(BounceNotificationRowViewModel.SenderAddress),
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (cell.DataContext is not BounceNotificationRowViewModel row)
+        {
+            return;
+        }
+
+        e.Handled = true;
+        await OpenSenderInSearchAsync(row.SenderAddress);
+    }
+
+    /// <summary>Vult de zoekfilters met dit afzenderadres en de periode, en zoekt meteen.</summary>
+    private async Task OpenSenderInSearchAsync(string senderAddress)
+    {
+        string address = senderAddress?.Trim() ?? string.Empty;
+        if (address.Length == 0)
+        {
+            return;
+        }
+
+        if (_emailPeriod is not null)
+        {
+            SearchFromDatePicker.SelectedDate = _emailPeriod.FromInclusive.Date;
+            SearchThroughDatePicker.SelectedDate = _emailPeriod.ThroughInclusive.Date;
+        }
+
+        SenderTextBox.Text = address;
+        RecipientTextBox.Text = string.Empty;
+        SelectSearchStatusFilter(null);
+        SearchRunStateTextBlock.Text = "Afzender overgenomen uit de E-mail-tab: " + address;
+        SearchRunDetailTextBlock.Text = "Bezig met zoeken...";
+
+        MainTabControl.SelectedItem = SearchTab;
+
+        await RunSearchAsync(SearchRunReason.FreshSearch);
+    }
+
+    /// <summary>Zoekt het dichtstbijzijnde bovenliggende element van het gevraagde type.</summary>
+    private static T? FindVisualParent<T>(DependencyObject? source)
+        where T : DependencyObject
+    {
+        while (source is not null)
+        {
+            if (source is T match)
+            {
+                return match;
+            }
+
+            source = source is System.Windows.Media.Visual
+                ? System.Windows.Media.VisualTreeHelper.GetParent(source)
+                : LogicalTreeHelper.GetParent(source);
+        }
+
+        return null;
+    }
+
     private void EmailEnableAllButton_Click(object sender, RoutedEventArgs e)
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)
         {
-            if (!row.NeverNotify)
-            {
-                row.Enabled = true;
-            }
+            row.Enabled = true;
         }
 
         UpdateEmailSummary();
@@ -567,10 +645,12 @@ public partial class MainWindow
     {
         foreach (BounceNotificationRowViewModel row in _emailRows)
         {
-            if (!row.NeverNotify)
+            if (row.NeverNotify)
             {
-                row.Enabled = false;
+                continue;
             }
+
+            row.Enabled = false;
         }
 
         UpdateEmailSummary();
@@ -627,7 +707,9 @@ public partial class MainWindow
                     reportDate,
                     sourceFileName,
                     hasAttachment: content.IncludeExcelAttachment,
-                    content);
+                    content,
+                    _emailPeriod?.FromInclusive ?? reportDate,
+                    _emailPeriod?.ThroughInclusive ?? reportDate);
                 extension = "html";
             }
             else
@@ -637,7 +719,9 @@ public partial class MainWindow
                     reportDate,
                     sourceFileName,
                     hasAttachment: content.IncludeExcelAttachment,
-                    content);
+                    content,
+                    _emailPeriod?.FromInclusive ?? reportDate,
+                    _emailPeriod?.ThroughInclusive ?? reportDate);
                 extension = "txt";
             }
 
@@ -872,7 +956,9 @@ public partial class MainWindow
         if (!_emailTabInitialized)
         {
             _emailTabInitialized = true;
-            EmailSendersGrid.ItemsSource = _emailRows;
+            _emailRowsView = new CollectionViewSource { Source = _emailRows };
+            _emailRowsView.Filter += EmailRowsView_Filter;
+            EmailSendersGrid.ItemsSource = _emailRowsView.View;
             LoadEmailSettingsIntoForm();
         }
 
@@ -901,5 +987,36 @@ public partial class MainWindow
 
         MainTabControl.SelectedItem = EmailTab;
         StatusTextBlock.Text = $"{plan.Count} afzender(s) met bounces. Zie de tab E-mail.";
+    }
+
+    // ── Afzenderfilter ──────────────────────────────────────────────────────────
+
+    private void EmailRowsView_Filter(object sender, FilterEventArgs e)
+    {
+        string filter = EmailSenderFilterTextBox?.Text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(filter))
+        {
+            e.Accepted = true;
+            return;
+        }
+
+        e.Accepted = e.Item is BounceNotificationRowViewModel row
+            && row.SenderAddress.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void EmailSenderFilterTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        EmailSenderFilterClearButton.Visibility =
+            string.IsNullOrEmpty(EmailSenderFilterTextBox.Text)
+                ? System.Windows.Visibility.Collapsed
+                : System.Windows.Visibility.Visible;
+
+        _emailRowsView?.View.Refresh();
+    }
+
+    private void EmailSenderFilterClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        EmailSenderFilterTextBox.Clear();
+        EmailSenderFilterTextBox.Focus();
     }
 }
