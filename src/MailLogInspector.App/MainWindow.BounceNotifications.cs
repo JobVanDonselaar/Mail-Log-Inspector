@@ -707,7 +707,9 @@ public partial class MainWindow
                     reportDate,
                     sourceFileName,
                     hasAttachment: content.IncludeExcelAttachment,
-                    content);
+                    content,
+                    _emailPeriod?.FromInclusive ?? reportDate,
+                    _emailPeriod?.ThroughInclusive ?? reportDate);
                 extension = "html";
             }
             else
@@ -717,7 +719,9 @@ public partial class MainWindow
                     reportDate,
                     sourceFileName,
                     hasAttachment: content.IncludeExcelAttachment,
-                    content);
+                    content,
+                    _emailPeriod?.FromInclusive ?? reportDate,
+                    _emailPeriod?.ThroughInclusive ?? reportDate);
                 extension = "txt";
             }
 

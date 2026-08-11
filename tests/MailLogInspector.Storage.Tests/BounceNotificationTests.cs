@@ -285,6 +285,24 @@ public sealed class BounceNotificationTests
         Assert.Contains("color:#ffffff;text-decoration:none;", header, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void HeaderShowsExquiseTitleIconAndSentMailDateRange()
+    {
+        string html = BounceNotificationContentBuilder.BuildHtmlBody(
+            BuildReport(),
+            new DateTime(2026, 2, 17),
+            sourceFileName: null,
+            hasAttachment: false,
+            BounceNotificationContentOptions.Default,
+            fromInclusive: new DateTime(2026, 2, 10),
+            throughInclusive: new DateTime(2026, 2, 17));
+
+        Assert.Contains("Overzicht gestuurde mails vanuit Exquise Next", html, StringComparison.Ordinal);
+        Assert.Contains("10-02-2026 t/m 17-02-2026", html, StringComparison.Ordinal);
+        Assert.Contains("&#x1F9B7;", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bounce-overzicht", html, StringComparison.Ordinal);
+    }
+
     // ------------------------------------------------- ontvanger in het raster
 
     /// <summary>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window x:Class="MailLogInspector.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -950,7 +950,7 @@
                   <TextBlock Text="Accepted" Style="{StaticResource MutedTextStyle}" />
                   <TextBlock Name="LiveApiAcceptedTextBlock" FontSize="22" FontWeight="SemiBold" Margin="0,2,0,0" />
                 </StackPanel>
-                <Border Width="38" Height="38" CornerRadius="19" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Accepted — ontvangen door SMTP.com">
+                <Border Width="38" Height="38" CornerRadius="19" Background="#EEF5FC" HorizontalAlignment="Left" ToolTip="Accepted â€” ontvangen door SMTP.com">
                   <TextBlock Text="&#xE724;" FontFamily="Segoe MDL2 Assets" Foreground="{StaticResource AccentBrush}" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
               </Grid>
@@ -1037,7 +1037,7 @@
             <StackPanel>
               <TextBlock Text="Over Live API" FontWeight="SemiBold" Margin="0,0,0,8" />
               <TextBlock TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" FontSize="12">
-                De Live API-tab haalt totaalstatistieken rechtstreeks op via de SMTP.com REST API v4 — zonder dat je een rapport hoeft te importeren.
+                De Live API-tab haalt totaalstatistieken rechtstreeks op via de SMTP.com REST API v4 â€” zonder dat je een rapport hoeft te importeren.
                 Kies een periode (Vandaag / 7 dagen / 30 dagen) en druk op Vernieuwen, of stel een auto-refresh interval in.
                 Stel het interval in op 0 om automatisch vernieuwen uit te schakelen.
                 De API-sleutel wordt opgehaald uit de Admin-instellingen (SMTP.com API-tab).

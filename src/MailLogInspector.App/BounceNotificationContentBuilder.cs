@@ -47,11 +47,16 @@ public static class BounceNotificationContentBuilder
         DateTime reportDate,
         string? sourceFileName,
         bool hasAttachment,
-        BounceNotificationContentOptions options)
+        BounceNotificationContentOptions options,
+        DateTime? fromInclusive = null,
+        DateTime? throughInclusive = null)
     {
         BounceNotificationContentOptions content =
             (options ?? BounceNotificationContentOptions.Default).EnsureNotEmpty();
         int maxRows = content.ResolveMaxDetailRows();
+        string dateRange = FormatDateRange(
+            fromInclusive ?? reportDate,
+            throughInclusive ?? reportDate);
 
         var html = new StringBuilder();
         html.Append("<!DOCTYPE html><html><head><meta charset=\"utf-8\" /></head>");
@@ -59,11 +64,16 @@ public static class BounceNotificationContentBuilder
         html.Append("<div style=\"max-width:820px;margin:0 auto;\">");
 
         html.Append("<div style=\"background:#1f5d8c;color:#ffffff;padding:18px 22px;border-radius:6px 6px 0 0;\">");
-        html.Append("<div style=\"font-size:19px;font-weight:600;\">Bounce-overzicht</div>");
-        html.Append("<div style=\"font-size:13px;opacity:0.9;margin-top:4px;\">");
+        html.Append("<table role=\"presentation\" style=\"width:100%;border-collapse:collapse;\"><tr>");
+        html.Append("<td style=\"vertical-align:middle;\">");
+        html.Append("<div style=\"font-size:19px;font-weight:600;line-height:1.25;\">Overzicht gestuurde mails vanuit Exquise Next</div>");
+        html.Append("<div style=\"font-size:13px;opacity:0.9;margin-top:5px;\">");
+        html.Append($"{Encode(dateRange)} &middot; ");
         html.Append(RenderSenderAddress(report.SenderAddress));
-        html.Append($" &middot; {Encode(reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture))}</div>");
-        html.Append("</div>");
+        html.Append("</div></td>");
+        html.Append("<td style=\"width:64px;text-align:right;vertical-align:middle;padding-left:16px;\">");
+        html.Append("<div style=\"display:inline-block;width:52px;height:52px;line-height:52px;text-align:center;background:#ffffff;color:#1f5d8c;border-radius:50%;font-size:29px;\">&#x1F9B7;</div>");
+        html.Append("</td></tr></table></div>");
 
         html.Append("<div style=\"background:#ffffff;border:1px solid #d8e0ea;border-top:none;padding:22px;border-radius:0 0 6px 6px;\">");
 
@@ -143,16 +153,18 @@ public static class BounceNotificationContentBuilder
         DateTime reportDate,
         string? sourceFileName,
         bool hasAttachment,
-        BounceNotificationContentOptions options)
+        BounceNotificationContentOptions options,
+        DateTime? fromInclusive = null,
+        DateTime? throughInclusive = null)
     {
         BounceNotificationContentOptions content =
             (options ?? BounceNotificationContentOptions.Default).EnsureNotEmpty();
         int maxRows = content.ResolveMaxDetailRows();
 
         var text = new StringBuilder();
-        text.AppendLine("BOUNCE-OVERZICHT");
+        text.AppendLine("OVERZICHT GESTUURDE MAILS VANUIT EXQUISE NEXT");
         text.AppendLine($"Afzender: {report.SenderAddress}");
-        text.AppendLine($"Datum: {reportDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)}");
+        text.AppendLine($"Periode: {FormatDateRange(fromInclusive ?? reportDate, throughInclusive ?? reportDate)}");
         text.AppendLine();
 
         if (!string.IsNullOrWhiteSpace(content.IntroText))
@@ -437,6 +449,21 @@ public static class BounceNotificationContentBuilder
         return $"<a href=\"mailto:{Encode(Uri.EscapeDataString(address))}\" " +
                "style=\"color:#ffffff;text-decoration:none;\">" +
                $"<span style=\"color:#ffffff;\">{encoded}</span></a>";
+    }
+
+    private static string FormatDateRange(DateTime fromInclusive, DateTime throughInclusive)
+    {
+        DateTime start = fromInclusive.Date;
+        DateTime end = throughInclusive.Date;
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
+
+        string startDisplay = start.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture);
+        return start == end
+            ? startDisplay
+            : $"{startDisplay} t/m {end.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture)}";
     }
 
     private static string Encode(string value) => WebUtility.HtmlEncode(value);
