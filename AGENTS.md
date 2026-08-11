@@ -25,6 +25,8 @@ Deze repo bevat `Mail Log Inspector`, een standalone Windows-app voor import, zo
 - De standaard publish-doelmap is `C:\Apps\Mail Log Inspector`.
 - Publiceren gebeurt door de gebruiker via `C:\GithubCoPilot\Mail Log Inspector\Publish-MailLogInspector.bat`.
 - GitHub Copilot voert geen publish uit en start geen productie-EXE, tenzij de gebruiker dat in die beurt expliciet vraagt.
+- Na push en merge naar `main` werkt GitHub Copilot altijd zelf de lokale publish-checkout `C:\GithubCoPilot\Mail Log Inspector` bij met een fast-forward pull voordat het werk als publish-klaar wordt gemeld.
+- Meld pas `gepusht, gemerged en lokaal binnengehaald` wanneer de lokale publish-checkout daadwerkelijk dezelfde app-versie bevat als `origin/main`; een bijgewerkte sessieworktree alleen is daarvoor niet voldoende.
 
 ## Git
 
@@ -36,6 +38,5 @@ Deze repo bevat `Mail Log Inspector`, een standalone Windows-app voor import, zo
 
 - Werk `README.md`, `ROADMAP.md` en relevante docs bij als de workflow of het gedrag verandert.
 - Leg nieuwe repo-regels hier vast als ze blijvend zijn.
-
 
 
