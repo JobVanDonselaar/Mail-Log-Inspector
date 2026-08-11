@@ -114,7 +114,8 @@ public sealed class BounceNotificationOperationalStore
             ("max_detail_rows", "INTEGER NOT NULL DEFAULT 100"),
             ("body_format", "TEXT NOT NULL DEFAULT 'both'"),
             ("intro_text", "TEXT NULL"),
-            ("footer_text", "TEXT NULL")
+            ("footer_text", "TEXT NULL"),
+            ("clear_gmail_sent_items_after_send", "INTEGER NOT NULL DEFAULT 0")
         ];
 
         foreach ((string column, string definition) in contentColumns)
@@ -170,7 +171,8 @@ public sealed class BounceNotificationOperationalStore
                    max_detail_rows,
                    body_format,
                    intro_text,
-                   footer_text
+                   footer_text,
+                   clear_gmail_sent_items_after_send
             FROM bounce_notification_settings
             WHERE settings_id = 1;
             """;
@@ -203,7 +205,8 @@ public sealed class BounceNotificationOperationalStore
                     : (int)reader.GetInt64(16),
                 BodyFormat: BounceNotificationBodyFormat.Normalize(ReadNullableString(reader, 17)),
                 IntroText: ReadNullableString(reader, 18) ?? BounceNotificationContentOptions.DefaultIntroText,
-                FooterText: ReadNullableString(reader, 19) ?? BounceNotificationContentOptions.DefaultFooterText));
+                FooterText: ReadNullableString(reader, 19) ?? BounceNotificationContentOptions.DefaultFooterText),
+            ClearGmailSentItemsAfterSend: ReadBoolean(reader, 20, defaultValue: false));
     }
 
     public void SaveSettings(BounceNotificationSettings settings)
@@ -232,13 +235,14 @@ public sealed class BounceNotificationOperationalStore
                 max_detail_rows,
                 body_format,
                 intro_text,
-                footer_text
+                footer_text,
+                clear_gmail_sent_items_after_send
             )
             VALUES (1, $enabled, $autoSend, $transport, $fromAddress, $fromDisplayName,
                     $subjectTemplate, $relayHost, $relayPort, $relayUsername, $relayPassword,
                     $includeAttachment, $includeKpi, $includeReasons, $includeDomains,
                     $includeDetails, $includeSource, $maxDetailRows, $bodyFormat,
-                    $introText, $footerText)
+                    $introText, $footerText, $clearGmailSent)
             ON CONFLICT(settings_id) DO UPDATE SET
                 enabled = excluded.enabled,
                 auto_send_after_import = excluded.auto_send_after_import,
@@ -259,7 +263,8 @@ public sealed class BounceNotificationOperationalStore
                 max_detail_rows = excluded.max_detail_rows,
                 body_format = excluded.body_format,
                 intro_text = excluded.intro_text,
-                footer_text = excluded.footer_text;
+                footer_text = excluded.footer_text,
+                clear_gmail_sent_items_after_send = excluded.clear_gmail_sent_items_after_send;
             """;
         command.Parameters.AddWithValue("$enabled", settings.Enabled ? 1 : 0);
         command.Parameters.AddWithValue("$autoSend", settings.AutoSendAfterImport ? 1 : 0);
@@ -283,6 +288,7 @@ public sealed class BounceNotificationOperationalStore
         command.Parameters.AddWithValue("$bodyFormat", content.ResolveBodyFormat());
         command.Parameters.AddWithValue("$introText", ToBodyTextDbValue(content.IntroText));
         command.Parameters.AddWithValue("$footerText", ToBodyTextDbValue(content.FooterText));
+        command.Parameters.AddWithValue("$clearGmailSent", settings.ClearGmailSentItemsAfterSend ? 1 : 0);
         command.ExecuteNonQuery();
     }
 

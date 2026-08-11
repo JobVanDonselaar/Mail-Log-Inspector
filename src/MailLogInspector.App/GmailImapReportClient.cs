@@ -27,6 +27,25 @@ public sealed class GmailImapReportClient : IGmailImapReportClient
         return await ReadMessagesAsync(sourceFolder, uids, sourceFolder.FullName, cancellationToken);
     }
 
+    public async Task ClearSentFolderAsync(GmailImapConnectionSettings settings, CancellationToken cancellationToken)
+    {
+        using ImapClient client = await ConnectAsync(settings, cancellationToken);
+
+        IMailFolder sentFolder = client.GetFolder(SpecialFolder.Sent)
+            ?? throw new InvalidOperationException("De Verzonden-map kon niet worden gevonden in het Gmail-account.");
+
+        await sentFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+
+        IList<UniqueId> uids = await sentFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (uids.Count == 0)
+        {
+            return;
+        }
+
+        await sentFolder.AddFlagsAsync(uids, MessageFlags.Deleted, silent: true, cancellationToken);
+        await sentFolder.ExpungeAsync(cancellationToken);
+    }
+
     public async Task DeleteMessagePermanentlyAsync(GmailImapConnectionSettings settings, GmailImapReportMessage message, CancellationToken cancellationToken)
     {
         using ImapClient client = await ConnectAsync(settings, cancellationToken);

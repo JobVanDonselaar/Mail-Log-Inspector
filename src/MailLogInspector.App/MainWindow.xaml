@@ -1667,6 +1667,9 @@
                     <CheckBox Name="EmailAutoSendCheckBox" Content="Automatisch versturen na elke import" Margin="0,2,0,0" />
                     <TextBlock Text="Staat dit uit, dan opent de app na een import deze tab met het overzicht klaar."
                                Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,5,0,0" />
+                    <CheckBox Name="EmailClearGmailSentCheckBox" Content="Verzonden-map leegmaken na verzenden (alleen Gmail)" Margin="0,12,0,0" />
+                    <TextBlock Text="Gmail slaat elke verzonden bouncemelding automatisch op in Verzonden items. Met deze optie worden die berichten direct daarna verwijderd."
+                               Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Margin="0,5,0,0" />
                   </StackPanel>
                 </Expander>
               </Border>

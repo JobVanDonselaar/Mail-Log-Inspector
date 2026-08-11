@@ -287,6 +287,7 @@ public partial class MainWindow
             EmailFromNameTextBox.Text = settings.FromDisplayName ?? "Mail Log Inspector";
             EmailSubjectTextBox.Text = settings.ResolveSubjectTemplate();
             EmailAutoSendCheckBox.IsChecked = settings.AutoSendAfterImport;
+            EmailClearGmailSentCheckBox.IsChecked = settings.ClearGmailSentItemsAfterSend;
             EmailRelayHostTextBox.Text = settings.RelayHost ?? string.Empty;
             EmailRelayPortTextBox.Text = settings.RelayPort.ToString(CultureInfo.InvariantCulture);
             EmailRelayUsernameTextBox.Text = settings.RelayUsername ?? string.Empty;
@@ -406,6 +407,7 @@ public partial class MainWindow
         {
             Enabled = _emailRows.Any(row => row.Enabled),
             AutoSendAfterImport = EmailAutoSendCheckBox.IsChecked == true,
+            ClearGmailSentItemsAfterSend = EmailClearGmailSentCheckBox.IsChecked == true,
             Transport = ReadSelectedEmailTransport(),
             FromAddress = EmailFromAddressTextBox.Text.Trim(),
             FromDisplayName = EmailFromNameTextBox.Text.Trim(),

@@ -410,6 +410,9 @@ public sealed class GmailReportSyncServiceTests
             DeletedMessageIds.Add(message.MessageUniqueId);
             return Task.CompletedTask;
         }
+
+        public Task ClearSentFolderAsync(GmailImapConnectionSettings settings, CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 
     private sealed class FakeGmailZipDownloader : IGmailZipDownloader
