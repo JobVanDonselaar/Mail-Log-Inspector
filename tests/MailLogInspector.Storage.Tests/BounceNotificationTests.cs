@@ -299,7 +299,12 @@ public sealed class BounceNotificationTests
 
         Assert.Contains("Overzicht gestuurde mails vanuit Exquise Next", html, StringComparison.Ordinal);
         Assert.Contains("10-02-2026 t/m 17-02-2026", html, StringComparison.Ordinal);
-        Assert.Contains("&#x1F9B7;", html, StringComparison.Ordinal);
+        Assert.Contains(
+            $"src=\"{BounceNotificationHeaderLogo.ContentSource}\"",
+            html,
+            StringComparison.Ordinal);
+        Assert.Contains("alt=\"Exquise Next\"", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("&#x1F9B7;", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Bounce-overzicht", html, StringComparison.Ordinal);
     }
 

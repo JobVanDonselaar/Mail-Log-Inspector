@@ -137,6 +137,28 @@ public sealed class BounceNotificationMimeHeaderTests
     }
 
     [Fact]
+    public void Build_EmbedsTheExquiseHeaderLogoAsAnInlineCidImage()
+    {
+        MimeMessage mime = BounceNotificationMimeBuilder.Build(
+            new BounceNotificationMessage(
+                "ontvanger@example.net",
+                "Mailoverzicht",
+                $"<img src=\"{BounceNotificationHeaderLogo.ContentSource}\" />",
+                "Overzicht",
+                AttachmentPath: null,
+                AttachmentFileName: null),
+            "meldingen@example.com",
+            "Mail Log Inspector");
+
+        MimePart logo = mime.BodyParts
+            .OfType<MimePart>()
+            .Single(part => part.ContentId == BounceNotificationHeaderLogo.ContentId);
+
+        Assert.Equal("image/png", logo.ContentType.MimeType);
+        Assert.Equal(BounceNotificationHeaderLogo.FileName, logo.FileName);
+    }
+
+    [Fact]
     public void Build_WithoutDisplayName_FallsBackToTheApplicationName()
     {
         MimeMessage mime = Build("meldingen@example.com", displayName: "   ");

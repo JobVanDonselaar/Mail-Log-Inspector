@@ -133,6 +133,17 @@ public static class BounceNotificationMimeBuilder
         if (!string.IsNullOrWhiteSpace(message.HtmlBody))
         {
             builder.HtmlBody = message.HtmlBody;
+
+            if (message.HtmlBody.Contains(
+                    BounceNotificationHeaderLogo.ContentSource,
+                    StringComparison.Ordinal))
+            {
+                MimeEntity logo = builder.LinkedResources.Add(
+                    BounceNotificationHeaderLogo.FileName,
+                    BounceNotificationHeaderLogo.Bytes,
+                    new ContentType("image", "png"));
+                logo.ContentId = BounceNotificationHeaderLogo.ContentId;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(message.PlainTextBody))
