@@ -31,32 +31,32 @@ public sealed class GmailImapReportClient : IGmailImapReportClient
     {
         using ImapClient client = await ConnectAsync(settings, cancellationToken);
 
-        // Verwijder uit Verzonden
+        // Gmail-strategie voor permanent verwijderen:
+        // 1. Berichten vanuit Verzonden naar Prullenbak verplaatsen (MoveTo)
+        // 2. Prullenbak openen en expungen — dan zijn ze echt weg
+        // Alleen \Deleted + Expunge op Sent/All Mail stuurt berichten naar Prullenbak, niet weg.
+
         IMailFolder sentFolder = client.GetFolder(SpecialFolder.Sent)
             ?? throw new InvalidOperationException("De Verzonden-map kon niet worden gevonden in het Gmail-account.");
+
+        IMailFolder trashFolder = client.GetFolder(SpecialFolder.Trash)
+            ?? throw new InvalidOperationException("De Prullenbak-map kon niet worden gevonden in het Gmail-account.");
 
         await sentFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
         IList<UniqueId> sentUids = await sentFolder.SearchAsync(SearchQuery.All, cancellationToken);
         if (sentUids.Count > 0)
         {
-            await sentFolder.AddFlagsAsync(sentUids, MessageFlags.Deleted, silent: true, cancellationToken);
-            await sentFolder.ExpungeAsync(cancellationToken);
+            // Verplaats naar Trash — hiermee verdwijnt het ook automatisch uit All Mail
+            await sentFolder.MoveToAsync(sentUids, trashFolder, cancellationToken);
         }
 
-        // Gmail bewaart berichten ook in "Alle e-mail" ([Gmail]/All Mail).
-        // Verwijder ze daar ook zodat ze nergens meer zichtbaar zijn.
-        IMailFolder? allMailFolder = client.GetFolder(SpecialFolder.All);
-        if (allMailFolder is null)
+        // Trash leegmaken = permanent verwijderd
+        await trashFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
+        IList<UniqueId> trashUids = await trashFolder.SearchAsync(SearchQuery.All, cancellationToken);
+        if (trashUids.Count > 0)
         {
-            return;
-        }
-
-        await allMailFolder.OpenAsync(FolderAccess.ReadWrite, cancellationToken);
-        IList<UniqueId> allUids = await allMailFolder.SearchAsync(SearchQuery.All, cancellationToken);
-        if (allUids.Count > 0)
-        {
-            await allMailFolder.AddFlagsAsync(allUids, MessageFlags.Deleted, silent: true, cancellationToken);
-            await allMailFolder.ExpungeAsync(cancellationToken);
+            await trashFolder.AddFlagsAsync(trashUids, MessageFlags.Deleted, silent: true, cancellationToken);
+            await trashFolder.ExpungeAsync(cancellationToken);
         }
     }
 
