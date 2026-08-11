@@ -473,7 +473,12 @@
               <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Border Name="SearchResultsPanel" Grid.Column="0" Grid.ColumnSpan="5" Style="{StaticResource PanelBorderStyle}" Padding="0">
-              <DataGrid Name="SearchResultsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="30" ColumnHeaderHeight="30">
+              <DataGrid Name="SearchResultsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" FontSize="11" RowHeight="30" ColumnHeaderHeight="30" PreviewMouseRightButtonDown="SearchResultsGrid_PreviewMouseRightButtonDown">
+                <DataGrid.ContextMenu>
+                  <ContextMenu Opened="SearchResultsContextMenu_Opened">
+                    <MenuItem Header="Volledige historie uit archief…" Click="SearchResultsHistoryMenuItem_Click" />
+                  </ContextMenu>
+                </DataGrid.ContextMenu>
                 <DataGrid.Columns>
                   <DataGridTextColumn Header="Accepted" Width="132" Binding="{Binding AcceptedDisplay}" />
                   <DataGridTemplateColumn Header="" Width="28">
@@ -1812,7 +1817,8 @@
                 <TextBlock Text="&#x2022; Resultaten bepaalt hoeveel regels eerst worden geladen. Meer laden voegt de volgende regels aan dezelfde zoekactie toe." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; Berichten met meerdere ontvangers worden gegroepeerd. Klik op het pijltje om de ontvangers uit te klappen; bij één gevonden afzender wordt de groep automatisch geopend." TextWrapping="Wrap" Margin="0,0,0,6" />
                 <TextBlock Text="&#x2022; De statusfilter werkt op de volledige zoekset. Afgeleverd is door de ontvangende server geaccepteerd, Onderweg heeft nog geen eindstatus en Bounce toont waar mogelijk direct de korte reden." TextWrapping="Wrap" Margin="0,0,0,6" />
-                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren. De logbron registreert op hele minuten, dus &lt; 1 min betekent afgeleverd binnen dezelfde minuut; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" />
+                <TextBlock Text="&#x2022; Aantal is numeriek sorteerbaar. Duur is de tijd tussen accepteren en afleveren. De logbron registreert op hele minuten, dus &lt; 1 min betekent afgeleverd binnen dezelfde minuut; een streepje betekent dat geen bruikbare eindtijd beschikbaar is." TextWrapping="Wrap" Margin="0,0,0,6" />
+                <TextBlock Text="&#x2022; Rechtsklik op een detailregel en kies Volledige historie uit archief voor alle afleverpogingen van die ene mail, inclusief tussenstappen zoals een tijdelijk uitgestelde poging. De database bewaart alleen de eindstand; de tussenstappen worden op dat moment uit de bewaarde rapporten gelezen, zodat de database klein en snel blijft. Het doorzoeken duurt enkele seconden." TextWrapping="Wrap" />
               </StackPanel>
             </Border>
 

@@ -33,6 +33,7 @@ Bestaat er nog geen database, dan maakt de EXE die zelf aan. De eerste automatis
 
 - Importeer CSV/ZIP via `Dashboard` of gebruik `Sync nu`.
 - Zoek op datum, afzender, ontvanger en status. Bij een afzenderdomein staat `Domeinanalyse tonen` standaard aan en opent het een snel dashboard met 30-daagse aflevertrend, aflevertijdverdeling en bounce-oorzaken. Bij één gevonden afzendergroep worden de ontvangers automatisch uitgeklapt.
+- Rechtsklik op een zoekresultaat en kies `Volledige historie uit archief` voor alle afleverpogingen van die ene mail. Zie [Volledige historie uit archief](#volledige-historie-uit-archief).
 - Excel exporteert de werkelijk zichtbare zoekregels. Met domeinanalyse actief staat als eerste werkblad een zakelijk Exquise Next Generation afleverrapport voor het praktijkdomein en verzending via SMTP.com. De filterbare zoekresultaten volgen op het tweede werkblad.
 - Analyse toont totalen, domeinen, SMTP-responsen en bounceoorzaken. Afzenders en ontvangers hebben dezelfde verdeling: links de domeinen met de meeste problemen, rechts de domeinen met het hoogste probleempercentage. `Excel export` maakt daarvan een werkmap met twee zakelijke werkbladen, `Afzenders` en `Ontvangers`. Beide bladen zijn identiek opgebouwd en volgen het scherm: kerncijfers, twee staafgrafieken en daaronder de twee ranglijsten naast elkaar met de kolommen Domein, Totaal, Problemen en % probleem; het blad `Ontvangers` bevat daarnaast de SMTP-responsen en de bounce-oorzaken met hun aandeel. De kop van elk blad vermeldt de periode, de gebruikte filters en de topselectie.
 - Dashboard toont importkwaliteit, één gecombineerde importlijst, acties en opslag. De importlijst vermeldt `SMTP.com API`, `SMTP.com direct`, `IMAP` of `Handmatig` als bron.
@@ -40,6 +41,17 @@ Bestaat er nog geen database, dan maakt de EXE die zelf aan. De eerste automatis
 - Lokale diagnose staat in `Logs\mail-log-inspector.log` onder de workspace. Synchronisatie- en importregels bevatten altijd een bronlabel.
 
 De EXE bouwt benodigde domeinaggregaties na een upgrade eenmalig en transactioneel op voor de actieve database en maandarchieven. Gewone zoekresultaten blijven detaildata gebruiken; dashboardqueries lezen daarna alleen de compacte dagtotalen.
+
+## Volledige historie uit archief
+
+De database bewaart per mail alleen de eindstand. Tussenliggende afleverpogingen, zoals een tijdelijk uitgestelde poging die twintig minuten later alsnog slaagt, worden bewust niet opgeslagen: dat houdt de database klein en het zoeken snel.
+
+Voor incidenteel onderzoek zijn die tussenstappen alsnog op te vragen. Rechtsklik in `Zoeken` op een detailregel en kies `Volledige historie uit archief`. De EXE doorzoekt dan de bewaarde bronrapporten in `Archive` en toont elke logregel van die ene mail: moment, status, SMTP-code met Nederlandse betekenis, het aantal pogingen en het antwoord van de ontvangende server.
+
+- De opzoeking gebeurt op aanvraag en schrijft niets weg. De database groeit er dus niet van.
+- Elk archiefbestand wordt doorzocht, zodat het resultaat compleet is. Een goedkope voorscan slaat bestanden zonder treffer snel over; in de praktijk duurt een opzoeking enkele seconden.
+- Zowel ZIP-rapporten als losse CSV-imports worden gelezen.
+- Zijn archiefbestanden van een oudere import verwijderd, dan meldt het venster hoeveel bestanden zijn overgeslagen. Valt de mail buiten de bewaarde periode, dan blijft de lijst leeg.
 
 ## Synchronisatie en IMAP 0.200
 

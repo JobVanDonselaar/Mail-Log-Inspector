@@ -36,7 +36,7 @@ public sealed class MailLogInspectorSearchService
 				MailLogInspectorStore.ReadStoredDateTime(reader, 0),
 				ComposeEmail(((DbDataReader)(object)reader).GetString(1), ((DbDataReader)(object)reader).IsDBNull(2) ? null : ((DbDataReader)(object)reader).GetString(2)),
 				ComposeEmail(((DbDataReader)(object)reader).GetString(3), ((DbDataReader)(object)reader).IsDBNull(4) ? null : ((DbDataReader)(object)reader).GetString(4)),
-				string.Empty,
+				ReadTrackingId(reader, 11),
 				MailLogInspectorStore.FromStatusCode(((DbDataReader)(object)reader).GetInt32(5)),
 				((DbDataReader)(object)reader).IsDBNull(6) ? null : ((DbDataReader)(object)reader).GetInt32(6),
 				(MailLogInspectorReasonCode)((DbDataReader)(object)reader).GetInt32(7),
@@ -91,7 +91,8 @@ public sealed class MailLogInspectorSearchService
 			.Append("       item.reason_code,\n")
 			.Append("       COALESCE(item.accepted_at, item.last_seen_at),\n")
 			.Append("       item.last_seen_at,\n")
-			.Append("       COALESCE(imports.source_file_name, '')\n")
+			.Append("       COALESCE(imports.source_file_name, ''),\n")
+			.Append("       item.tracking_key\n")
 			.Append("FROM mail_items AS item\n")
 			.Append("JOIN mail_addresses AS sender ON sender.address_id = item.sender_address_id\n")
 			.Append("LEFT JOIN mail_domains AS sender_domain ON sender_domain.domain_id = item.sender_domain_id\n")
@@ -369,6 +370,24 @@ public sealed class MailLogInspectorSearchService
 	private static string ComposeEmail(string localPart, string? domain)
 	{
 		return string.IsNullOrWhiteSpace(domain) ? localPart : localPart + "@" + domain;
+	}
+
+	/// <summary>
+	/// De import bewaart een GUID-tracking-id als <see cref="Guid.ToByteArray"/>, dus die is
+	/// omkeerbaar. Alleen daarmee kunnen we de volledige historie in het archief terugvinden.
+	/// Niet-GUID tracking-ids worden als hash bewaard en zijn niet herleidbaar.
+	/// </summary>
+	internal static string ReadTrackingId(SqliteDataReader reader, int ordinal)
+	{
+		DbDataReader source = reader;
+		if (source.IsDBNull(ordinal))
+		{
+			return string.Empty;
+		}
+
+		byte[] key = new byte[16];
+		long read = source.GetBytes(ordinal, 0, key, 0, key.Length);
+		return read == key.Length ? new Guid(key).ToString() : string.Empty;
 	}
 
 	private readonly record struct FilterScope(
