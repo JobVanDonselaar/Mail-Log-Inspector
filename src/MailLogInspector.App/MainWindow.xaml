@@ -717,12 +717,17 @@
                 </StackPanel>
               </Grid>
               <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="104" />
+                  <ColumnDefinition Width="78" />
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
                   <TextBlock Text="Top" Style="{StaticResource LabelTextStyle}" />
                   <ComboBox Name="AnalysisTopDomainLimitComboBox" SelectedIndex="1" SelectionChanged="AnalysisInputs_Changed">
                     <ComboBoxItem Content="10" Tag="10" />
@@ -733,16 +738,32 @@
                     <ComboBoxItem Content="500" Tag="500" />
                   </ComboBox>
                 </StackPanel>
-                <Button Name="AnalysisRunButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" Click="AnalysisRefreshButton_Click" IsEnabled="False">
+                <Button Name="AnalysisRunButton" Grid.Row="0" Grid.Column="2" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" Click="AnalysisRefreshButton_Click" IsEnabled="False">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
                     <TextBlock Text="Analyse uitvoeren" Foreground="White" FontWeight="SemiBold" />
                   </StackPanel>
                 </Button>
-                <Button Name="AnalysisExportButton" Grid.Column="2" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="10,0,0,0" Click="AnalysisExportButton_Click" IsEnabled="False">
+                <Button Name="AnalysisExportButton" Grid.Row="0" Grid.Column="3" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="10,0,0,0" Click="AnalysisExportButton_Click" IsEnabled="False">
                   <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
                     <TextBlock Text="Excel export" FontWeight="SemiBold" />
+                  </StackPanel>
+                </Button>
+                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,8,12,0">
+                  <TextBlock Text="Top traag" Style="{StaticResource LabelTextStyle}" />
+                  <ComboBox Name="AnalysisLongestTopCountComboBox" SelectedIndex="0" SelectionChanged="AnalysisInputs_Changed">
+                    <ComboBoxItem Content="25" Tag="25" />
+                    <ComboBoxItem Content="50" Tag="50" />
+                    <ComboBoxItem Content="100" Tag="100" />
+                    <ComboBoxItem Content="Aangepast" Tag="0" />
+                  </ComboBox>
+                </StackPanel>
+                <TextBox Name="AnalysisLongestTopCountCustomTextBox" Grid.Row="1" Grid.Column="1" Margin="0,36,10,0" TextChanged="AnalysisInputs_Changed" ToolTip="Alleen bij 'Aangepast': voer een positief geheel getal in." />
+                <Button Name="AnalysisLongestExportButton" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0,8,0,0" Click="AnalysisLongestExportButton_Click" IsEnabled="False">
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                    <TextBlock Text="Excel langste mails" FontWeight="SemiBold" />
                   </StackPanel>
                 </Button>
               </Grid>

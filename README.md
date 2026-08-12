@@ -33,9 +33,11 @@ Bestaat er nog geen database, dan maakt de EXE die zelf aan. De eerste automatis
 
 - Importeer CSV/ZIP via `Dashboard` of gebruik `Sync nu`.
 - Zoek op datum, afzender, ontvanger en status. Bij een afzenderdomein staat `Domeinanalyse tonen` standaard aan en opent het een snel dashboard met 30-daagse aflevertrend, aflevertijdverdeling en bounce-oorzaken. Bij één gevonden afzendergroep worden de ontvangers automatisch uitgeklapt.
+- Zoek- en analysedatums starten na middernacht standaard op `gisteren t/m vandaag` (aanpasbaar).
 - Rechtsklik op een zoekresultaat en kies `Volledige historie uit archief` voor alle afleverpogingen van die ene mail. Zie [Volledige historie uit archief](#volledige-historie-uit-archief).
 - Excel exporteert de werkelijk zichtbare zoekregels. Met domeinanalyse actief staat als eerste werkblad een zakelijk Exquise Next Generation afleverrapport voor het praktijkdomein en verzending via SMTP.com. De filterbare zoekresultaten volgen op het tweede werkblad.
 - Analyse toont totalen, domeinen, SMTP-responsen en bounceoorzaken. Afzenders en ontvangers hebben dezelfde verdeling: links de domeinen met de meeste problemen, rechts de domeinen met het hoogste probleempercentage. `Excel export` maakt daarvan een werkmap met twee zakelijke werkbladen, `Afzenders` en `Ontvangers`. Beide bladen zijn identiek opgebouwd en volgen het scherm: kerncijfers, twee staafgrafieken en daaronder de twee ranglijsten naast elkaar met de kolommen Domein, Totaal, Problemen en % probleem; het blad `Ontvangers` bevat daarnaast de SMTP-responsen en de bounce-oorzaken met hun aandeel. De kop van elk blad vermeldt de periode, de gebruikte filters en de topselectie.
+- `Excel langste mails` exporteert de top 25/50/100 of aangepaste top van langste aflevertijden (eerste event tot afgeleverd) voor de gekozen periode, met samenvatting, volledige archiefhistorie per mail en filtercontext.
 - Dashboard toont importkwaliteit, één gecombineerde importlijst, acties en opslag. De importlijst vermeldt `SMTP.com API`, `SMTP.com direct`, `IMAP` of `Handmatig` als bron.
 - Start `MailLogInspector.exe /admin` om bronkeuze, inloggegevens, automatische synchronisatie en systeemvakgedrag te beheren. Dezelfde instellingen zijn onderaan Help bereikbaar.
 - Lokale diagnose staat in `Logs\mail-log-inspector.log` onder de workspace. Synchronisatie- en importregels bevatten altijd een bronlabel.
@@ -130,5 +132,4 @@ GitHub Copilot publiceert niet automatisch. Publiceren gebeurt door de gebruiker
 ## Werkregels
 
 `AGENTS.md` is leidend voor database-, build-, publish-, versie- en Git-afspraken.
-
 

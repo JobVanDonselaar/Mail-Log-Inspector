@@ -154,12 +154,12 @@ public partial class MainWindow : Window
 		// The active database may require an EXE-managed rebuild. Do not initialize
 		// the legacy schema before the Loaded startup flow can perform that rebuild.
 		SwitchActiveStore(_workspace.DatabasePath, null, initialize: false);
-		SearchFromDatePicker.SelectedDate = DateTime.Today.AddDays(-1.0);
-		SearchThroughDatePicker.SelectedDate = DateTime.Today;
+		(DateTime defaultFromDate, DateTime defaultThroughDate) = BuildRollingYesterdayToTodayRange();
+		SearchFromDatePicker.SelectedDate = defaultFromDate;
+		SearchThroughDatePicker.SelectedDate = defaultThroughDate;
 		SenderDomainDashboardCheckBox.IsChecked = true;
-		DateTime yesterday = DateTime.Today.AddDays(-1.0);
-		AnalysisFromDatePicker.SelectedDate = yesterday;
-		AnalysisThroughDatePicker.SelectedDate = yesterday;
+		AnalysisFromDatePicker.SelectedDate = defaultFromDate;
+		AnalysisThroughDatePicker.SelectedDate = defaultThroughDate;
 		RefreshDatePickerConstraints();
 		UpdateTopStatusPanelVisibility();
 		UpdateAnalysisExecutionState();
@@ -425,6 +425,92 @@ public partial class MainWindow : Window
 		}
 	}
 
+	private async void AnalysisLongestExportButton_Click(object sender, RoutedEventArgs e)
+	{
+		if (!TryBuildAnalysisCriteria(out MailLogInspectorSearchCriteria? criteria, out string? validationMessage))
+		{
+			AnalysisRunStateTextBlock.Text = validationMessage ?? "Kies eerst een geldige periode.";
+			return;
+		}
+
+		if (!TryReadLongestDeliveryTopLimit(out int topLimit, out string? topLimitMessage))
+		{
+			AnalysisRunStateTextBlock.Text = topLimitMessage ?? "Kies een geldige topselectie.";
+			return;
+		}
+
+		Microsoft.Win32.SaveFileDialog saveFileDialog = new()
+		{
+			Filter = "Excel workbook (*.xlsx)|*.xlsx",
+			FileName = BuildLongestDeliveryExportFileName(criteria!, topLimit),
+			DefaultExt = ".xlsx",
+			AddExtension = true
+		};
+
+		if (saveFileDialog.ShowDialog(this) != true)
+		{
+			return;
+		}
+
+		_analysisRefreshCancellation?.Cancel();
+		_analysisRefreshCancellation?.Dispose();
+		_analysisRefreshCancellation = new CancellationTokenSource();
+		CancellationToken cancellationToken = _analysisRefreshCancellation.Token;
+		UpdateAnalysisExecutionState(isRunning: true);
+		AnalysisRunStateTextBlock.Text = "Langste afleveringen en archiefhistorie worden verzameld...";
+		AnalysisRunDurationTextBlock.Text = "Bezig...";
+		DateTime startedAt = DateTime.UtcNow;
+
+		try
+		{
+			IReadOnlyList<MailLogInspectorLongestDeliveredMail> mails = await Task.Run(
+				() => _analysisService.ReadLongestDeliveredMails(criteria!, topLimit, cancellationToken),
+				cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			if (mails.Count == 0)
+			{
+				AnalysisRunStateTextBlock.Text = "Geen afgeleverde mails gevonden in de gekozen periode.";
+				return;
+			}
+
+			MailLogInspectorMailHistoryService historyService = new(_store);
+			List<LongestDeliveredExportEntry> entries = new(mails.Count);
+			int rank = 1;
+			foreach (MailLogInspectorLongestDeliveredMail mail in mails)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				MailLogInspectorMailHistory history = string.IsNullOrWhiteSpace(mail.TrackingId)
+					? MailLogInspectorMailHistory.Empty(mail.TrackingId, mail.Recipient)
+					: historyService.ReadHistory(mail.TrackingId, mail.Recipient, cancellationToken: cancellationToken);
+				entries.Add(new LongestDeliveredExportEntry(rank++, mail, history, BuildLongestHistoryNote(history)));
+			}
+
+			LongestDeliveredExportContext context = new(
+				criteria!.FromInclusive,
+				criteria.ThroughInclusive,
+				AnalysisSenderTextBox.Text,
+				AnalysisRecipientTextBox.Text,
+				topLimit);
+			await Task.Run(() => LongestDeliveredExcelExporter.Export(saveFileDialog.FileName, context, entries), cancellationToken);
+			TimeSpan elapsed = DateTime.UtcNow - startedAt;
+			AnalysisRunStateTextBlock.Text = "Excel export langste mails gereed: " + Path.GetFileName(saveFileDialog.FileName);
+			AnalysisRunDurationTextBlock.Text = $"Export gereed in {elapsed.TotalSeconds:0.0}s";
+			OpenExportedWorkbook(saveFileDialog.FileName);
+		}
+		catch (OperationCanceledException)
+		{
+			AnalysisRunStateTextBlock.Text = "Export geannuleerd.";
+		}
+		catch (Exception ex)
+		{
+			AnalysisRunStateTextBlock.Text = "Export langste mails mislukt: " + ex.Message;
+		}
+		finally
+		{
+			UpdateAnalysisExecutionState();
+		}
+	}
+
 	private static string BuildAnalysisExportFileName(AnalysisReportContext context)
 	{
 		List<string> parts = ["mail-log-inspector", "analyse"];
@@ -435,6 +521,41 @@ public partial class MainWindow : Window
 		parts.Add("tot");
 		parts.Add(context.ThroughDate.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture));
 		return string.Join('-', parts) + ".xlsx";
+	}
+
+	private static string BuildLongestDeliveryExportFileName(MailLogInspectorSearchCriteria criteria, int topLimit)
+	{
+		List<string> parts = ["mail-log-inspector", "langste-aflevertijden", "top", topLimit.ToString(CultureInfo.InvariantCulture)];
+		AddExportFilterPart(parts, "afzender", criteria.Sender ?? criteria.SenderDomain);
+		AddExportFilterPart(parts, "ontvanger", criteria.Recipient ?? criteria.RecipientDomain);
+		parts.Add("van");
+		parts.Add(criteria.FromInclusive.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture));
+		parts.Add("tot");
+		parts.Add(criteria.ThroughInclusive.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture));
+		return string.Join('-', parts) + ".xlsx";
+	}
+
+	private static string BuildLongestHistoryNote(MailLogInspectorMailHistory history)
+	{
+		if (!history.HasAttempts)
+		{
+			return "Geen archiefregels gevonden.";
+		}
+
+		int attempts = history.Attempts.Count;
+		int bouncedAttempts = history.Attempts.Count(attempt =>
+			string.Equals(attempt.Status, "B", StringComparison.OrdinalIgnoreCase));
+		if (attempts > 1 && bouncedAttempts > 0)
+		{
+			return $"Meerdere pogingen ({attempts}), inclusief {bouncedAttempts} bounce-melding(en).";
+		}
+
+		if (attempts > 1)
+		{
+			return $"Meerdere pogingen ({attempts}) voordat aflevering werd bevestigd.";
+		}
+
+		return "Eén poging geregistreerd in het archief.";
 	}
 
 	private void SearchResultsStatusHeaderComboBox_Loaded(object sender, RoutedEventArgs e)
@@ -1140,12 +1261,11 @@ public partial class MainWindow : Window
 		// the legacy schema before the Loaded startup flow can perform that rebuild.
 		SwitchActiveStore(_workspace.DatabasePath, null, initialize: false);
 		await EnsureCurrentSenderDomainAnalyticsReadyAsync();
-		DateTime yesterday = DateTime.Today.AddDays(-1.0);
-		SearchFromDatePicker.SelectedDate = yesterday;
-		SearchThroughDatePicker.SelectedDate = DateTime.Today;
-
-		AnalysisFromDatePicker.SelectedDate = yesterday;
-		AnalysisThroughDatePicker.SelectedDate = yesterday;
+		(DateTime defaultFromDate, DateTime defaultThroughDate) = BuildRollingYesterdayToTodayRange();
+		SearchFromDatePicker.SelectedDate = defaultFromDate;
+		SearchThroughDatePicker.SelectedDate = defaultThroughDate;
+		AnalysisFromDatePicker.SelectedDate = defaultFromDate;
+		AnalysisThroughDatePicker.SelectedDate = defaultThroughDate;
 		RefreshDatePickerConstraints();
 		StatusTextBlock.Text = "Actuele database geopend.";
 		ImportProgressTextBlock.Text = "Importeren is weer beschikbaar.";
@@ -1164,7 +1284,15 @@ public partial class MainWindow : Window
 	{
 		var senderFilter = ParseAddressFilter(SenderTextBox.Text);
 		var recipientFilter = ParseAddressFilter(RecipientTextBox.Text);
-		return new MailLogInspectorSearchCriteria(SearchFromDatePicker.SelectedDate?.Date ?? DateTime.Today.AddDays(-90.0), EndOfDay(SearchThroughDatePicker.SelectedDate?.Date ?? DateTime.Today), senderFilter.Email, recipientFilter.Email, senderFilter.Domain, recipientFilter.Domain, _selectedSearchStatus);
+		(DateTime defaultFromDate, DateTime defaultThroughDate) = BuildRollingYesterdayToTodayRange();
+		return new MailLogInspectorSearchCriteria(
+			SearchFromDatePicker.SelectedDate?.Date ?? defaultFromDate,
+			EndOfDay(SearchThroughDatePicker.SelectedDate?.Date ?? defaultThroughDate),
+			senderFilter.Email,
+			recipientFilter.Email,
+			senderFilter.Domain,
+			recipientFilter.Domain,
+			_selectedSearchStatus);
 	}
 
 	private bool TryBuildAnalysisCriteria(out MailLogInspectorSearchCriteria? criteria, out string? validationMessage)
@@ -1208,6 +1336,12 @@ public partial class MainWindow : Window
 	private static DateTime EndOfDay(DateTime value)
 	{
 		return value.Date.AddDays(1.0).AddTicks(-1L);
+	}
+
+	private static (DateTime FromDate, DateTime ThroughDate) BuildRollingYesterdayToTodayRange()
+	{
+		DateTime today = DateTime.Today;
+		return (today.AddDays(-1), today);
 	}
 
 	private static string FormatBytes(long bytes)
@@ -1378,6 +1512,29 @@ public partial class MainWindow : Window
 		return ReadComboTagAsInt(AnalysisTopDomainLimitComboBox, 10);
 	}
 
+	private bool TryReadLongestDeliveryTopLimit(out int limit, out string? validationMessage)
+	{
+		limit = 25;
+		validationMessage = null;
+		if (AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: var tag } &&
+			int.TryParse(tag?.ToString(), out int selectedTop) &&
+			selectedTop > 0)
+		{
+			limit = selectedTop;
+			return true;
+		}
+
+		if (!int.TryParse(AnalysisLongestTopCountCustomTextBox.Text?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int customLimit) ||
+			customLimit <= 0)
+		{
+			validationMessage = "Vul bij 'Top traag: Aangepast' een positief geheel getal in.";
+			return false;
+		}
+
+		limit = customLimit;
+		return true;
+	}
+
 	private void AnalysisInputs_Changed(object sender, RoutedEventArgs e)
 	{
 		UpdateAnalysisExecutionState();
@@ -1392,8 +1549,11 @@ public partial class MainWindow : Window
 		}
 
 		bool isReady = TryBuildAnalysisCriteria(out _, out string? validationMessage);
+		bool hasValidLongestTop = TryReadLongestDeliveryTopLimit(out _, out _);
 		AnalysisRunButton.IsEnabled = !isRunning && isReady;
 		AnalysisExportButton.IsEnabled = !isRunning && _lastAnalysisSummary != null && _lastAnalysisContext != null;
+		AnalysisLongestExportButton.IsEnabled = !isRunning && isReady && hasValidLongestTop;
+		AnalysisLongestTopCountCustomTextBox.IsEnabled = AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: "0" };
 		AnalysisRunProgressBar.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
 		AnalysisRunProgressBar.IsIndeterminate = isRunning;
 		if (!isRunning)
@@ -1409,7 +1569,18 @@ public partial class MainWindow : Window
 
 	private bool AreAnalysisControlsReady()
 	{
-		return AnalysisFromDatePicker != null && AnalysisThroughDatePicker != null && AnalysisSenderTextBox != null && AnalysisRecipientTextBox != null && AnalysisTopDomainLimitComboBox != null && AnalysisRunButton != null && AnalysisExportButton != null && AnalysisRunStateTextBlock != null && AnalysisRunProgressBar != null;
+		return AnalysisFromDatePicker != null &&
+			AnalysisThroughDatePicker != null &&
+			AnalysisSenderTextBox != null &&
+			AnalysisRecipientTextBox != null &&
+			AnalysisTopDomainLimitComboBox != null &&
+			AnalysisRunButton != null &&
+			AnalysisExportButton != null &&
+			AnalysisLongestTopCountComboBox != null &&
+			AnalysisLongestTopCountCustomTextBox != null &&
+			AnalysisLongestExportButton != null &&
+			AnalysisRunStateTextBlock != null &&
+			AnalysisRunProgressBar != null;
 	}
 
 	private void ResetAnalysisResults()
@@ -1673,6 +1844,8 @@ public partial class MainWindow : Window
 				DateTime date = dateTime.Value.Date;
 				SearchFromDatePicker.SelectedDate = date;
 				SearchThroughDatePicker.SelectedDate = date;
+				AnalysisFromDatePicker.SelectedDate = date;
+				AnalysisThroughDatePicker.SelectedDate = date;
 				StatusTextBlock.Text = $"Geen data in gisteren-vandaag. Laatste beschikbare dag geselecteerd: {MailLogInspectorDisplayFormats.Date(date)}.";
 			}
 		}
