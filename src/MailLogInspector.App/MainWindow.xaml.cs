@@ -476,7 +476,11 @@ public partial class MainWindow : Window
 			});
 			IReadOnlyList<MailLogInspectorMailHistory> histories = await Task.Run(
 				() => historyService.ReadHistories(
-					mails.Select(mail => new MailLogInspectorMailHistoryRequest(mail.TrackingId, mail.Recipient)).ToArray(),
+					mails.Select(mail => new MailLogInspectorMailHistoryRequest(
+						mail.TrackingId,
+						mail.Recipient,
+						mail.AcceptedAt,
+						mail.DeliveredAt)).ToArray(),
 					historyProgress,
 					cancellationToken),
 				cancellationToken);
