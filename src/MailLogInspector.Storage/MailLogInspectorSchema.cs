@@ -223,6 +223,8 @@ internal static class MailLogInspectorSchema
 			    ON mail_items(sender_domain_id, accepted_at DESC);
 			CREATE INDEX IF NOT EXISTS ix_mail_log_inspector_items_recipient_domain_accepted_at
 			    ON mail_items(recipient_domain_id, accepted_at DESC);
+			CREATE INDEX IF NOT EXISTS ix_mail_log_inspector_items_delivered_duration
+			    ON mail_items(status, duration_seconds DESC, accepted_at ASC);
 			DROP INDEX IF EXISTS ix_mail_log_inspector_items_import_status;
 			""";
 		command.ExecuteNonQuery();

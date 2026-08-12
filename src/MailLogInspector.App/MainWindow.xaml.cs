@@ -470,16 +470,24 @@ public partial class MainWindow : Window
 			}
 
 			MailLogInspectorMailHistoryService historyService = new(_store);
-			List<LongestDeliveredExportEntry> entries = new(mails.Count);
-			int rank = 1;
-			foreach (MailLogInspectorLongestDeliveredMail mail in mails)
+			Progress<MailLogInspectorMailHistoryProgress> historyProgress = new(progress =>
 			{
-				cancellationToken.ThrowIfCancellationRequested();
-				MailLogInspectorMailHistory history = string.IsNullOrWhiteSpace(mail.TrackingId)
-					? MailLogInspectorMailHistory.Empty(mail.TrackingId, mail.Recipient)
-					: historyService.ReadHistory(mail.TrackingId, mail.Recipient, cancellationToken: cancellationToken);
-				entries.Add(new LongestDeliveredExportEntry(rank++, mail, history, BuildLongestHistoryNote(history)));
-			}
+				AnalysisRunStateTextBlock.Text = $"Archiefhistorie verzamelen: {progress.Display}";
+			});
+			IReadOnlyList<MailLogInspectorMailHistory> histories = await Task.Run(
+				() => historyService.ReadHistories(
+					mails.Select(mail => new MailLogInspectorMailHistoryRequest(mail.TrackingId, mail.Recipient)).ToArray(),
+					historyProgress,
+					cancellationToken),
+				cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			List<LongestDeliveredExportEntry> entries = mails
+				.Select((mail, index) => new LongestDeliveredExportEntry(
+					index + 1,
+					mail,
+					histories[index],
+					BuildLongestHistoryNote(histories[index])))
+				.ToList();
 
 			LongestDeliveredExportContext context = new(
 				criteria!.FromInclusive,
