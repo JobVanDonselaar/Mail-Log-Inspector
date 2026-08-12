@@ -33,7 +33,7 @@ Klaar:
 - eigen tabblad `E-mail` met bouncemeldingen per afzender-e-mailadres, vrije periodekeuze (import, gisteren, laatste 7 dagen, deze maand of eigen datumbereik), instelbare mailinhoud, ontvangervoorstel voor noreply-adressen, optionele Excel-bijlage en een verzendgeschiedenis van alle pogingen
 - Excel-export van de analyse als zakelijk rapport met een werkblad `Afzenders` en een werkblad `Ontvangers`, elk met kerncijfers, staafgrafieken en de onderliggende ranglijsten
 - datum-aware standaardperiode voor zoeken en analyse (`gisteren t/m vandaag` na middernacht)
-- extra analyse-export `Excel langste mails` met top 25/50/100 of aangepaste top, inclusief volledige archiefhistorie per geselecteerde mail
+- extra analyse-export (`Excel export`) met top 25/50/100 langste aflevertijden, inclusief volledige archiefhistorie per geselecteerde mail
 
 Bewust uitgangspunt:
 

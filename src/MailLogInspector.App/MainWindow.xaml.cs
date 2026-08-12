@@ -433,11 +433,7 @@ public partial class MainWindow : Window
 			return;
 		}
 
-		if (!TryReadLongestDeliveryTopLimit(out int topLimit, out string? topLimitMessage))
-		{
-			AnalysisRunStateTextBlock.Text = topLimitMessage ?? "Kies een geldige topselectie.";
-			return;
-		}
+		int topLimit = ReadLongestDeliveryTopLimit();
 
 		Microsoft.Win32.SaveFileDialog saveFileDialog = new()
 		{
@@ -1512,27 +1508,16 @@ public partial class MainWindow : Window
 		return ReadComboTagAsInt(AnalysisTopDomainLimitComboBox, 10);
 	}
 
-	private bool TryReadLongestDeliveryTopLimit(out int limit, out string? validationMessage)
+	private int ReadLongestDeliveryTopLimit()
 	{
-		limit = 25;
-		validationMessage = null;
 		if (AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: var tag } &&
 			int.TryParse(tag?.ToString(), out int selectedTop) &&
 			selectedTop > 0)
 		{
-			limit = selectedTop;
-			return true;
+			return selectedTop;
 		}
 
-		if (!int.TryParse(AnalysisLongestTopCountCustomTextBox.Text?.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int customLimit) ||
-			customLimit <= 0)
-		{
-			validationMessage = "Vul bij 'Top traag: Aangepast' een positief geheel getal in.";
-			return false;
-		}
-
-		limit = customLimit;
-		return true;
+		return 25;
 	}
 
 	private void AnalysisInputs_Changed(object sender, RoutedEventArgs e)
@@ -1549,11 +1534,9 @@ public partial class MainWindow : Window
 		}
 
 		bool isReady = TryBuildAnalysisCriteria(out _, out string? validationMessage);
-		bool hasValidLongestTop = TryReadLongestDeliveryTopLimit(out _, out _);
 		AnalysisRunButton.IsEnabled = !isRunning && isReady;
 		AnalysisExportButton.IsEnabled = !isRunning && _lastAnalysisSummary != null && _lastAnalysisContext != null;
-		AnalysisLongestExportButton.IsEnabled = !isRunning && isReady && hasValidLongestTop;
-		AnalysisLongestTopCountCustomTextBox.IsEnabled = AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: "0" };
+		AnalysisLongestExportButton.IsEnabled = !isRunning && isReady;
 		AnalysisRunProgressBar.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
 		AnalysisRunProgressBar.IsIndeterminate = isRunning;
 		if (!isRunning)
@@ -1577,7 +1560,6 @@ public partial class MainWindow : Window
 			AnalysisRunButton != null &&
 			AnalysisExportButton != null &&
 			AnalysisLongestTopCountComboBox != null &&
-			AnalysisLongestTopCountCustomTextBox != null &&
 			AnalysisLongestExportButton != null &&
 			AnalysisRunStateTextBlock != null &&
 			AnalysisRunProgressBar != null;
