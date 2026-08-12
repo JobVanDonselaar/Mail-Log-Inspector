@@ -66,7 +66,13 @@ public partial class MailHistoryWindow : Window
 		{
 			CancellationToken token = _cancellation.Token;
 			MailLogInspectorMailHistory history = await Task.Run(
-				() => _service.ReadHistory(_row.TrackingId, _row.Recipient, progress, token),
+				() => _service.ReadHistory(
+					_row.TrackingId,
+					_row.Recipient,
+					_row.AcceptedAt,
+					_row.LastSeenAt,
+					progress,
+					token),
 				token);
 
 			_history = history;

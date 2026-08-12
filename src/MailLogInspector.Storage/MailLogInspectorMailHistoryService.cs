@@ -35,8 +35,19 @@ public sealed class MailLogInspectorMailHistoryService
         IProgress<MailLogInspectorMailHistoryProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
+        return ReadHistory(trackingId, recipient, null, null, progress, cancellationToken);
+    }
+
+    public MailLogInspectorMailHistory ReadHistory(
+        string trackingId,
+        string recipient,
+        DateTime? fromInclusive,
+        DateTime? throughInclusive,
+        IProgress<MailLogInspectorMailHistoryProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
         return ReadHistories(
-            [new MailLogInspectorMailHistoryRequest(trackingId, recipient)],
+            [new MailLogInspectorMailHistoryRequest(trackingId, recipient, fromInclusive, throughInclusive)],
             progress,
             cancellationToken)[0];
     }
@@ -73,7 +84,19 @@ public sealed class MailLogInspectorMailHistoryService
                     group => group.Key,
                     group => (IReadOnlyList<HistoryAccumulator>)group.ToArray(),
                     StringComparer.OrdinalIgnoreCase);
-        IReadOnlyList<ArchiveCandidate> candidates = ResolveArchives();
+        DateTime? firstRelevantMoment = validAccumulators
+            .Select(accumulator => accumulator.FromInclusive)
+            .Where(moment => moment.HasValue)
+            .OrderBy(moment => moment)
+            .FirstOrDefault();
+        DateTime? lastRelevantMoment = validAccumulators
+            .Select(accumulator => accumulator.ThroughInclusive)
+            .Where(moment => moment.HasValue)
+            .OrderByDescending(moment => moment)
+            .FirstOrDefault();
+        IReadOnlyList<ArchiveCandidate> candidates = ResolveArchives(
+            firstRelevantMoment?.Date.AddDays(-1),
+            lastRelevantMoment?.Date.AddDays(1).AddTicks(-1));
         int completed = 0;
         object gate = new();
 
@@ -233,17 +256,27 @@ public sealed class MailLogInspectorMailHistoryService
 
     private sealed class HistoryAccumulator
     {
-        private HistoryAccumulator(int index, string trackingId, string recipient, MatchTarget? target)
+        private HistoryAccumulator(
+            int index,
+            string trackingId,
+            string recipient,
+            DateTime? fromInclusive,
+            DateTime? throughInclusive,
+            MatchTarget? target)
         {
             Index = index;
             TrackingId = trackingId;
             Recipient = recipient;
+            FromInclusive = fromInclusive;
+            ThroughInclusive = throughInclusive;
             Target = target;
         }
 
         public int Index { get; }
         public string TrackingId { get; }
         public string Recipient { get; }
+        public DateTime? FromInclusive { get; }
+        public DateTime? ThroughInclusive { get; }
         public MatchTarget? Target { get; }
         public List<MailLogInspectorMailHistoryAttempt> Attempts { get; } = new();
         public List<string> Searched { get; } = new();
@@ -257,7 +290,7 @@ public sealed class MailLogInspectorMailHistoryService
             MatchTarget? target = Guid.TryParse(trackingId, out Guid guid)
                 ? new MatchTarget(trackingId, recipient, guid.ToByteArray())
                 : null;
-            return new HistoryAccumulator(index, trackingId, recipient, target);
+            return new HistoryAccumulator(index, trackingId, recipient, request.FromInclusive, request.ThroughInclusive, target);
         }
 
         public void AddAttempt(MailLogInspectorMailHistoryAttempt attempt)
@@ -287,7 +320,7 @@ public sealed class MailLogInspectorMailHistoryService
         }
     }
 
-    private IReadOnlyList<ArchiveCandidate> ResolveArchives()
+    private IReadOnlyList<ArchiveCandidate> ResolveArchives(DateTime? fromInclusive, DateTime? throughInclusive)
     {
         using SqliteConnection connection = _store.OpenConnection();
         using SqliteCommand command = connection.CreateCommand();
@@ -295,8 +328,16 @@ public sealed class MailLogInspectorMailHistoryService
             SELECT source_file_name, archive_path
             FROM imports
             WHERE archive_path IS NOT NULL AND archive_path <> ''
+              AND (
+                    $fromInclusive IS NULL
+                    OR report_start IS NULL
+                    OR report_end IS NULL
+                    OR (report_end >= $fromInclusive AND report_start <= $throughInclusive)
+                  )
             ORDER BY imported_at DESC;
             """;
+        command.Parameters.AddWithValue("$fromInclusive", fromInclusive.HasValue ? fromInclusive.Value : DBNull.Value);
+        command.Parameters.AddWithValue("$throughInclusive", throughInclusive.HasValue ? throughInclusive.Value : DBNull.Value);
 
         List<ArchiveCandidate> candidates = new();
         HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);

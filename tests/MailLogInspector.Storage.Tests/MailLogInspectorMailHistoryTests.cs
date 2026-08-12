@@ -82,6 +82,31 @@ public sealed class MailLogInspectorMailHistoryTests
     }
 
     [Fact]
+    public async Task ReadHistories_SkipsArchivesOutsideTheKnownMailPeriod()
+    {
+        string trackingId = "12345678-1234-1234-1234-123456789012";
+        DateTime acceptedAt = new(2026, 7, 20, 15, 7, 0);
+        DateTime deliveredAt = new(2026, 7, 20, 15, 8, 0);
+        await using var harness = await MailLogInspectorTestHarness.CreateAsync(
+            new SmtpCsvRow("7/20/2026 3:07PM", "7/20/2026 3:08PM", "sender@example.com", "target@example.net", "D", trackingId));
+
+        WriteZipArchive(harness, "old-report.zip",
+            ("7/01/2026 3:07PM", "7/01/2026 3:08PM", "old", "D", "250", "ok"),
+            ("7/01/2026 3:07PM", "7/01/2026 3:09PM", "old", "D", "250", "ok"),
+            trackingId);
+        SetImportPeriod(harness, "old-report.zip", new DateTime(2026, 7, 1), new DateTime(2026, 7, 1, 23, 59, 59));
+
+        var service = new MailLogInspectorMailHistoryService(harness.Store);
+        MailLogInspectorMailHistory history = Assert.Single(service.ReadHistories(
+        [
+            new MailLogInspectorMailHistoryRequest(trackingId, "target@example.net", acceptedAt, deliveredAt)
+        ]));
+
+        Assert.Single(history.Attempts);
+        Assert.DoesNotContain("old-report.zip", history.SearchedArchives);
+    }
+
+    [Fact]
     public async Task ReadHistory_IgnoresOtherRecipientsThatShareTheTrackingId()
     {
         string trackingId = "11111111-2222-3333-4444-555555555555";
@@ -270,6 +295,22 @@ public sealed class MailLogInspectorMailHistoryTests
         command.Parameters.AddWithValue("$hash", Guid.NewGuid().ToString("N"));
         command.Parameters.AddWithValue("$imported", DateTime.UtcNow.ToString("O"));
         command.Parameters.AddWithValue("$archive", archivePath);
+        command.ExecuteNonQuery();
+    }
+
+    private static void SetImportPeriod(MailLogInspectorTestHarness harness, string fileName, DateTime reportStart, DateTime reportEnd)
+    {
+        using var connection = harness.Store.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE imports
+            SET report_start = $reportStart,
+                report_end = $reportEnd
+            WHERE source_file_name = $fileName;
+            """;
+        command.Parameters.AddWithValue("$reportStart", reportStart);
+        command.Parameters.AddWithValue("$reportEnd", reportEnd);
+        command.Parameters.AddWithValue("$fileName", fileName);
         command.ExecuteNonQuery();
     }
 }
