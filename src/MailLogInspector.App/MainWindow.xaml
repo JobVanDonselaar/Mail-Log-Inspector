@@ -718,51 +718,61 @@
               </Grid>
               <Grid Grid.Column="2">
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="104" />
                   <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="1" />
-                  <ColumnDefinition Width="104" />
+                  <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                  <TextBlock Text="Top" Style="{StaticResource LabelTextStyle}" />
-                  <ComboBox Name="AnalysisTopDomainLimitComboBox" SelectedIndex="1" SelectionChanged="AnalysisInputs_Changed">
-                    <ComboBoxItem Content="10" Tag="10" />
-                    <ComboBoxItem Content="25" Tag="25" />
-                    <ComboBoxItem Content="50" Tag="50" />
-                    <ComboBoxItem Content="100" Tag="100" />
-                    <ComboBoxItem Content="200" Tag="200" />
-                    <ComboBoxItem Content="500" Tag="500" />
-                  </ComboBox>
-                </StackPanel>
-                <Button Name="AnalysisRunButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" Click="AnalysisRefreshButton_Click" IsEnabled="False">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
-                    <TextBlock Text="Analyse uitvoeren" Foreground="White" FontWeight="SemiBold" />
+                <Grid Grid.Column="0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="104" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Top" Style="{StaticResource LabelTextStyle}" />
+                    <ComboBox Name="AnalysisTopDomainLimitComboBox" SelectedIndex="1" SelectionChanged="AnalysisInputs_Changed">
+                      <ComboBoxItem Content="10" Tag="10" />
+                      <ComboBoxItem Content="25" Tag="25" />
+                      <ComboBoxItem Content="50" Tag="50" />
+                      <ComboBoxItem Content="100" Tag="100" />
+                      <ComboBoxItem Content="200" Tag="200" />
+                      <ComboBoxItem Content="500" Tag="500" />
+                    </ComboBox>
                   </StackPanel>
-                </Button>
-                <Button Name="AnalysisExportButton" Grid.Column="2" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="10,0,0,0" Click="AnalysisExportButton_Click" IsEnabled="False">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
-                    <TextBlock Text="Excel export" FontWeight="SemiBold" />
+                  <Button Name="AnalysisRunButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" VerticalAlignment="Bottom" Click="AnalysisRefreshButton_Click" IsEnabled="False">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE72C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                      <TextBlock Text="Analyse uitvoeren" Foreground="White" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Button>
+                  <Button Name="AnalysisExportButton" Grid.Column="2" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="10,0,0,0" Click="AnalysisExportButton_Click" IsEnabled="False">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE9F9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                      <TextBlock Text="Excel export" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+                <Border Grid.Column="1" Width="2" Height="46" Background="{StaticResource StrongStrokeBrush}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,18,0" />
+                <Grid Grid.Column="2">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="104" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Top traag" Style="{StaticResource LabelTextStyle}" />
+                    <ComboBox Name="AnalysisLongestTopCountComboBox" SelectedIndex="0" SelectionChanged="AnalysisInputs_Changed">
+                      <ComboBoxItem Content="25" Tag="25" />
+                      <ComboBoxItem Content="50" Tag="50" />
+                      <ComboBoxItem Content="100" Tag="100" />
+                    </ComboBox>
                   </StackPanel>
-                </Button>
-                <Border Grid.Column="3" Width="1" Height="34" Background="{StaticResource PanelStrokeBrush}" VerticalAlignment="Bottom" Margin="14,0" />
-                <StackPanel Grid.Column="4" Margin="14,0,12,0">
-                  <TextBlock Text="Top traag" Style="{StaticResource LabelTextStyle}" />
-                  <ComboBox Name="AnalysisLongestTopCountComboBox" SelectedIndex="0" SelectionChanged="AnalysisInputs_Changed">
-                    <ComboBoxItem Content="25" Tag="25" />
-                    <ComboBoxItem Content="50" Tag="50" />
-                    <ComboBoxItem Content="100" Tag="100" />
-                  </ComboBox>
-                </StackPanel>
-                <Button Name="AnalysisLongestExportButton" Grid.Column="5" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0" Click="AnalysisLongestExportButton_Click" IsEnabled="False">
-                  <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
-                    <TextBlock Text="Excel export" FontWeight="SemiBold" />
-                  </StackPanel>
-                </Button>
+                  <Button Name="AnalysisLongestExportButton" Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0" Click="AnalysisLongestExportButton_Click" IsEnabled="False">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,8,0" />
+                      <TextBlock Text="Excel export" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
           </Border>
