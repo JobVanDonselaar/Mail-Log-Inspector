@@ -53,6 +53,35 @@ public sealed class MailLogInspectorMailHistoryTests
     }
 
     [Fact]
+    public async Task ReadHistories_ReturnsCompleteHistoryForMultipleMailsInOneBatch()
+    {
+        string firstTrackingId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        string secondTrackingId = "11111111-2222-3333-4444-555555555555";
+        await using var harness = await MailLogInspectorTestHarness.CreateAsync(
+            new SmtpCsvRow("7/20/2026 3:07PM", "7/20/2026 3:08PM", "sender@example.com", "first@example.net", "D", firstTrackingId));
+
+        WriteZipArchive(harness, "second-report.zip",
+            ("7/20/2026 3:10PM", "", "retry", "T", "451", "4.7.1 Greylisted"),
+            ("7/20/2026 3:10PM", "7/20/2026 3:20PM", "delivered", "D", "250", "ok"),
+            secondTrackingId,
+            firstRecipient: "second@example.net",
+            secondRecipient: "second@example.net");
+
+        var service = new MailLogInspectorMailHistoryService(harness.Store);
+        IReadOnlyList<MailLogInspectorMailHistory> histories = service.ReadHistories(
+        [
+            new MailLogInspectorMailHistoryRequest(firstTrackingId, "first@example.net"),
+            new MailLogInspectorMailHistoryRequest(secondTrackingId, "second@example.net")
+        ]);
+
+        Assert.Equal(2, histories.Count);
+        Assert.Single(histories[0].Attempts);
+        Assert.Equal(firstTrackingId, histories[0].Attempts[0].TrackingId);
+        Assert.Equal(2, histories[1].Attempts.Count);
+        Assert.All(histories[1].Attempts, attempt => Assert.Equal(secondTrackingId, attempt.TrackingId));
+    }
+
+    [Fact]
     public async Task ReadHistory_IgnoresOtherRecipientsThatShareTheTrackingId()
     {
         string trackingId = "11111111-2222-3333-4444-555555555555";

@@ -35,77 +35,95 @@ public sealed class MailLogInspectorMailHistoryService
         IProgress<MailLogInspectorMailHistoryProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(trackingId) || !Guid.TryParse(trackingId.Trim(), out Guid trackingGuid))
+        return ReadHistories(
+            [new MailLogInspectorMailHistoryRequest(trackingId, recipient)],
+            progress,
+            cancellationToken)[0];
+    }
+
+    /// <summary>
+    /// Leest de historie voor meerdere mails in één doorgang. Dit voorkomt dat een Excel-export
+    /// dezelfde ZIP- en CSV-archieven opnieuw doorzoekt voor iedere regel in de topselectie.
+    /// </summary>
+    public IReadOnlyList<MailLogInspectorMailHistory> ReadHistories(
+        IReadOnlyList<MailLogInspectorMailHistoryRequest> requests,
+        IProgress<MailLogInspectorMailHistoryProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (requests.Count == 0)
         {
-            return MailLogInspectorMailHistory.Empty(trackingId ?? string.Empty, recipient ?? string.Empty);
+            return Array.Empty<MailLogInspectorMailHistory>();
         }
 
-        // De opgeslagen sleutel is de enige betrouwbare identificatie: bij een GUID-tracking-id is
-        // dat de GUID zelf, anders een hash over tracking-id en ontvanger. Door in het archief
-        // dezelfde sleutel te berekenen werken beide gevallen.
-        byte[] expectedKey = trackingGuid.ToByteArray();
-        MatchTarget target = new(trackingId.Trim(), (recipient ?? string.Empty).Trim(), expectedKey);
+        List<HistoryAccumulator> accumulators = requests
+            .Select((request, index) => HistoryAccumulator.Create(index, request))
+            .ToList();
+        IReadOnlyList<HistoryAccumulator> validAccumulators = accumulators
+            .Where(accumulator => accumulator.Target is not null)
+            .ToArray();
+        if (validAccumulators.Count == 0)
+        {
+            return accumulators.Select(accumulator => accumulator.ToHistory()).ToArray();
+        }
 
+        IReadOnlyDictionary<string, IReadOnlyList<HistoryAccumulator>> targetsByRecipient =
+            validAccumulators
+                .GroupBy(accumulator => accumulator.Target!.Recipient, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group.Key,
+                    group => (IReadOnlyList<HistoryAccumulator>)group.ToArray(),
+                    StringComparer.OrdinalIgnoreCase);
         IReadOnlyList<ArchiveCandidate> candidates = ResolveArchives();
-
-        List<MailLogInspectorMailHistoryAttempt> attempts = new();
-        List<string> searched = new();
-        List<string> missing = new();
         int completed = 0;
         object gate = new();
 
         ParallelOptions options = new()
         {
             CancellationToken = cancellationToken,
-            MaxDegreeOfParallelism = Math.Max(2, Math.Min(Environment.ProcessorCount, 8)),
+            MaxDegreeOfParallelism = Math.Max(1, Math.Min(Environment.ProcessorCount, 4)),
         };
 
         Parallel.ForEach(candidates, options, candidate =>
         {
             bool exists = !string.IsNullOrWhiteSpace(candidate.ArchivePath) && File.Exists(candidate.ArchivePath);
-            List<MailLogInspectorMailHistoryAttempt>? found = exists
-                ? ReadArchive(candidate, target, cancellationToken)
-                : null;
+            if (exists)
+            {
+                ReadArchive(candidate, targetsByRecipient, cancellationToken);
+            }
 
             lock (gate)
             {
-                if (found is null)
+                foreach (HistoryAccumulator accumulator in validAccumulators)
                 {
-                    missing.Add(candidate.SourceFileName);
-                }
-                else
-                {
-                    searched.Add(candidate.SourceFileName);
-                    attempts.AddRange(found);
+                    if (exists)
+                    {
+                        accumulator.Searched.Add(candidate.SourceFileName);
+                    }
+                    else
+                    {
+                        accumulator.Missing.Add(candidate.SourceFileName);
+                    }
                 }
 
                 progress?.Report(new MailLogInspectorMailHistoryProgress(++completed, candidates.Count, candidate.SourceFileName));
             }
         });
 
-        MailLogInspectorMailHistoryAttempt[] ordered = attempts
-            .GroupBy(attempt => (attempt.AcceptedAt, attempt.DeliveredAt, attempt.Status, attempt.ResponseCode, attempt.Tries))
-            .Select(group => group.First())
-            .OrderBy(attempt => attempt.SortMoment)
+        return accumulators
+            .OrderBy(accumulator => accumulator.Index)
+            .Select(accumulator => accumulator.ToHistory())
             .ToArray();
-
-        searched.Sort(StringComparer.OrdinalIgnoreCase);
-        missing.Sort(StringComparer.OrdinalIgnoreCase);
-
-        return new MailLogInspectorMailHistory(trackingId, target.Recipient, ordered, searched, missing);
     }
 
     /// <summary>
     /// Een import kan een ZIP met rapporten zijn of een los CSV-bestand; beide worden gearchiveerd,
     /// dus beide moeten hier gelezen kunnen worden.
     /// </summary>
-    private static List<MailLogInspectorMailHistoryAttempt> ReadArchive(
+    private static void ReadArchive(
         ArchiveCandidate candidate,
-        MatchTarget target,
+        IReadOnlyDictionary<string, IReadOnlyList<HistoryAccumulator>> targetsByRecipient,
         CancellationToken cancellationToken)
     {
-        List<MailLogInspectorMailHistoryAttempt> found = new();
-
         if (candidate.ArchivePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
             using ZipArchive archive = ZipFile.OpenRead(candidate.ArchivePath);
@@ -117,32 +135,32 @@ public sealed class MailLogInspectorMailHistoryService
                     continue;
                 }
 
-                CollectFromCsv(entry.Open, candidate, target, found, cancellationToken);
+                CollectFromCsv(entry.Open, candidate, targetsByRecipient, cancellationToken);
             }
 
-            return found;
+            return;
         }
 
         CollectFromCsv(
             () => File.Open(candidate.ArchivePath, FileMode.Open, FileAccess.Read, FileShare.Read),
             candidate,
-            target,
-            found,
+            targetsByRecipient,
             cancellationToken);
-
-        return found;
     }
 
     private static void CollectFromCsv(
         Func<Stream> openStream,
         ArchiveCandidate candidate,
-        MatchTarget target,
-        List<MailLogInspectorMailHistoryAttempt> found,
+        IReadOnlyDictionary<string, IReadOnlyList<HistoryAccumulator>> targetsByRecipient,
         CancellationToken cancellationToken)
     {
-        // Een ruwe regelscan is ruim tien keer sneller dan de volledige CSV-parser. De meeste
-        // archieven bevatten deze mail niet, dus die slaan we zo goedkoop over.
-        if (!MayContainMail(openStream, target, cancellationToken))
+        // Een ruwe scan is goedkoper dan volledig parsen. Voor een batch volstaat één scan om te
+        // bepalen of minstens één geselecteerde ontvanger in dit CSV-bestand voorkomt.
+        if (!MayContainAnyTarget(
+            openStream,
+            targetsByRecipient.Keys,
+            targetsByRecipient.Values.SelectMany(accumulators => accumulators).Select(accumulator => accumulator.Target!.TrackingId),
+            cancellationToken))
         {
             return;
         }
@@ -151,23 +169,31 @@ public sealed class MailLogInspectorMailHistoryService
         using StreamReader reader = new(stream);
         foreach (SmtpLogEntry logEntry in SmtpCsvReader.Enumerate(reader, onError: null, cancellationToken))
         {
-            if (!target.Matches(logEntry))
+            string recipient = logEntry.Recipient?.Trim() ?? string.Empty;
+            if (!targetsByRecipient.TryGetValue(recipient, out IReadOnlyList<HistoryAccumulator>? candidates))
             {
                 continue;
             }
 
-            found.Add(new MailLogInspectorMailHistoryAttempt(
-                logEntry.AcceptedAt,
-                logEntry.DeliveredAt,
-                logEntry.MailFrom ?? string.Empty,
-                logEntry.Recipient ?? string.Empty,
-                logEntry.Status ?? string.Empty,
-                logEntry.ResponseCode ?? string.Empty,
-                logEntry.ResponseMessage ?? string.Empty,
-                logEntry.BounceClass ?? string.Empty,
-                logEntry.Tries,
-                logEntry.TrackingId ?? string.Empty,
-                candidate.SourceFileName));
+            byte[] key = MailLogInspectorStore.BuildTrackingKey(logEntry.TrackingId, recipient);
+            foreach (HistoryAccumulator accumulator in candidates)
+            {
+                if (accumulator.Target!.Matches(key))
+                {
+                    accumulator.AddAttempt(new MailLogInspectorMailHistoryAttempt(
+                        logEntry.AcceptedAt,
+                        logEntry.DeliveredAt,
+                        logEntry.MailFrom ?? string.Empty,
+                        recipient,
+                        logEntry.Status ?? string.Empty,
+                        logEntry.ResponseCode ?? string.Empty,
+                        logEntry.ResponseMessage ?? string.Empty,
+                        logEntry.BounceClass ?? string.Empty,
+                        logEntry.Tries,
+                        logEntry.TrackingId ?? string.Empty,
+                        candidate.SourceFileName));
+                }
+            }
         }
     }
 
@@ -176,20 +202,22 @@ public sealed class MailLogInspectorMailHistoryService
     /// tracking-id dat geen GUID is niet letterlijk in het rapport staat maar wel via de ontvanger
     /// te vinden is.
     /// </summary>
-    private static bool MayContainMail(Func<Stream> openStream, MatchTarget target, CancellationToken cancellationToken)
+    private static bool MayContainAnyTarget(
+        Func<Stream> openStream,
+        IEnumerable<string> recipients,
+        IEnumerable<string> trackingIds,
+        CancellationToken cancellationToken)
     {
+        string[] recipientTargets = recipients.Where(recipient => recipient.Length > 0).ToArray();
+        string[] trackingIdTargets = trackingIds.Where(trackingId => trackingId.Length > 0).ToArray();
         using Stream stream = openStream();
         using StreamReader reader = new(stream);
         string? line;
         while ((line = reader.ReadLine()) is not null)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (line.Contains(target.TrackingId, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (target.Recipient.Length > 0 && line.Contains(target.Recipient, StringComparison.OrdinalIgnoreCase))
+            if (recipientTargets.Any(recipient => line.Contains(recipient, StringComparison.OrdinalIgnoreCase)) ||
+                trackingIdTargets.Any(trackingId => line.Contains(trackingId, StringComparison.OrdinalIgnoreCase)))
             {
                 return true;
             }
@@ -200,16 +228,62 @@ public sealed class MailLogInspectorMailHistoryService
 
     private sealed record MatchTarget(string TrackingId, string Recipient, byte[] ExpectedKey)
     {
-        public bool Matches(SmtpLogEntry entry)
+        public bool Matches(byte[] key) => key.AsSpan().SequenceEqual(ExpectedKey);
+    }
+
+    private sealed class HistoryAccumulator
+    {
+        private HistoryAccumulator(int index, string trackingId, string recipient, MatchTarget? target)
         {
-            if (Recipient.Length > 0 &&
-                !string.Equals(entry.Recipient?.Trim(), Recipient, StringComparison.OrdinalIgnoreCase))
+            Index = index;
+            TrackingId = trackingId;
+            Recipient = recipient;
+            Target = target;
+        }
+
+        public int Index { get; }
+        public string TrackingId { get; }
+        public string Recipient { get; }
+        public MatchTarget? Target { get; }
+        public List<MailLogInspectorMailHistoryAttempt> Attempts { get; } = new();
+        public List<string> Searched { get; } = new();
+        public List<string> Missing { get; } = new();
+        private object Gate { get; } = new();
+
+        public static HistoryAccumulator Create(int index, MailLogInspectorMailHistoryRequest request)
+        {
+            string trackingId = request.TrackingId?.Trim() ?? string.Empty;
+            string recipient = request.Recipient?.Trim() ?? string.Empty;
+            MatchTarget? target = Guid.TryParse(trackingId, out Guid guid)
+                ? new MatchTarget(trackingId, recipient, guid.ToByteArray())
+                : null;
+            return new HistoryAccumulator(index, trackingId, recipient, target);
+        }
+
+        public void AddAttempt(MailLogInspectorMailHistoryAttempt attempt)
+        {
+            lock (Gate)
             {
-                return false;
+                Attempts.Add(attempt);
+            }
+        }
+
+        public MailLogInspectorMailHistory ToHistory()
+        {
+            MailLogInspectorMailHistoryAttempt[] attempts;
+            lock (Gate)
+            {
+                attempts = Attempts.ToArray();
             }
 
-            byte[] key = MailLogInspectorStore.BuildTrackingKey(entry.TrackingId, entry.Recipient);
-            return key.AsSpan().SequenceEqual(ExpectedKey);
+            attempts = attempts
+                .GroupBy(attempt => (attempt.AcceptedAt, attempt.DeliveredAt, attempt.Status, attempt.ResponseCode, attempt.Tries))
+                .Select(group => group.First())
+                .OrderBy(attempt => attempt.SortMoment)
+                .ToArray();
+            Searched.Sort(StringComparer.OrdinalIgnoreCase);
+            Missing.Sort(StringComparer.OrdinalIgnoreCase);
+            return new MailLogInspectorMailHistory(TrackingId, Recipient, attempts, Searched, Missing);
         }
     }
 
