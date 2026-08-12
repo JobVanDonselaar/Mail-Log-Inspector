@@ -59,6 +59,79 @@ public sealed class MailLogInspectorAnalysisService
 			topResponseCodes);
 	}
 
+	public IReadOnlyList<MailLogInspectorLongestDeliveredMail> ReadLongestDeliveredMails(MailLogInspectorSearchCriteria criteria, int limit, CancellationToken cancellationToken = default)
+	{
+		if (limit <= 0)
+		{
+			return Array.Empty<MailLogInspectorLongestDeliveredMail>();
+		}
+
+		using SqliteConnection connection = _store.OpenConnection();
+		FilterScope scope = ResolveFilterScope(connection, criteria);
+		if (HasUnresolvedDomain(scope.SenderParts.Domain, criteria.SenderDomain, scope.SenderDomainId) ||
+			HasUnresolvedDomain(scope.RecipientParts.Domain, criteria.RecipientDomain, scope.RecipientDomainId))
+		{
+			return Array.Empty<MailLogInspectorLongestDeliveredMail>();
+		}
+
+		using SqliteCommand command = CreateFilteredCommand(connection, criteria with { Status = "afgeleverd" }, scope,
+			"SELECT item.accepted_at,\n" +
+			"       item.last_seen_at,\n" +
+			"       sender.local_part,\n" +
+			"       sender_domain.domain_name,\n" +
+			"       recipient.local_part,\n" +
+			"       recipient_domain.domain_name,\n" +
+			"       item.tracking_key,\n" +
+			"       item.duration_seconds,\n" +
+			"       item.reason_code,\n" +
+			"       item.response_code,\n" +
+			"       COALESCE(imports.source_file_name, '')\n" +
+			"FROM mail_items AS item\n" +
+			"JOIN mail_addresses AS sender ON sender.address_id = item.sender_address_id\n" +
+			"LEFT JOIN mail_domains AS sender_domain ON sender_domain.domain_id = item.sender_domain_id\n" +
+			"JOIN mail_addresses AS recipient ON recipient.address_id = item.recipient_address_id\n" +
+			"LEFT JOIN mail_domains AS recipient_domain ON recipient_domain.domain_id = item.recipient_domain_id\n" +
+			"LEFT JOIN imports ON imports.import_id = item.last_import_id\n" +
+			"WHERE item.accepted_at >= $fromInclusive\n" +
+			"  AND item.accepted_at <= $throughInclusive\n" +
+			"  AND ($senderLocal IS NULL OR sender.local_part = $senderLocal)\n" +
+			"  AND ($recipientLocal IS NULL OR recipient.local_part = $recipientLocal)\n" +
+			"  AND ($senderDomainId IS NULL OR item.sender_domain_id = $senderDomainId)\n" +
+			"  AND ($recipientDomainId IS NULL OR item.recipient_domain_id = $recipientDomainId)\n" +
+			"  AND item.status = 1\n" +
+			"  AND item.duration_seconds IS NOT NULL\n" +
+			"ORDER BY item.duration_seconds DESC, item.accepted_at ASC, item.last_seen_at ASC\n" +
+			"LIMIT $limit;");
+		command.Parameters.AddWithValue("$limit", limit);
+		command.CommandTimeout = 60;
+		using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(command.Cancel);
+		using SqliteDataReader reader = command.ExecuteReader();
+		List<MailLogInspectorLongestDeliveredMail> rows = new();
+		while (reader.Read())
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			DateTime? acceptedAt = MailLogInspectorStore.ReadStoredDateTime(reader, 0);
+			DateTime? deliveredAt = MailLogInspectorStore.ReadStoredDateTime(reader, 1);
+			if (!acceptedAt.HasValue || !deliveredAt.HasValue)
+			{
+				continue;
+			}
+
+			rows.Add(new MailLogInspectorLongestDeliveredMail(
+				acceptedAt.Value,
+				deliveredAt.Value,
+				ComposeEmail(reader.GetString(2), reader.IsDBNull(3) ? null : reader.GetString(3)),
+				ComposeEmail(reader.GetString(4), reader.IsDBNull(5) ? null : reader.GetString(5)),
+				MailLogInspectorSearchService.ReadTrackingId(reader, 6),
+				ReadInt32(reader, 7),
+				(MailLogInspectorReasonCode)ReadInt32(reader, 8),
+				reader.IsDBNull(9) ? null : reader.GetInt32(9),
+				reader.GetString(10)));
+		}
+
+		return rows;
+	}
+
 	private static (int TotalCount, int DeliveredCount, int UnderwayCount, int BounceCount) ReadTotals(SqliteConnection connection, MailLogInspectorSearchCriteria criteria, FilterScope scope, CancellationToken cancellationToken)
 	{
 		if (CanUseDailyAggregates(criteria, scope) && criteria.Status is null)
@@ -473,6 +546,11 @@ public sealed class MailLogInspectorAnalysisService
 		return ((DbDataReader)(object)reader).IsDBNull(ordinal)
 			? 0
 			: Convert.ToInt32(((DbDataReader)(object)reader).GetValue(ordinal));
+	}
+
+	private static string ComposeEmail(string localPart, string? domain)
+	{
+		return string.IsNullOrWhiteSpace(domain) ? localPart : localPart + "@" + domain;
 	}
 
 	private static object DbValue(string? value) => value is null ? DBNull.Value : value;
