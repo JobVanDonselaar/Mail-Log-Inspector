@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
+using MailLogInspector.Core;
 using MailLogInspector.Storage;
 using MimeKit;
 using MimeKit.Utils;
@@ -16,7 +17,8 @@ public sealed record BounceNotificationMessage(
     string? HtmlBody,
     string? PlainTextBody,
     string? AttachmentPath,
-    string? AttachmentFileName);
+    string? AttachmentFileName,
+    string? BccAddress = null);
 
 /// <summary>Verzendkanaal voor bouncemeldingen. Elke implementatie levert één transportmethode.</summary>
 public interface IBounceMailTransport
@@ -116,6 +118,7 @@ public static class BounceNotificationMimeBuilder
         var mime = new MimeMessage();
         mime.From.Add(new MailboxAddress(name, senderAddress));
         mime.To.Add(MailboxAddress.Parse(message.ToAddress));
+        AddBccRecipient(mime, message.BccAddress);
         mime.Subject = message.Subject;
         mime.MessageId = MimeUtils.GenerateMessageId(ResolveSendingDomain(senderAddress));
 
@@ -168,6 +171,25 @@ public static class BounceNotificationMimeBuilder
 
         mime.Body = builder.ToMessageBody();
         return mime;
+    }
+
+    private static void AddBccRecipient(MimeMessage mime, string? bccAddress)
+    {
+        if (string.IsNullOrWhiteSpace(bccAddress))
+        {
+            return;
+        }
+
+        if (!MailboxAddress.TryParse(bccAddress.Trim(), out MailboxAddress? mailbox) ||
+            mailbox is null ||
+            string.IsNullOrWhiteSpace(mailbox.Address) ||
+            !MailLogInspectorNotificationAddressPolicy.IsPlausibleAddress(mailbox.Address))
+        {
+            throw new InvalidOperationException(
+                $"Het BCC-adres '{bccAddress}' is geen geldig e-mailadres. Pas dit aan bij de e-mailinstellingen.");
+        }
+
+        mime.Bcc.Add(mailbox);
     }
 }
 

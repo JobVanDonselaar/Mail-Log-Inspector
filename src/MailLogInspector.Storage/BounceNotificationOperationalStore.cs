@@ -75,7 +75,7 @@ public sealed class BounceNotificationOperationalStore
             """;
         command.ExecuteNonQuery();
 
-        EnsureContentColumns(connection);
+        EnsureSettingsColumns(connection);
         EnsureSenderColumns(connection);
     }
 
@@ -97,13 +97,13 @@ public sealed class BounceNotificationOperationalStore
     }
 
     /// <summary>
-    /// Voegt de inhoudskolommen toe aan databases die van voor de instelbare mailinhoud stammen.
+    /// Voegt later toegevoegde verzend- en inhoudskolommen toe aan bestaande databases.
     /// </summary>
-    private static void EnsureContentColumns(SqliteConnection connection)
+    private static void EnsureSettingsColumns(SqliteConnection connection)
     {
         HashSet<string> existing = ReadColumnNames(connection, "bounce_notification_settings");
 
-        (string Column, string Definition)[] contentColumns =
+        (string Column, string Definition)[] settingsColumns =
         [
             ("include_excel_attachment", "INTEGER NOT NULL DEFAULT 1"),
             ("include_kpi_summary", "INTEGER NOT NULL DEFAULT 1"),
@@ -115,10 +115,11 @@ public sealed class BounceNotificationOperationalStore
             ("body_format", "TEXT NOT NULL DEFAULT 'both'"),
             ("intro_text", "TEXT NULL"),
             ("footer_text", "TEXT NULL"),
-            ("clear_gmail_sent_items_after_send", "INTEGER NOT NULL DEFAULT 0")
+            ("clear_gmail_sent_items_after_send", "INTEGER NOT NULL DEFAULT 0"),
+            ("bcc_address", "TEXT NULL")
         ];
 
-        foreach ((string column, string definition) in contentColumns)
+        foreach ((string column, string definition) in settingsColumns)
         {
             if (existing.Contains(column))
             {
@@ -172,7 +173,8 @@ public sealed class BounceNotificationOperationalStore
                    body_format,
                    intro_text,
                    footer_text,
-                   clear_gmail_sent_items_after_send
+                   clear_gmail_sent_items_after_send,
+                   bcc_address
             FROM bounce_notification_settings
             WHERE settings_id = 1;
             """;
@@ -206,7 +208,8 @@ public sealed class BounceNotificationOperationalStore
                 BodyFormat: BounceNotificationBodyFormat.Normalize(ReadNullableString(reader, 17)),
                 IntroText: ReadNullableString(reader, 18) ?? BounceNotificationContentOptions.DefaultIntroText,
                 FooterText: ReadNullableString(reader, 19) ?? BounceNotificationContentOptions.DefaultFooterText),
-            ClearGmailSentItemsAfterSend: ReadBoolean(reader, 20, defaultValue: false));
+            ClearGmailSentItemsAfterSend: ReadBoolean(reader, 20, defaultValue: false),
+            BccAddress: ReadNullableString(reader, 21));
     }
 
     public void SaveSettings(BounceNotificationSettings settings)
@@ -236,13 +239,14 @@ public sealed class BounceNotificationOperationalStore
                 body_format,
                 intro_text,
                 footer_text,
-                clear_gmail_sent_items_after_send
+                clear_gmail_sent_items_after_send,
+                bcc_address
             )
             VALUES (1, $enabled, $autoSend, $transport, $fromAddress, $fromDisplayName,
                     $subjectTemplate, $relayHost, $relayPort, $relayUsername, $relayPassword,
                     $includeAttachment, $includeKpi, $includeReasons, $includeDomains,
                     $includeDetails, $includeSource, $maxDetailRows, $bodyFormat,
-                    $introText, $footerText, $clearGmailSent)
+                    $introText, $footerText, $clearGmailSent, $bccAddress)
             ON CONFLICT(settings_id) DO UPDATE SET
                 enabled = excluded.enabled,
                 auto_send_after_import = excluded.auto_send_after_import,
@@ -264,7 +268,8 @@ public sealed class BounceNotificationOperationalStore
                 body_format = excluded.body_format,
                 intro_text = excluded.intro_text,
                 footer_text = excluded.footer_text,
-                clear_gmail_sent_items_after_send = excluded.clear_gmail_sent_items_after_send;
+                clear_gmail_sent_items_after_send = excluded.clear_gmail_sent_items_after_send,
+                bcc_address = excluded.bcc_address;
             """;
         command.Parameters.AddWithValue("$enabled", settings.Enabled ? 1 : 0);
         command.Parameters.AddWithValue("$autoSend", settings.AutoSendAfterImport ? 1 : 0);
@@ -289,6 +294,7 @@ public sealed class BounceNotificationOperationalStore
         command.Parameters.AddWithValue("$introText", ToBodyTextDbValue(content.IntroText));
         command.Parameters.AddWithValue("$footerText", ToBodyTextDbValue(content.FooterText));
         command.Parameters.AddWithValue("$clearGmailSent", settings.ClearGmailSentItemsAfterSend ? 1 : 0);
+        command.Parameters.AddWithValue("$bccAddress", ToDbValue(settings.BccAddress));
         command.ExecuteNonQuery();
     }
 

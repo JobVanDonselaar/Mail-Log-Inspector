@@ -173,7 +173,8 @@ public sealed class BounceNotificationService
                     AttachmentPath: attachmentPath,
                     AttachmentFileName: attachmentPath is null
                         ? null
-                        : BounceNotificationContentBuilder.BuildAttachmentFileName(item.Report, reportDate));
+                        : BounceNotificationContentBuilder.BuildAttachmentFileName(item.Report, reportDate),
+                    BccAddress: settings.BccAddress);
 
                 await transport.SendAsync(message, cancellationToken);
 

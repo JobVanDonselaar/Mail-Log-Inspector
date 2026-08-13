@@ -39,7 +39,8 @@ public sealed record BounceNotificationSettings(
     string? RelayUsername,
     string? EncryptedRelayPassword,
     BounceNotificationContentOptions Content,
-    bool ClearGmailSentItemsAfterSend = false)
+    bool ClearGmailSentItemsAfterSend = false,
+    string? BccAddress = null)
 {
     public const string DefaultSubjectTemplate = "Bounce-overzicht {sender} - {date}";
 
@@ -55,7 +56,8 @@ public sealed record BounceNotificationSettings(
         RelayUsername: null,
         EncryptedRelayPassword: null,
         Content: BounceNotificationContentOptions.Default,
-        ClearGmailSentItemsAfterSend: false);
+        ClearGmailSentItemsAfterSend: false,
+        BccAddress: null);
 
     public string ResolveSubjectTemplate() =>
         string.IsNullOrWhiteSpace(SubjectTemplate) ? DefaultSubjectTemplate : SubjectTemplate.Trim();
