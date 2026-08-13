@@ -1,4 +1,5 @@
 using System.IO;
+using System.Globalization;
 using DocumentFormat.OpenXml.Packaging;
 using MailLogInspector.Core;
 using S = DocumentFormat.OpenXml.Spreadsheet;
@@ -34,7 +35,7 @@ public static class LongestDeliveredExcelExporter
 
 		using SpreadsheetDocument document = SpreadsheetDocument.Create(path, DocumentFormat.OpenXml.SpreadsheetDocumentType.Workbook);
 		document.PackageProperties.Title = "Mail Log Inspector - Langste aflevertijden";
-		document.PackageProperties.Subject = $"Top {context.TopCount} langste aflevertijden met archiefhistorie";
+		document.PackageProperties.Subject = $"Top {FormatTopSelection(context.TopCount)} langste aflevertijden met archiefhistorie";
 		document.PackageProperties.Creator = "Mail Log Inspector";
 
 		WorkbookPart workbookPart = document.AddWorkbookPart();
@@ -70,7 +71,7 @@ public static class LongestDeliveredExcelExporter
 
 		sheetData.Append(StyledSpanRow(1, 1, 11, "Mail Log Inspector - Top langste aflevertijden", StyleTitle, 30));
 		sheetData.Append(StyledSpanRow(2, 1, 11,
-			$"Periode: {context.FromDate:dd-MM-yyyy} t/m {context.ThroughDate:dd-MM-yyyy} | Top: {context.TopCount}",
+			$"Periode: {context.FromDate:dd-MM-yyyy} t/m {context.ThroughDate:dd-MM-yyyy} | Top: {FormatTopSelection(context.TopCount)}",
 			StyleSubtitle, 24));
 		sheetData.Append(StyledSpanRow(3, 1, 11,
 			$"Filters: afzender={CleanFilter(context.SenderFilter)}, ontvanger={CleanFilter(context.RecipientFilter)} | Gegenereerd: {DateTime.Now:dd-MM-yyyy HH:mm}",
@@ -216,8 +217,8 @@ public static class LongestDeliveredExcelExporter
 			StringCell("A6", "Ontvangerfilter", StyleTableHeader),
 			StringCell("B6", CleanFilter(context.RecipientFilter), StyleBody)));
 		sheetData.Append(CreateSparseRow(7,
-			StringCell("A7", "Top limiet", StyleTableHeader),
-			NumberCell("B7", context.TopCount, StyleNumber)));
+			StringCell("A7", "Top selectie", StyleTableHeader),
+			StringCell("B7", FormatTopSelection(context.TopCount), StyleBody)));
 		sheetData.Append(CreateSparseRow(8,
 			StringCell("A8", "Aantal records", StyleTableHeader),
 			NumberCell("B8", actualCount, StyleNumber)));
@@ -229,4 +230,7 @@ public static class LongestDeliveredExcelExporter
 	}
 
 	private static string CleanFilter(string? value) => string.IsNullOrWhiteSpace(value) ? "-" : value.Trim();
+
+	private static string FormatTopSelection(int topCount) =>
+		topCount == int.MaxValue ? "Alles" : topCount.ToString(CultureInfo.InvariantCulture);
 }

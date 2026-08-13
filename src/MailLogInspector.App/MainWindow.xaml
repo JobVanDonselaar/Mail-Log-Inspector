@@ -764,6 +764,9 @@
                       <ComboBoxItem Content="25" Tag="25" />
                       <ComboBoxItem Content="50" Tag="50" />
                       <ComboBoxItem Content="100" Tag="100" />
+                      <ComboBoxItem Content="1000" Tag="1000" />
+                      <ComboBoxItem Content="5000" Tag="5000" />
+                      <ComboBoxItem Content="Alles" Tag="all" />
                     </ComboBox>
                   </StackPanel>
                   <Button Name="AnalysisLongestExportButton" Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Bottom" Margin="0" Click="AnalysisLongestExportButton_Click" IsEnabled="False">

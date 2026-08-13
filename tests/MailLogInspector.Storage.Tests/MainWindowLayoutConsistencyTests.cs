@@ -32,6 +32,10 @@ public sealed class MainWindowLayoutConsistencyTests
         Assert.Contains("<ComboBoxItem Content=\"100\" Tag=\"100\" />", xaml, StringComparison.Ordinal);
         Assert.Contains("<ComboBoxItem Content=\"200\" Tag=\"200\" />", xaml, StringComparison.Ordinal);
         Assert.Contains("<ComboBoxItem Content=\"500\" Tag=\"500\" />", xaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"AnalysisLongestTopCountComboBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ComboBoxItem Content=\"1000\" Tag=\"1000\" />", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ComboBoxItem Content=\"5000\" Tag=\"5000\" />", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ComboBoxItem Content=\"Alles\" Tag=\"all\" />", xaml, StringComparison.Ordinal);
     }
     [Fact]
     public void HelpTabDescribesAllCurrentUserWorkflows()
@@ -96,8 +100,8 @@ public sealed class MainWindowLayoutConsistencyTests
         string project = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspector.App.csproj"));
         string version = File.ReadAllText(Path.Combine(root, "src", "MailLogInspector.App", "MailLogInspectorVersion.cs"));
 
-        Assert.Contains("<InformationalVersion>0.243</InformationalVersion>", project, StringComparison.Ordinal);
-        Assert.Contains("SemanticVersion = \"0.243\"", version, StringComparison.Ordinal);
+        Assert.Contains("<InformationalVersion>0.244</InformationalVersion>", project, StringComparison.Ordinal);
+        Assert.Contains("SemanticVersion = \"0.244\"", version, StringComparison.Ordinal);
     }
 
     [Fact]
