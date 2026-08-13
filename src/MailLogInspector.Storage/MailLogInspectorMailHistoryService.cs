@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using MailLogInspector.Core;
 using Microsoft.Data.Sqlite;
@@ -94,9 +95,15 @@ public sealed class MailLogInspectorMailHistoryService
             .Where(moment => moment.HasValue)
             .OrderByDescending(moment => moment)
             .FirstOrDefault();
-        IReadOnlyList<ArchiveCandidate> candidates = ResolveArchives(
-            firstRelevantMoment?.Date.AddDays(-1),
-            lastRelevantMoment?.Date.AddDays(1).AddTicks(-1));
+        DateTime? scopedFrom = firstRelevantMoment?.Date.AddDays(-1);
+        DateTime? scopedThrough = lastRelevantMoment?.Date.AddDays(1).AddTicks(-1);
+        IReadOnlyList<ArchiveCandidate> indexedCandidates = ResolveIndexedArchives(
+            validAccumulators,
+            scopedFrom,
+            scopedThrough);
+        IReadOnlyList<ArchiveCandidate> candidates = indexedCandidates.Count > 0
+            ? MergeCandidates(indexedCandidates, ResolveLegacyArchivesWithoutLookup(scopedFrom, scopedThrough))
+            : ResolveArchives(scopedFrom, scopedThrough);
         int completed = 0;
         object gate = new();
 
@@ -353,6 +360,184 @@ public sealed class MailLogInspectorMailHistoryService
         }
 
         return candidates;
+    }
+
+    private IReadOnlyList<ArchiveCandidate> ResolveIndexedArchives(
+        IReadOnlyList<HistoryAccumulator> accumulators,
+        DateTime? fromInclusive,
+        DateTime? throughInclusive)
+    {
+        List<(byte[] TrackingKey, string RecipientAddress, int TargetId)> targets = BuildLookupTargets(accumulators);
+        if (targets.Count == 0)
+        {
+            return Array.Empty<ArchiveCandidate>();
+        }
+
+        using SqliteConnection connection = _store.OpenConnection();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = BuildLookupArchiveSql(targets.Count);
+        command.Parameters.AddWithValue("$fromInclusive", fromInclusive.HasValue ? fromInclusive.Value : DBNull.Value);
+        command.Parameters.AddWithValue("$throughInclusive", throughInclusive.HasValue ? throughInclusive.Value : DBNull.Value);
+        for (int index = 0; index < targets.Count; index++)
+        {
+            command.Parameters.AddWithValue("$targetId" + index, targets[index].TargetId);
+            command.Parameters.AddWithValue("$trackingKey" + index, targets[index].TrackingKey);
+            command.Parameters.AddWithValue("$recipientAddress" + index, targets[index].RecipientAddress);
+        }
+
+        List<ArchiveCandidate> candidates = new();
+        HashSet<string> seenArchives = new(StringComparer.OrdinalIgnoreCase);
+        using SqliteDataReader reader = command.ExecuteReader();
+        DbDataReader source = reader;
+        while (source.Read())
+        {
+            string sourceFileName = source.GetString(0);
+            string archivePath = source.GetString(1);
+            if (seenArchives.Add(archivePath))
+            {
+                candidates.Add(new ArchiveCandidate(sourceFileName, archivePath));
+            }
+        }
+
+        return candidates;
+    }
+
+    private static List<(byte[] TrackingKey, string RecipientAddress, int TargetId)> BuildLookupTargets(
+        IReadOnlyList<HistoryAccumulator> accumulators)
+    {
+        List<(byte[] TrackingKey, string RecipientAddress, int TargetId)> targets = new();
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        int targetId = 0;
+        foreach (HistoryAccumulator accumulator in accumulators)
+        {
+            if (accumulator.Target is null)
+            {
+                continue;
+            }
+
+            string recipientAddress = NormalizeRecipientAddress(accumulator.Recipient);
+            if (recipientAddress.Length == 0)
+            {
+                continue;
+            }
+
+            string key = Convert.ToHexString(accumulator.Target.ExpectedKey) + "|" + recipientAddress;
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            targets.Add((accumulator.Target.ExpectedKey, recipientAddress, targetId));
+            targetId++;
+        }
+
+        return targets;
+    }
+
+    private static string BuildLookupArchiveSql(int targetCount)
+    {
+        StringBuilder sql = new();
+        sql.AppendLine("WITH targets(target_id, tracking_key, recipient_address) AS (VALUES");
+        for (int index = 0; index < targetCount; index++)
+        {
+            if (index > 0)
+            {
+                sql.Append(",");
+            }
+
+            sql.AppendLine()
+                .Append("    ($targetId")
+                .Append(index)
+                .Append(", $trackingKey")
+                .Append(index)
+                .Append(", $recipientAddress")
+                .Append(index)
+                .Append(')');
+        }
+
+        sql.AppendLine();
+        sql.AppendLine(")");
+        sql.AppendLine("SELECT DISTINCT imports.source_file_name, imports.archive_path");
+        sql.AppendLine("FROM targets");
+        sql.AppendLine("JOIN import_mail_lookup AS lookup");
+        sql.AppendLine("  ON lookup.tracking_key = targets.tracking_key");
+        sql.AppendLine(" AND lookup.recipient_address = targets.recipient_address");
+        sql.AppendLine("JOIN imports ON imports.import_id = lookup.import_id");
+        sql.AppendLine("WHERE imports.archive_path IS NOT NULL AND imports.archive_path <> ''");
+        sql.AppendLine("  AND (");
+        sql.AppendLine("        $fromInclusive IS NULL");
+        sql.AppendLine("        OR imports.report_start IS NULL");
+        sql.AppendLine("        OR imports.report_end IS NULL");
+        sql.AppendLine("        OR (imports.report_end >= $fromInclusive AND imports.report_start <= $throughInclusive)");
+        sql.AppendLine("      )");
+        sql.AppendLine("ORDER BY imports.imported_at DESC;");
+        return sql.ToString();
+    }
+
+    private IReadOnlyList<ArchiveCandidate> ResolveLegacyArchivesWithoutLookup(
+        DateTime? fromInclusive,
+        DateTime? throughInclusive)
+    {
+        using SqliteConnection connection = _store.OpenConnection();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT source_file_name, archive_path
+            FROM imports
+            WHERE archive_path IS NOT NULL AND archive_path <> ''
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM import_mail_lookup
+                    WHERE import_mail_lookup.import_id = imports.import_id
+              )
+              AND (
+                    $fromInclusive IS NULL
+                    OR report_start IS NULL
+                    OR report_end IS NULL
+                    OR (report_end >= $fromInclusive AND report_start <= $throughInclusive)
+                  )
+            ORDER BY imported_at DESC;
+            """;
+        command.Parameters.AddWithValue("$fromInclusive", fromInclusive.HasValue ? fromInclusive.Value : DBNull.Value);
+        command.Parameters.AddWithValue("$throughInclusive", throughInclusive.HasValue ? throughInclusive.Value : DBNull.Value);
+        List<ArchiveCandidate> candidates = new();
+        using SqliteDataReader reader = command.ExecuteReader();
+        DbDataReader source = reader;
+        while (source.Read())
+        {
+            candidates.Add(new ArchiveCandidate(source.GetString(0), source.GetString(1)));
+        }
+
+        return candidates;
+    }
+
+    private static IReadOnlyList<ArchiveCandidate> MergeCandidates(
+        IReadOnlyList<ArchiveCandidate> primary,
+        IReadOnlyList<ArchiveCandidate> fallback)
+    {
+        List<ArchiveCandidate> merged = new(primary.Count + fallback.Count);
+        HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+        foreach (ArchiveCandidate candidate in primary)
+        {
+            if (seen.Add(candidate.ArchivePath))
+            {
+                merged.Add(candidate);
+            }
+        }
+
+        foreach (ArchiveCandidate candidate in fallback)
+        {
+            if (seen.Add(candidate.ArchivePath))
+            {
+                merged.Add(candidate);
+            }
+        }
+
+        return merged;
+    }
+
+    private static string NormalizeRecipientAddress(string? recipient)
+    {
+        return recipient?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 
     private readonly record struct ArchiveCandidate(string SourceFileName, string ArchivePath);

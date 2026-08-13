@@ -490,7 +490,7 @@ public partial class MainWindow : Window
 					index + 1,
 					mail,
 					histories[index],
-					BuildLongestHistoryNote(histories[index])))
+					BuildLongestHistoryNote(mail, histories[index])))
 				.ToList();
 
 			LongestDeliveredExportContext context = new(
@@ -543,27 +543,69 @@ public partial class MainWindow : Window
 		return string.Join('-', parts) + ".xlsx";
 	}
 
-	private static string BuildLongestHistoryNote(MailLogInspectorMailHistory history)
+	private static string BuildLongestHistoryNote(
+		MailLogInspectorLongestDeliveredMail mail,
+		MailLogInspectorMailHistory history)
 	{
 		if (!history.HasAttempts)
 		{
 			return "Geen archiefregels gevonden.";
 		}
 
+		List<string> signals = [];
 		int attempts = history.Attempts.Count;
+		int delayedAttempts = history.Attempts.Count(attempt =>
+			string.Equals(attempt.Status, "T", StringComparison.OrdinalIgnoreCase));
 		int bouncedAttempts = history.Attempts.Count(attempt =>
 			string.Equals(attempt.Status, "B", StringComparison.OrdinalIgnoreCase));
-		if (attempts > 1 && bouncedAttempts > 0)
-		{
-			return $"Meerdere pogingen ({attempts}), inclusief {bouncedAttempts} bounce-melding(en).";
-		}
+		int maxTries = history.Attempts.Max(attempt => Math.Max(0, attempt.Tries.GetValueOrDefault()));
+		string? dominantCode = history.Attempts
+			.Select(attempt => attempt.ResponseCode?.Trim())
+			.Where(code => !string.IsNullOrWhiteSpace(code))
+			.GroupBy(code => code!, StringComparer.OrdinalIgnoreCase)
+			.OrderByDescending(group => group.Count())
+			.ThenBy(group => group.Key, StringComparer.OrdinalIgnoreCase)
+			.Select(group => group.Key)
+			.FirstOrDefault();
 
 		if (attempts > 1)
 		{
-			return $"Meerdere pogingen ({attempts}) voordat aflevering werd bevestigd.";
+			signals.Add($"{attempts} pogingen");
 		}
 
-		return "Eén poging geregistreerd in het archief.";
+		if (delayedAttempts > 0)
+		{
+			signals.Add($"{delayedAttempts} keer tijdelijk uitgesteld");
+		}
+
+		if (bouncedAttempts > 0)
+		{
+			signals.Add($"{bouncedAttempts} bouncepoging(en)");
+		}
+
+		if (maxTries >= 2)
+		{
+			signals.Add($"hoge retry-teller (max tries {maxTries})");
+		}
+
+		if (!string.IsNullOrWhiteSpace(dominantCode) &&
+			!string.Equals(dominantCode, "250", StringComparison.OrdinalIgnoreCase))
+		{
+			signals.Add($"dominante SMTP-code {dominantCode}");
+		}
+
+		double minutes = Math.Max(0.0, mail.DurationSeconds / 60.0);
+		if (minutes >= 120 && attempts <= 1)
+		{
+			signals.Add("lange wachttijd zonder duidelijke foutcode (waarschijnlijk queue/remote vertraging)");
+		}
+
+		if (signals.Count == 0)
+		{
+			return "Geen duidelijk foutpatroon; vermoedelijk tijdelijke vertraging buiten SMTP-foutscenario.";
+		}
+
+		return string.Join("; ", signals) + ".";
 	}
 
 	private void SearchResultsStatusHeaderComboBox_Loaded(object sender, RoutedEventArgs e)
