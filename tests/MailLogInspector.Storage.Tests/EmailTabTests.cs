@@ -330,6 +330,7 @@ public sealed class EmailTabTests
         Assert.Contains("Name=\"EmailSendersGrid\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailHistoryGrid\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailTransportComboBox\"", emailXaml, StringComparison.Ordinal);
+        Assert.Contains("Name=\"EmailBccAddressTextBox\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("Name=\"EmailIncludeAttachmentCheckBox\"", emailXaml, StringComparison.Ordinal);
         Assert.Contains("PeriodStateDisplay", emailXaml, StringComparison.Ordinal);
     }

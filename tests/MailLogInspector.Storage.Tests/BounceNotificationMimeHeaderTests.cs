@@ -137,6 +137,24 @@ public sealed class BounceNotificationMimeHeaderTests
     }
 
     [Fact]
+    public void Build_AddsTheConfiguredBccRecipient()
+    {
+        MimeMessage mime = BounceNotificationMimeBuilder.Build(
+            new BounceNotificationMessage(
+                "ontvanger@example.net",
+                "Bounce-overzicht",
+                "<p>Overzicht</p>",
+                "Overzicht",
+                AttachmentPath: null,
+                AttachmentFileName: null,
+                BccAddress: "archief@example.net"),
+            "meldingen@example.com",
+            "Mail Log Inspector");
+
+        Assert.Equal("archief@example.net", mime.Bcc.Mailboxes.Single().Address);
+    }
+
+    [Fact]
     public void Build_EmbedsTheExquiseHeaderLogoAsAnInlineCidImage()
     {
         MimeMessage mime = BounceNotificationMimeBuilder.Build(

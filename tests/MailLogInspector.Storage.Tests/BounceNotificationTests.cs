@@ -199,11 +199,13 @@ public sealed class BounceNotificationTests
         {
             Transport = BounceNotificationTransport.SmtpRelay,
             FromAddress = "meldingen@bedrijf.nl",
+            BccAddress = "archief@bedrijf.nl",
             Content = content
         });
 
         BounceNotificationSettings loaded = store.LoadSettings();
         Assert.Equal(BounceNotificationTransport.SmtpRelay, loaded.Transport);
+        Assert.Equal("archief@bedrijf.nl", loaded.BccAddress);
         Assert.Equal(content, loaded.Content);
     }
 

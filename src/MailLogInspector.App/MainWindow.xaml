@@ -1703,6 +1703,9 @@
                       </StackPanel>
                     </Grid>
 
+                    <TextBlock Text="BCC-adres voor elke melding (optioneel)" Style="{StaticResource LabelTextStyle}" />
+                    <TextBox Name="EmailBccAddressTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" Margin="0,0,0,10" />
+
                     <TextBlock Text="Onderwerp (gebruik {sender}, {domain}, {count} en {date})" Style="{StaticResource LabelTextStyle}" />
                     <TextBox Name="EmailSubjectTextBox" Height="30" VerticalContentAlignment="Center" Padding="6,0" Margin="0,0,0,10" />
 

@@ -290,6 +290,7 @@ public partial class MainWindow
             SelectComboBoxByTag(EmailTransportComboBox, BounceNotificationTransport.Normalize(settings.Transport));
             EmailFromAddressTextBox.Text = settings.FromAddress ?? string.Empty;
             EmailFromNameTextBox.Text = settings.FromDisplayName ?? "Mail Log Inspector";
+            EmailBccAddressTextBox.Text = settings.BccAddress ?? string.Empty;
             EmailSubjectTextBox.Text = settings.ResolveSubjectTemplate();
             EmailAutoSendCheckBox.IsChecked = settings.AutoSendAfterImport;
             EmailClearGmailSentCheckBox.IsChecked = settings.ClearGmailSentItemsAfterSend;
@@ -416,6 +417,7 @@ public partial class MainWindow
             Transport = ReadSelectedEmailTransport(),
             FromAddress = EmailFromAddressTextBox.Text.Trim(),
             FromDisplayName = EmailFromNameTextBox.Text.Trim(),
+            BccAddress = EmailBccAddressTextBox.Text.Trim(),
             SubjectTemplate = EmailSubjectTextBox.Text.Trim(),
             RelayHost = EmailRelayHostTextBox.Text.Trim(),
             RelayPort = port,
