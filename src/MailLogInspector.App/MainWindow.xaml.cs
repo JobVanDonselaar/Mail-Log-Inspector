@@ -533,7 +533,8 @@ public partial class MainWindow : Window
 
 	private static string BuildLongestDeliveryExportFileName(MailLogInspectorSearchCriteria criteria, int topLimit)
 	{
-		List<string> parts = ["mail-log-inspector", "langste-aflevertijden", "top", topLimit.ToString(CultureInfo.InvariantCulture)];
+		string topToken = topLimit == int.MaxValue ? "alles" : topLimit.ToString(CultureInfo.InvariantCulture);
+		List<string> parts = ["mail-log-inspector", "langste-aflevertijden", "top", topToken];
 		AddExportFilterPart(parts, "afzender", criteria.Sender ?? criteria.SenderDomain);
 		AddExportFilterPart(parts, "ontvanger", criteria.Recipient ?? criteria.RecipientDomain);
 		parts.Add("van");
@@ -1564,6 +1565,11 @@ public partial class MainWindow : Window
 
 	private int ReadLongestDeliveryTopLimit()
 	{
+		if (AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: "all" })
+		{
+			return int.MaxValue;
+		}
+
 		if (AnalysisLongestTopCountComboBox.SelectedItem is ComboBoxItem { Tag: var tag } &&
 			int.TryParse(tag?.ToString(), out int selectedTop) &&
 			selectedTop > 0)
