@@ -53,6 +53,25 @@ public sealed class MailLogInspectorMailHistoryTests
     }
 
     [Fact]
+    public async Task SaveImport_PopulatesLookupTableForTargetedArchiveSelection()
+    {
+        string trackingId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+        await using var harness = await MailLogInspectorTestHarness.CreateAsync(
+            new SmtpCsvRow("7/20/2026 3:07PM", "7/20/2026 3:28PM", "sender@example.com", "target@example.net", "D", trackingId));
+
+        using var connection = harness.Store.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM import_mail_lookup
+            WHERE recipient_address = 'target@example.net';
+            """;
+
+        long rows = Convert.ToInt64(command.ExecuteScalar() ?? 0L);
+        Assert.True(rows > 0);
+    }
+
+    [Fact]
     public async Task ReadHistories_ReturnsCompleteHistoryForMultipleMailsInOneBatch()
     {
         string firstTrackingId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
@@ -104,6 +123,50 @@ public sealed class MailLogInspectorMailHistoryTests
 
         Assert.Single(history.Attempts);
         Assert.DoesNotContain("old-report.zip", history.SearchedArchives);
+    }
+
+    [Fact]
+    public async Task ReadHistory_UsesLookupToSkipUnrelatedArchives()
+    {
+        string trackingId = "99999999-1111-2222-3333-444444444444";
+        await using var harness = await MailLogInspectorTestHarness.CreateAsync(
+            new SmtpCsvRow("7/20/2026 3:07PM", "7/20/2026 3:08PM", "sender@example.com", "target@example.net", "D", trackingId));
+
+        string irrelevantArchivePath = Path.Combine(harness.Workspace.ArchiveDirectory, "irrelevant.csv");
+        await File.WriteAllTextAsync(
+            irrelevantArchivePath,
+            "Date accepted,Date delivered,Mail from,Recipient,Status,Response code,Response message,Bounce class,Tries,Sender id,Tracking id,Campaign id\r\n");
+        harness.Store.SaveImport(
+            "irrelevant-source.csv",
+            "hash-irrelevant-" + Guid.NewGuid().ToString("N"),
+            irrelevantArchivePath,
+            [
+                new SmtpLogEntry(
+                    1,
+                    new DateTime(2026, 7, 20, 15, 7, 0),
+                    new DateTime(2026, 7, 20, 15, 8, 0),
+                    "sender@example.com",
+                    "example.com",
+                    "other@example.net",
+                    "example.net",
+                    "D",
+                    "250",
+                    "ok",
+                    string.Empty,
+                    1,
+                    string.Empty,
+                    "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                    string.Empty,
+                    string.Empty)
+            ],
+            errorCount: 0);
+
+        var service = new MailLogInspectorMailHistoryService(harness.Store);
+        MailLogInspectorMailHistory history = service.ReadHistory(trackingId, "target@example.net");
+
+        Assert.True(history.HasAttempts);
+        Assert.DoesNotContain("irrelevant-source.csv", history.SearchedArchives);
+        Assert.DoesNotContain("irrelevant-source.csv", history.MissingArchives);
     }
 
     [Fact]

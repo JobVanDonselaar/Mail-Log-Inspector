@@ -78,7 +78,7 @@ public static class LongestDeliveredExcelExporter
 		sheetData.Append(CreateSparseRow(4));
 		sheetData.Append(CreateStyledStringRow(5, StyleTableHeader,
 			"#", "Accepted", "Afgeleverd", "Duur (sec)", "Duur", "Afzender", "Ontvanger",
-			"Tracking", "SMTP code", "Bron", "Toelichting"));
+			"Tracking", "SMTP code", "Bron", "Waarom traag?"));
 
 		uint rowIndex = 6;
 		foreach (LongestDeliveredExportEntry entry in entries)

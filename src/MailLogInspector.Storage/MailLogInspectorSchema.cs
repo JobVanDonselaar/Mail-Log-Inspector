@@ -14,6 +14,7 @@ internal static class MailLogInspectorSchema
 		EnsureAddressLookupTable(connection);
 		EnsureCompactMailItemsTable(connection, GetMailItemsState(connection));
 		EnsureMailItemIndexes(connection);
+		EnsureImportMailLookupTable(connection);
 		EnsureAnalysisTables(connection);
 		EnsureAnalysisMetadataTable(connection);
 		EnsureImportReasonCountsTable(connection);
@@ -226,6 +227,23 @@ internal static class MailLogInspectorSchema
 			CREATE INDEX IF NOT EXISTS ix_mail_log_inspector_items_delivered_duration
 			    ON mail_items(status, duration_seconds DESC, accepted_at ASC);
 			DROP INDEX IF EXISTS ix_mail_log_inspector_items_import_status;
+			""";
+		command.ExecuteNonQuery();
+	}
+
+	private static void EnsureImportMailLookupTable(SqliteConnection connection)
+	{
+		using SqliteCommand command = connection.CreateCommand();
+		command.CommandText = """
+			CREATE TABLE IF NOT EXISTS import_mail_lookup (
+			    import_id INTEGER NOT NULL,
+			    tracking_key BLOB NOT NULL,
+			    recipient_address TEXT NOT NULL,
+			    PRIMARY KEY(import_id, tracking_key, recipient_address)
+			) WITHOUT ROWID;
+
+			CREATE INDEX IF NOT EXISTS ix_import_mail_lookup_tracking_recipient
+			    ON import_mail_lookup(tracking_key, recipient_address, import_id);
 			""";
 		command.ExecuteNonQuery();
 	}

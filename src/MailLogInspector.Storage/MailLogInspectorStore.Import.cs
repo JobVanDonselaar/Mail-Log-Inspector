@@ -40,6 +40,14 @@ public sealed partial class MailLogInspectorStore
 				using SqliteCommand selectDomainCommand = CreatePreparedCommand(val, val2, "SELECT domain_id FROM mail_domains WHERE domain_name = $domainName LIMIT 1;", ("$domainName", SqliteType.Text));
 				using SqliteCommand insertAddressCommand = CreatePreparedCommand(val, val2, "INSERT OR IGNORE INTO mail_addresses (local_part, domain_id) VALUES ($localPart, $domainId);", ("$localPart", SqliteType.Text), ("$domainId", SqliteType.Integer));
 				using SqliteCommand selectAddressCommand = CreatePreparedCommand(val, val2, "SELECT address_id FROM mail_addresses WHERE local_part = $localPart AND ((domain_id IS NULL AND $domainId IS NULL) OR domain_id = $domainId) LIMIT 1;", ("$localPart", SqliteType.Text), ("$domainId", SqliteType.Integer));
+				using SqliteCommand insertImportLookupCommand = CreatePreparedCommand(
+					val,
+					val2,
+					"INSERT OR IGNORE INTO import_mail_lookup (import_id, tracking_key, recipient_address) VALUES ($importId, $trackingKey, $recipientAddress);",
+					("$importId", SqliteType.Integer),
+					("$trackingKey", SqliteType.Blob),
+					("$recipientAddress", SqliteType.Text));
+				HashSet<string> seenLookupRows = new(StringComparer.Ordinal);
 				foreach (SmtpLogEntry entry in entries)
 				{
 					num2++;
@@ -70,6 +78,7 @@ public sealed partial class MailLogInspectorStore
 						break;
 					}
 					UpsertMailItem(upsertMailItemCommand, importId, entry, senderReference, recipientReference);
+					PersistImportLookup(insertImportLookupCommand, seenLookupRows, importId, entry);
 					num3++;
 				}
 				UpdateImport(val, val2, importId, num2, dateTime, dateTime2, deliveredCount, bounceCount, underwayCount);
@@ -294,6 +303,36 @@ public sealed partial class MailLogInspectorStore
 		command.Parameters["$reasonCode"].Value = (int)MailLogInspectorAttemptMeaning.ClassifyReason(entry.Status, entry.ResponseCode, entry.ResponseMessage, entry.BounceClass);
 		command.Parameters["$lastImportId"].Value = importId;
 		command.ExecuteNonQuery();
+	}
+
+	private static void PersistImportLookup(
+		SqliteCommand command,
+		HashSet<string> seenRows,
+		long importId,
+		SmtpLogEntry entry)
+	{
+		string recipientAddress = NormalizeRecipientAddress(entry.Recipient);
+		if (recipientAddress.Length == 0)
+		{
+			return;
+		}
+
+		byte[] trackingKey = BuildTrackingKey(entry.TrackingId, entry.Recipient);
+		string dedupeKey = Convert.ToHexString(trackingKey) + "|" + recipientAddress;
+		if (!seenRows.Add(dedupeKey))
+		{
+			return;
+		}
+
+		command.Parameters["$importId"].Value = importId;
+		command.Parameters["$trackingKey"].Value = trackingKey;
+		command.Parameters["$recipientAddress"].Value = recipientAddress;
+		command.ExecuteNonQuery();
+	}
+
+	private static string NormalizeRecipientAddress(string? recipient)
+	{
+		return recipient?.Trim().ToLowerInvariant() ?? string.Empty;
 	}
 	private static string ResolveCompactStatus(string rawStatus)
 	{
